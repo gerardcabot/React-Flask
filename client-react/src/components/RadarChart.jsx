@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function PassMap({ playerId, season }) {
+export default function RadarChart({ playerId, season }) {
   const [imgData, setImgData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!playerId || !season) return;
 
-    axios.get("http://localhost:5000/pass_map_plot", {
+    axios.get("http://localhost:5000/radar_chart", {
       params: { player_id: playerId, season }
     })
     .then(res => {
@@ -21,23 +21,23 @@ export default function PassMap({ playerId, season }) {
       }
     })
     .catch(err => {
-      setError("Error fetching pass map");
+      setError("Error fetching radar chart");
       console.error(err);
     });
   }, [playerId, season]);
 
   return (
     <div>
-      <h3>Pass Map (StatsBomb Pitch)</h3>
+      <h3>Player Stats Radar Chart</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imgData ? (
         <img
           src={imgData}
-          alt="Pass Map"
+          alt="Radar Chart"
           style={{ maxWidth: "100%", border: "1px solid #ccc" }}
         />
       ) : (
-        !error && <p>Loading pass map...</p>
+        !error && <p>Loading radar chart...</p>
       )}
     </div>
   );

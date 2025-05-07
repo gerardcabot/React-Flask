@@ -32,6 +32,9 @@ import DuelAnd5050Chart from "./components/DuelAnd5050Chart";
 import EventTimelineChart from "./components/EventTimelineChart";
 import DribbleCarrySuccessChart from "./components/DribbleCarrySuccessChart";
 import GoalkeeperPerformanceChart from "./components/GoalkeeperPerformanceChart";
+import PositionHeatmap from "./components/PositionHeatmap";
+import RadarChart from "./components/RadarChart";
+
 
 function App() {
   const [seasons, setSeasons] = useState([]);
@@ -105,12 +108,14 @@ function App() {
           <div>
             <h2>Visual Analytics</h2>
             {/* <EventTypeChart events={events} /> */}
-            <PassMap events={events} />
-            {/* <ShotMap events={events} /> */}
+            {/* <PassMap events={events} /> */}
+            <PassMap playerId={selectedPlayer?.player_id} season={selectedSeason} />
             {/* <DuelAnd5050Chart events={events} /> */}
             {/* <EventTimelineChart events={events} /> */}
             {/* <DribbleCarrySuccessChart events={events} /> */}
             {/* <GoalkeeperPerformanceChart events={events} /> */}
+            {<PositionHeatmap playerId={selectedPlayer?.player_id} season={selectedSeason} />}
+            { <RadarChart playerId={selectedPlayer?.player_id} season={selectedSeason} /> }
           </div>
         </>
       )}
