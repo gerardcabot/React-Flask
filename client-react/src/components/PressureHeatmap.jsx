@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function PositionHeatmap({ playerId, season }) {
+export default function PressureHeatmap({ playerId, season }) {
   const [imgUrl, setImgUrl] = useState(null);
   const [error, setError] = useState(null);
 
@@ -11,7 +11,7 @@ export default function PositionHeatmap({ playerId, season }) {
     setImgUrl(null);
     setError(null);
 
-    axios.get("http://localhost:5000/position_heatmap", {
+    axios.get("http://localhost:5000/pressure_heatmap", {
       params: { player_id: playerId, season }
     })
     .then(res => {
@@ -23,24 +23,24 @@ export default function PositionHeatmap({ playerId, season }) {
       }
     })
     .catch(err => {
-      setError("Error fetching heatmap");
+      setError("Error fetching pressure heatmap");
       console.error(err);
     });
   }, [playerId, season]);
 
   return (
     <div>
-      <h3>Position Heatmap</h3>
+      <h3>Pressure Heatmap</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imgUrl ? (
         <img
-          key={imgUrl} // ✅ prevent React from reusing old <img>
+          key={imgUrl}
           src={imgUrl}
-          alt="Position Heatmap"
+          alt="Pressure Heatmap"
           style={{ maxWidth: "100%", border: "1px solid #ccc" }}
         />
       ) : (
-        !error && <p>Loading heatmap...</p>
+        !error && <p>Loading pressure heatmap...</p>
       )}
     </div>
   );
