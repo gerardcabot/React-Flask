@@ -27,6 +27,8 @@ Les dades del projecte són massa grans per a GitHub i s'han de descarregar manu
 ```
 React-Flask/
 ├── data/
+├── client-react/
+├── ml_models/
 ├── server-flask/
 └── ...
 ```
