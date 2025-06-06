@@ -30,13 +30,13 @@ const InfoTooltip = ({ text }) => {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid #1d4ed8',
+        border: '1px solid #dc2626', // vermell
         borderRadius: '50%',
         width: '18px',
         height: '18px',
         textAlign: 'center',
         fontSize: '11px',
-        color: '#1d4ed8',
+        color: '#dc2626', // vermell
         fontWeight: 'bold',
         userSelect: 'none',
         transition: 'background-color 0.2s, color 0.2s'
@@ -60,7 +60,7 @@ const InfoTooltip = ({ text }) => {
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '7px',
-            background: 'rgba(0,0,0,0.9)',
+            background: 'rgba(220,38,38,0.95)', // vermell fosc
             color: 'white',
             padding: '12px',
             borderRadius: '6px',
@@ -109,7 +109,7 @@ function ScoutingPage() {
   useEffect(() => {
     axios.get("http://localhost:5000/players")
       .then(res => setAllPlayers(res.data || []))
-      .catch(() => { setAllPlayers([]); setPredictionError("Failed to load players list."); });
+      .catch(() => { setAllPlayers([]); setPredictionError("No s'ha pogut carregar la llista de jugadors."); });
 
     axios.get("http://localhost:5000/api/custom_model/available_kpis")
       .then(res => {
@@ -184,11 +184,11 @@ function ScoutingPage() {
 
   const handlePredict = () => {
     if (!selectedPlayer || !selectedSeason) {
-      setPredictionError("Please select a player and a U21 season.");
+      setPredictionError("Selecciona un jugador i una temporada sub-21.");
       return;
     }
     if (modelTypeForPrediction === 'custom' && !selectedCustomModelId) {
-      setPredictionError("Please select a custom model to use for prediction, or switch to Default V14 model.");
+      setPredictionError("Seleccioneu un model personalitzat per utilitzar-lo per a la predicció o canvieu al model V14 per defecte.");
       return;
     }
     setIsLoadingPrediction(true);
@@ -206,7 +206,7 @@ function ScoutingPage() {
         setIsLoadingPrediction(false);
       })
       .catch(err => {
-        const errorMsg = err.response?.data?.error || "Failed to get prediction.";
+        const errorMsg = err.response?.data?.error || "No s'ha pogut obtenir la predicció.";
         console.error("Prediction error:", err.response || err);
         setPredictionError(errorMsg);
         setIsLoadingPrediction(false);
@@ -233,7 +233,7 @@ function ScoutingPage() {
     if (!selectedPositionGroupForCustom ||
         !selectedImpactKpisForCustom.length ||
         !selectedTargetKpisForCustom.length) {
-      setCustomModelBuildStatus({ success: false, message: "Please select a position group and at least one Impact KPI and one Target KPI." });
+      setCustomModelBuildStatus({ success: false, message: "Seleccioneu un grup de posicions i com a mínim un KPI d'impacte i un KPI d'objectiu." });
       return;
     }
     let mlFeaturesPayload = null;
@@ -262,7 +262,7 @@ function ScoutingPage() {
         }
       })
       .catch(err => {
-        setCustomModelBuildStatus({ success: false, message: err.response?.data?.error || "Failed to build custom model." });
+        setCustomModelBuildStatus({ success: false, message: err.response?.data?.error || "No s'ha pogut crear el model personalitzat." });
         setIsBuildingCustomModel(false);
       });
   };
@@ -304,18 +304,18 @@ function ScoutingPage() {
         let formattedLabel = formatMlFeatureName(feature);
 
         if (feature.startsWith('current_inter_') || feature.startsWith('current_poly_')) {
-          groupNameKey = 'Current Season: Interactions & Polynomials';
+          groupNameKey = 'Temporada actual: Interaccions i polinomis';
         } else if (feature.startsWith('current_')) {
-          groupNameKey = 'Current Season: Metrics';
+          groupNameKey = 'Temporada actual: Mètriques';
         } else if (feature.startsWith('hist_avg_') || feature.startsWith('hist_sum_') || feature.startsWith('hist_max_')) {
-          groupNameKey = 'Historical Performance: Aggregates';
+          groupNameKey = 'Rendiment històric: Agregats';
         } else if (feature.startsWith('hist_trend_')) {
-          groupNameKey = 'Historical Performance: Trends';
+          groupNameKey = 'Rendiment històric: Tendències';
         } else if (feature.startsWith('growth_')) {
-          groupNameKey = 'Season-over-Season: Growth & Ratios';
+          groupNameKey = 'Temporada rere temporada: creixement i ràtios';
         } else if (feature === 'num_hist_seasons') {
-          groupNameKey = 'Historical Context';
-          formattedLabel = "Number of Historical Seasons";
+          groupNameKey = 'Context històric';
+          formattedLabel = "Nombre de temporades històriques";
         }
 
         if (!acc[groupNameKey]) acc[groupNameKey] = [];
@@ -351,7 +351,7 @@ function ScoutingPage() {
   };
   const kpiSectionTitleStyle = {
     marginTop: 0,
-    color: '#1d4ed8',
+    color: '#dc2626', // vermell
     display: 'flex',
     alignItems: 'center',
     fontSize: '1.2rem',
@@ -383,54 +383,31 @@ function ScoutingPage() {
   };
   const kpiOptionLabelSelectedStyle = {
     ...kpiOptionLabelStyle,
-    background: "#dbeafe",
-    border: '1px solid #3b82f6'
+    background: "#fee2e2", 
+    border: '1px solid #dc2626' 
   };
 
   return (
     <div className="app-root" style={{
       minHeight: "100vh",
-      background: "#f3f4f6",
+      width: "100vw",
+      background: "#fff",
       padding: "0",
       margin: "0",
       boxSizing: "border-box",
       fontFamily: "'Inter', sans-serif",
-      color: "#1f2937"
+      color: "#1f2937",
+      overflowX: "hidden"
     }}>
-      <header className="app-header" style={{
-        maxWidth: "100%",
-        padding: "2rem 2rem 1rem",
-        background: "#dc2626",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-      }}>
-        <h1 style={{
-          fontSize: "2.25rem",
-          fontWeight: 800,
-          color: "#fff",
-          letterSpacing: "-0.025em",
-          margin: "0",
-          textAlign: "center"
-        }}>🕵️ La Liga U21 Player Potential</h1>
-      </header>
 
-      {/* Secció de Predicció */}
       <section style={{
-        maxWidth: "100%",
+        width: "100%",
+        maxWidth: "1100px",
         margin: "2rem auto",
         background: "#fff",
         padding: "2rem 2.5rem",
         borderRadius: "12px",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
       }}>
-        <h2 style={{
-          fontSize: "1.6rem",
-          marginBottom: "25px",
-          color: "#1f2937",
-          borderBottom: "2px solid #1d4ed8",
-          paddingBottom: "10px"
-        }}>
-          📊 Predict Player Potential
-        </h2>
         <div style={{
           display: "flex",
           flexWrap: "wrap",
@@ -444,7 +421,7 @@ function ScoutingPage() {
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
-              Player (U21 seasons available):
+              Jugador (temporades disponibles per a menors de 21 anys):
             </label>
             <select
               id="player-select"
@@ -461,7 +438,7 @@ function ScoutingPage() {
                 boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}
             >
-              <option value="">-- Select Player --</option>
+              <option value="">-- Selecciona jugador --</option>
               {u21EligiblePlayers.map(p => (
                 <option key={p.player_id} value={p.name}>
                   {p.name} (ID: {p.player_id})
@@ -478,7 +455,7 @@ function ScoutingPage() {
                 color: "#1f2937",
                 fontSize: "1.1rem"
               }}>
-                Season (U21 performance basis):
+                Temporada (rendiment sub-21):
               </label>
               <select
                 id="season-select"
@@ -496,16 +473,16 @@ function ScoutingPage() {
                 }}
                 disabled={!selectedPlayer || u21SeasonsForSelectedPlayer.length === 0}
               >
-                <option value="">-- Select U21 Season --</option>
+                <option value="">-- Selecciona la temporada sub-21 --</option>
                 {u21SeasonsForSelectedPlayer.map(s => (
                   <option key={s} value={s}>
-                    {s} (Age: {calculatePlayerAge(selectedPlayer.dob, s)})
+                    {s} (Edat: {calculatePlayerAge(selectedPlayer.dob, s)})
                   </option>
                 ))}
               </select>
               {selectedPlayer.dob && (
                 <p style={{ fontSize: '0.9em', color: '#4b5563', marginTop: '5px' }}>
-                  Player DOB: {dayjs(selectedPlayer.dob).format("DD MMM YYYY")}
+                  Data de naixement del jugador: {dayjs(selectedPlayer.dob).format("DD MMM YYYY")}
                 </p>
               )}
             </div>
@@ -518,7 +495,7 @@ function ScoutingPage() {
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
-              Model for Prediction:
+              Model per fer la predicció:
             </label>
             <select
               id="model-type-select"
@@ -536,8 +513,8 @@ function ScoutingPage() {
                 marginBottom: '10px'
               }}
             >
-              <option value="default_v14">Default V14 Model</option>
-              <option value="custom">Custom Model</option>
+              <option value="default_v14">Model per defecte V14</option>
+              <option value="custom">Model customitzat</option>
             </select>
             {modelTypeForPrediction === 'custom' && (
               <div>
@@ -548,7 +525,7 @@ function ScoutingPage() {
                   color: "#1f2937",
                   fontSize: '0.95em'
                 }}>
-                  Select Custom Model:
+                  Selecciona un model personalitzat:
                 </label>
                 <select
                   id="custom-model-select"
@@ -567,7 +544,7 @@ function ScoutingPage() {
                   disabled={availableCustomModels.length === 0}
                 >
                   <option value="">
-                    -- {availableCustomModels.length === 0 ? 'No custom models available' : 'Select a custom model'} --
+                    -- {availableCustomModels.length === 0 ? 'No hi ha models personalitzats disponibles' : 'Seleccioneu un model personalitzat'} --
                   </option>
                   {availableCustomModels.map(model => (
                     <option key={model.id} value={model.id}>
@@ -585,7 +562,7 @@ function ScoutingPage() {
           style={{
             width: "100%",
             padding: "12px",
-            background: (!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId)) ? "#d1d5db" : "#1d4ed8",
+            background: (!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId)) ? "#fca5a5" : "#dc2626", // vermell clar/desactivat
             color: "#fff",
             border: "none",
             borderRadius: "6px",
@@ -597,20 +574,20 @@ function ScoutingPage() {
           }}
           onMouseOver={e => {
             if (!(!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId))) {
-              e.currentTarget.style.backgroundColor = '#1e40af';
+              e.currentTarget.style.backgroundColor = '#b91c1c'; 
             }
           }}
           onMouseOut={e => {
             if (!(!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId))) {
-              e.currentTarget.style.backgroundColor = '#1d4ed8';
+              e.currentTarget.style.backgroundColor = '#dc2626'; 
             }
           }}
         >
-          {isLoadingPrediction ? "Calculating..." : "Predict Potential Score"}
+          {isLoadingPrediction ? "Calculant..." : "Predir puntuació de potencial"}
         </button>
         {isLoadingPrediction && (
-          <p style={{ textAlign: 'center', marginTop: '15px', color: '#1d4ed8' }}>
-            Loading model and predicting...
+          <p style={{ textAlign: 'center', marginTop: '15px', color: '#dc2626' }}>
+              S'està carregant el model i s'està fent predicció...
           </p>
         )}
         {predictionError && (
@@ -629,30 +606,29 @@ function ScoutingPage() {
         {predictionResult && !predictionError && (
           <div style={{
             marginTop: "28px",
-            background: "#e2f0d9",
+            background: "#fee2e2", 
             padding: "18px",
             borderRadius: "12px",
-            border: "1px solid #c5e0b4",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+            border: "1px solid #fca5a5", 
           }}>
             <h3 style={{
               marginTop: 0,
               marginBottom: '10px',
-              color: '#385723',
+              color: '#b91c1c', 
               fontWeight: 700,
               fontSize: "1.18rem"
             }}>
-              Prediction Result ({predictionResult.model_used === 'default_v14' ? 'Default V14 Model' : `Custom Model: ${predictionResult.model_used}`}):
+              Resultat de la predicció ({predictionResult.model_used === 'default_v14' ? 'Default V14 Model' : `Custom Model: ${predictionResult.model_used}`}):
             </h3>
-            <p style={{ margin: "8px 0" }}><strong>Player:</strong> {predictionResult.player_name} (ID: {predictionResult.player_id})</p>
-            <p style={{ margin: "8px 0" }}><strong>Season Assessed:</strong> {predictionResult.season_predicted_from}</p>
-            <p style={{ margin: "8px 0" }}><strong>Age Assessed:</strong> {predictionResult.age_at_season_start_of_year} (at Jan 1st of season's end year)</p>
-            <p style={{ margin: "8px 0" }}><strong>Position Group:</strong> {predictionResult.position_group}</p>
-            <p style={{ margin: "8px 0" }}><strong>90s Played in Season:</strong> {predictionResult.num_90s_played_in_season}</p>
+            <p style={{ margin: "8px 0" }}><strong>Jugador:</strong> {predictionResult.player_name} (ID: {predictionResult.player_id})</p>
+            <p style={{ margin: "8px 0" }}><strong>Temporada avaluada:</strong> {predictionResult.season_predicted_from}</p>
+            <p style={{ margin: "8px 0" }}><strong>Edat avaluada:</strong> {predictionResult.age_at_season_start_of_year} </p>
+            <p style={{ margin: "8px 0" }}><strong>Posició:</strong> {predictionResult.position_group}</p>
+            <p style={{ margin: "8px 0" }}><strong>90s Jugats a la temporada:</strong> {predictionResult.num_90s_played_in_season}</p>
             <p style={{
               fontSize: '1.2em',
               fontWeight: 'bold',
-              color: '#1e7e34',
+              color: '#b91c1c', 
               margin: "18px 0 0 0"
             }}>
               Predicted U21 Potential Score: <span style={{ fontSize: '1.3em' }}>{predictionResult.predicted_potential_score} / 200</span>
@@ -661,23 +637,22 @@ function ScoutingPage() {
         )}
       </section>
 
-      {/* Secció de Construcció de Model Personalitzat */}
       <section style={{
-        maxWidth: "100%",
+        width: "100%",
+        maxWidth: "1100px",
         margin: "2rem auto",
         background: "#fff",
         padding: "2rem 2.5rem",
         borderRadius: "12px",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
       }}>
         <h2 style={{
           fontSize: "1.6rem",
           marginBottom: "25px",
           color: "#1f2937",
-          borderBottom: "2px solid #1d4ed8",
+          borderBottom: "2px solid #dc2626", 
           paddingBottom: "10px"
         }}>
-          🛠️ Build Custom Potential Model
+          Construeix un model de potencial personalitzat
         </h2>
         <div style={{
           display: 'flex',
@@ -687,7 +662,7 @@ function ScoutingPage() {
         }}>
           <div style={{ flex: '2', minWidth: 'clamp(350px, 60%, 700px)' }}>
             {structuredKpiOptions.length === 0 ? (
-              <p style={{ color: "#4b5563" }}>Loading KPI options for custom model building...</p>
+              <p style={{ color: "#4b5563" }}>S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...</p>
             ) : (
               <form onSubmit={handleBuildCustomModelSubmit}>
                 <div style={{ marginBottom: '20px' }}>
@@ -698,14 +673,14 @@ function ScoutingPage() {
                     color: "#1f2937",
                     fontSize: "1.1rem"
                   }}>
-                    Custom Model Name (Optional):
+                    Nom del model personalitzat:
                   </label>
                   <input
                     type="text"
                     id="custom-model-name"
                     value={customModelName}
                     onChange={e => setCustomModelName(e.target.value)}
-                    placeholder="e.g., MyAttackerModel_HighXG"
+                    placeholder="p. ex., Atacant_Alt_xG"
                     style={{
                       width: "100%",
                       padding: "10px",
@@ -726,7 +701,7 @@ function ScoutingPage() {
                     color: "#1f2937",
                     fontSize: "1.1rem"
                   }}>
-                    Position Group for Model:
+                    Grup de posició per al model:
                   </label>
                   <select
                     id="custom-model-pos-group"
@@ -747,7 +722,7 @@ function ScoutingPage() {
                       boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
                     }}
                   >
-                    {["Attacker", "Midfielder", "Defender"].map(group => (
+                    {["Atacant", "Migcampista", "Defensor"].map(group => (
                       <option key={group} value={group}>{group}</option>
                     ))}
                   </select>
@@ -756,12 +731,14 @@ function ScoutingPage() {
                   <div style={kpiSectionStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                       <h4 style={{ ...kpiSectionTitleStyle, marginBottom: '0' }}>
-                        Step 1: Define Player Impact
-                        <InfoTooltip text="Select KPIs that you believe represent overall positive player impact for the chosen position. These will form a composite score. The 'Target Definition KPIs' (Step 2) will then be weighted based on their correlation with this composite impact score." />
+                        Pas 1: Definir l'impacte del jugador
+                        <InfoTooltip text="Seleccioneu els KPI que creieu que representen un impacte positiu general del jugador per a la posició escollida. 
+                        Aquests formaran una puntuació composta. Els KPI de definició d'objectius 
+                        (Pas 2) es ponderaran en funció de la seva correlació amb aquesta puntuació d'impacte composta." />
                       </h4>
                       <input
                         type="text"
-                        placeholder="Search Impact KPIs..."
+                        placeholder="Busca KPIs d'impacte..."
                         value={kpiSearchTerm}
                         onChange={e => setKpiSearchTerm(e.target.value)}
                         style={{
@@ -775,7 +752,7 @@ function ScoutingPage() {
                       />
                     </div>
                     <p style={kpiSectionDescriptionStyle}>
-                      Choose metrics that best reflect impactful performance.
+                      Trieu les mètriques que reflecteixin millor el rendiment impactant.
                     </p>
                     {filteredStructuredKpiOptions.map(metricGroup => (
                       <div key={`impact-group-${metricGroup.metric_base_id}`} style={{ marginBottom: '15px' }}>
@@ -799,17 +776,19 @@ function ScoutingPage() {
                         </div>
                       </div>
                     ))}
-                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No Impact KPIs match your search.</p>}
+                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No hi ha cap KPI d'impacte que coincideixi amb la teva cerca.</p>}
                   </div>
                   <div style={kpiSectionStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                       <h4 style={{ ...kpiSectionTitleStyle, marginBottom: '0' }}>
-                        Step 2: Define Potential Heuristic
-                        <InfoTooltip text="Select the KPIs that will directly form the 'potential score'. The model will learn to predict this score. The importance of each KPI here is automatically determined by its correlation with the 'Impact KPIs' you chose in Step 1." />
+                        Pas 2: Definir l'heurística potencial
+                        <InfoTooltip text="Seleccioneu els KPI que formaran directament la puntuació potencial. 
+                        El model aprendrà a predir aquesta puntuació. 
+                        La importància de cada KPI aquí es determina automàticament per la seva correlació amb els KPI d'impacte que heu triat al pas 1. "/>
                       </h4>
                     </div>
                     <p style={kpiSectionDescriptionStyle}>
-                      These metrics define what "potential" means for this custom model.
+                      Aquestes mètriques defineixen què significa "potencial" per a aquest model personalitzat.
                     </p>
                     {filteredStructuredKpiOptions.map(metricGroup => (
                       <div key={`target-group-${metricGroup.metric_base_id}`} style={{ marginBottom: '15px' }}>
@@ -833,17 +812,19 @@ function ScoutingPage() {
                         </div>
                       </div>
                     ))}
-                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No Target Definition KPIs match your search.</p>}
+                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No hi ha cap KPI de definició d'objectiu que coincideixi amb la cerca.</p>}
                   </div>
                 </div>
                 <div style={{ ...kpiSectionStyle, marginTop: '5px' }}>
                   <h4 style={{ ...kpiSectionTitleStyle, display: 'flex', alignItems: 'center' }}>
-                    Step 3 (Optional): Advanced - ML Feature Selection
-                    <InfoTooltip text="Manually select the specific input features for the XGBoost model. This gives fine-grained control. If 'Use default...' is checked, features will be automatically selected based on your Target Definition KPIs (Step 2), aiming for relevance. For most users, the default is recommended." />
+                    Pas 3 (opcional): Avançat: selecció de funcions d'aprenentatge automàtic
+                    <InfoTooltip text="Seleccioneu manualment les característiques d'entrada específiques per al model XGBoost. 
+                    Això proporciona un control precís. Si l'opció 'Utilitza l'opció per defecte...' està marcada, 
+                    les característiques es seleccionaran automàticament en funció dels KPI de definició d'objectiu (Pas 2), 
+                    amb l'objectiu de ser rellevants. Per a la majoria d'usuaris, es recomana l'opció per defecte." />
                   </h4>
                   <p style={kpiSectionDescriptionStyle}>
-                    The model uses these features to learn. Fewer, relevant features can improve robustness.
-                  </p>
+                    El model utilitza aquestes característiques per aprendre.</p>
                   <div style={{ marginBottom: '15px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
                       <input
@@ -857,21 +838,21 @@ function ScoutingPage() {
                         }}
                         style={{ marginRight: '8px', transform: 'scale(1.1)' }}
                       />
-                      Use default ML feature selection logic
+                      Utilitza la lògica de selecció de funcions d'aprenentatge automàtic predeterminada
                     </label>
                     <p style={{ fontSize: '0.8em', color: '#4b5563', margin: '5px 0 0 25px' }}>
-                      Relevant features will be auto-selected. Uncheck for manual selection.
+                      Les característiques rellevants es seleccionaran automàticament. Desmarqueu la casella per a la selecció manual.
                     </p>
                   </div>
                   {!useDefaultMlFeatures && (
                     <div style={{ marginBottom: '15px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <strong style={{ display: "block", fontSize: '0.95rem', color: '#1f2937' }}>
-                          Select Custom ML Features:
+                          Seleccioneu les funcions d'aprenentatge automàtic personalitzades:
                         </strong>
                         <input
                           type="text"
-                          placeholder="Search ML features..."
+                          placeholder="Cerca característiques de ML..."
                           value={mlFeatureSearchTerm}
                           onChange={e => setMlFeatureSearchTerm(e.target.value)}
                           style={{
@@ -924,16 +905,16 @@ function ScoutingPage() {
                                 ))}
                               </div>
                             </div>
-                          )) : <p style={{ color: '#4b5563', textAlign: 'center', padding: '10px 0' }}>No ML features match your search.</p>}
+                          )) : <p style={{ color: '#4b5563', textAlign: 'center', padding: '10px 0' }}>No hi ha cap funció d'aprenentatge automàtic que coincideixi amb la teva cerca.</p>}
                         </div>
                       ) : (
-                        <p style={{ color: '#4b5563' }}>Loading available ML features or none found from backend...</p>
+                        <p style={{ color: '#4b5563' }}>S'estan carregant les funcions d'aprenentatge automàtic disponibles o no s'ha trobat cap des del backend...</p>
                       )}
                       <p style={{ fontSize: '0.8em', color: '#4b5563', marginTop: '10px' }}>
-                        The model will use these selected features. If none are chosen (and "Use default" is off), default logic applies.
+                        El model utilitzarà aquestes característiques seleccionades. Si no se'n tria cap (i l'opció "Utilitza per defecte" està desactivada), s'aplica la lògica per defecte.
                       </p>
                       <div style={{ marginTop: '15px', fontSize: '0.9em', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span>Selected ML Features: <strong>{selectedCustomMlFeatures.length}</strong></span>
+                        <span>Característiques de ML seleccionades: <strong>{selectedCustomMlFeatures.length}</strong></span>
                         {selectedCustomMlFeatures.length > 0 && (
                           <button
                             type="button"
@@ -948,7 +929,7 @@ function ScoutingPage() {
                               cursor: 'pointer'
                             }}
                           >
-                            Clear Selection
+                            Esborra la selecció
                           </button>
                         )}
                       </div>
@@ -959,7 +940,7 @@ function ScoutingPage() {
                   type="submit"
                   disabled={isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length}
                   style={{
-                    background: isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length ? "#d1d5db" : "#1d4ed8",
+                    background: isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length ? "#fca5a5" : "#dc2626", // vermell clar/desactivat
                     color: "#fff",
                     border: "none",
                     borderRadius: "6px",
@@ -971,7 +952,7 @@ function ScoutingPage() {
                     marginTop: "20px"
                   }}
                 >
-                  {isBuildingCustomModel ? "Building Model..." : "Build Custom Model"}
+                  {isBuildingCustomModel ? "Construint el model..." : "Crea un model personalitzat"}
                 </button>
               </form>
             )}
@@ -1007,15 +988,14 @@ function ScoutingPage() {
                 fontSize: '1.2rem',
                 marginBottom: '10px'
               }}>
-                Understanding KPI Variants
-                <InfoTooltip text="The same base metric (e.g., Goals) can be represented in different ways, each providing a unique perspective on player performance." />
-              </h4>
+                Comprensió de les variants de KPI
+                <InfoTooltip text="La mateixa mètrica base (per exemple, els gols) es pot representar de maneres diferents, cadascuna de les quals proporciona una perspectiva única sobre el rendiment del jugador." /></h4>
               <ul style={{ fontSize: '0.95em', listStyleType: 'disc', paddingLeft: '20px', color: '#4b5563' }}>
-                <li style={{ marginBottom: '10px' }}><strong>Total / Count:</strong> Raw sum or count over the season (e.g., total goals). Reflects overall volume.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Per 90 Min (P90):</strong> Metric normalized per 90 minutes. Crucial for rate-based comparison.</li>
-                <li style={{ marginBottom: '10px' }}><strong>P90 Sqrt (P90 √):</strong> Square root of the P90 value. Stabilizes variance for skewed metrics (like goals, xG) and reduces impact of outliers.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Direct KPI:</strong> Pre-calculated rates or percentages (e.g., Pass Completion %).</li>
-                <li style={{ marginBottom: '10px' }}><strong>Inverted (Inv):</strong> For metrics where lower is better (e.g., Turnovers), higher inverted scores mean better performance. `_inv_kpi_base` is often the raw P90 before inversion.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Total / Recompte:</strong> Suma o recompte brut al llarg de la temporada. Reflecteix el volum global.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Per 90 Min (P90):</strong> Mètrica normalitzada per 90 minuts. Crucial per a la comparació basada en els minuts jugats.</li>
+                <li style={{ marginBottom: '10px' }}><strong>P90 Sqrt (P90 √):</strong> Arrel quadrada del valor P90. Estabilitza la variància per a mètriques asimètriques i redueix l'impacte dels valors atípics.</li>
+                <li style={{ marginBottom: '10px' }}><strong>KPI directe:</strong> Taxes o percentatges precalculats.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Invertit (Inv):</strong> Per a mètriques on com més baix és millor (per exemple, pèrdues), les puntuacions invertides més altes signifiquen un millor rendiment.</li>
               </ul>
             </div>
             <div>
@@ -1027,21 +1007,21 @@ function ScoutingPage() {
                 fontSize: '1.2rem',
                 marginBottom: '10px'
               }}>
-                How ML Feature Selection Affects the Model
-                <InfoTooltip text="The ML features are the direct inputs the model uses. Your choices here significantly shape what the model learns." />
+                Com afecta la selecció de funcions de ML al model
+                <InfoTooltip text="Les característiques d'aprenentatge automàtic són les entrades directes que utilitza el model. Les vostres eleccions aquí influeixen significativament en el que aprèn el model." />
               </h4>
               <ul style={{ fontSize: '0.95em', listStyleType: 'disc', paddingLeft: '20px', color: '#4b5563' }}>
-                <li style={{ marginBottom: '10px' }}><strong>Relevance is Key:</strong> Select features genuinely predictive of your defined potential. Irrelevant features add noise.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Model Complexity:</strong> More features can create complex models that might overfit (learn noise, not general patterns).</li>
+                <li style={{ marginBottom: '10px' }}><strong>Relevance is Key:</strong> Seleccioneu característiques que siguin realment predictives del vostre potencial definit. Les característiques irrellevants afegeixen soroll.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Model Complexity:</strong> Més característiques poden crear models complexos que podrien sobreajustar-se (aprendre soroll, no patrons generals).</li>
                 <li style={{ marginBottom: '10px' }}><strong>Feature Types:</strong>
                   <ul style={{ paddingLeft: '20px', listStyleType: 'circle', marginTop: '5px' }}>
-                    <li><em>Current Season</em> features show recent form.</li>
-                    <li><em>Historical Aggregates</em> (Avg, Sum, Max) give a performance baseline.</li>
-                    <li><em>Growth & Trends</em> indicate development.</li>
+                    <li><em>Temporada actual</em> les característiques mostren la forma recent.</li>
+                    <li><em>Agregats històrics</em> (Mitjana, Suma, Màx.) donen una línia de base de rendiment.</li>
+                    <li><em>Creixement i tendències</em> indiquen desenvolupament.</li>
                   </ul>
                 </li>
-                <li style={{ marginBottom: '10px' }}><strong>Interactions/Polynomials:</strong> Capture non-linear relationships. Use if you have a strong hypothesis.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Default Logic:</strong> If "Use default..." is checked, the system picks features related to your Target Definition KPIs.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Interaccions/Polinomis:</strong> Captura relacions no lineals.</li>
+                <li style={{ marginBottom: '10px' }}><strong>Lògica per defecte:</strong> Si l'opció "Utilitza l'opció per defecte..." està marcada, el sistema selecciona les característiques relacionades amb els KPI de definició d'objectiu.</li>
               </ul>
             </div>
           </div>

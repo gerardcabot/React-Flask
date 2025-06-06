@@ -116,9 +116,9 @@ export default function ShotMap({ playerId, season }) {
           fill="black"
         />
         <Rect x={10} y={10} width={15} height={15} fill="#b94b75" />
-        <Text x={30} y={10} text="Shot (No Goal)" fontSize={12} />
+        <Text x={30} y={10} text="Shot (No gol)" fontSize={12} />
         <Rect x={10} y={30} width={15} height={15} fill="#00ff00" />
-        <Text x={30} y={30} text="Shot (Goal)" fontSize={12} />
+        <Text x={30} y={30} text="Shot (Gol)" fontSize={12} />
       </>
     );
   };
@@ -140,7 +140,7 @@ export default function ShotMap({ playerId, season }) {
 
   return (
     <div style={{ position: "relative" }}>
-      <h3>Shot Map</h3>
+      {/* <h3>Shot Map</h3> */}
       {error && <p style={{ color: "red" }}>{error}</p>}
       <Stage width={canvasWidth} height={canvasHeight}>
         <Layer>
@@ -168,9 +168,10 @@ export default function ShotMap({ playerId, season }) {
         </Layer>
       </Stage>
       <div style={{ marginTop: "10px" }}>
-        <p>Total Goals: {stats.totalGoals}</p>
-        <p>Total xG: {stats.totalXg.toFixed(2)}</p>
-        <p>Overall xG Difference (Goals - xG): {stats.overallXgDiff.toFixed(2)}</p>
+        <p>Gols totals: {stats.totalGoals}</p>
+        <p>Gols esperats (xG) totals: {stats.totalXg.toFixed(2)}</p>
+        <p>Diferència entre els gols i el xG (Gols - xG): {stats.overallXgDiff.toFixed(2)} </p>
+        <p>Nota: Els valors positius en aquesta diferència indiquen un millor rendiment de l'esperat</p>
       </div>
       {tooltip.visible && (
         <div
@@ -190,9 +191,7 @@ export default function ShotMap({ playerId, season }) {
           xG: {tooltip.xg.toFixed(2)}
         </div>
       )}
-      <p style={{ fontStyle: "italic", color: "#555", marginTop: "5px" }}>
-        Note: Larger markers indicate higher expected goals (xG).
-      </p>
+
     </div>
   );
 }

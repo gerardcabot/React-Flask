@@ -1,63 +1,112 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import "./App.css"; // Keep your global styles
 import VisualizationPage from "./VisualizationPage"; // Import the page component
 import ScoutingPage from "./ScoutingPage"; // Import the scouting page component
+import React from "react";
+
+function HeaderBrand() {
+  const location = useLocation();
+  const isScouting = location.pathname === "/scouting";
+  return (
+    <span
+      style={{
+        background: isScouting ? "rgba(220,38,38,0.07)" : "rgba(29,78,216,0.07)",
+        borderRadius: "12px",
+        padding: "0.25em 1.2em",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        display: "inline-block",
+        fontSize: "1.1em",
+        letterSpacing: "0.09em",
+        fontWeight: 900,
+        border: `2px solid ${isScouting ? "#dc2626" : "#1d4ed8"}`,
+        textTransform: "uppercase",
+        lineHeight: 1.1,
+        marginBottom: "0.1em",
+        color: isScouting ? "#dc2626" : "#1d4ed8"
+      }}
+    >
+      ESTRELLES DEL FUTUR
+    </span>
+  );
+}
 
 function App() {
+  const location = useLocation();
+  const isVisualization = location.pathname === "/visualization";
+  const isScouting = location.pathname === "/scouting";
   return (
-    <Router>
+    <>
+      <header
+        style={{
+          width: "100%",
+          background: "#fff",
+          color: "#1f2937",
+          padding: "2.5rem 0 1.2rem 0",
+          textAlign: "center",
+          fontWeight: 900,
+          fontSize: "2.7rem",
+          letterSpacing: "0.08em",
+          boxShadow: "none", // Elimina l'ombra per evitar el canvi de color
+          marginBottom: "0.5rem",
+          borderBottomLeftRadius: "18px",
+          borderBottomRightRadius: "18px",
+          position: "relative",
+          zIndex: 10,
+          fontFamily: "'Inter', 'Montserrat', 'Segoe UI', Arial, sans-serif",
+          textShadow: "0 2px 8px rgba(0,0,0,0.03)"
+        }}
+      >
+        {/* Utilitza el component HeaderBrand per canviar el color segons la ruta */}
+        <HeaderBrand />
+      </header>
       <nav style={{
-        background: "#343a40", // Darker background for better contrast
-        padding: "1rem 1.5rem", // Increased padding
-        borderBottom: "2px solid #495057", // Slightly thicker border
-        marginBottom: 0, // Remove bottom margin if pages handle their own top padding
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)" // Subtle shadow
+        background: "#343a40",
+        padding: "1rem 1.5rem",
+        borderBottom: "2px solid #495057",
+        marginBottom: 0,
+        boxShadow: "none"
       }}>
         <div style={{
           display: "flex",
-          justifyContent: "center", // Center links
-          alignItems: "center",   // Vertically align items
-          gap: "30px",          // Increased gap
-          maxWidth: "1200px",    // Max width for content within nav
-          margin: "0 auto"       // Center nav content
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "30px",
+          maxWidth: "1200px",
+          margin: "0 auto"
         }}>
           <Link 
             to="/visualization" 
             style={{ 
               fontWeight: 600, 
-              color: "#adb5bd", // Lighter gray for inactive
+              color: isVisualization ? "#fff" : "#adb5bd", // actiu blanc, inactiu gris
+              background: isVisualization ? "#1d4ed8" : "transparent", // actiu blau
               textDecoration: "none", 
-              fontSize: "1.1rem", // Slightly larger font
-              padding: "8px 12px", // Padding for better click area
+              fontSize: "1.1rem",
+              padding: "8px 12px",
               borderRadius: "4px",
-              transition: "color 0.2s ease, background-color 0.2s ease"
+              transition: "color 0.2s, background 0.2s"
             }}
-            // Example active style (you might need NavLink for this or manage active state)
-            onMouseOver={e => e.currentTarget.style.color = '#ffffff'}
-            onMouseOut={e => e.currentTarget.style.color = '#adb5bd'}
           >
-            Player Analysis
+            Anàlisi del jugador
           </Link>
           <Link 
             to="/scouting" 
             style={{ 
               fontWeight: 600, 
-              color: "#adb5bd", 
+              color: isScouting ? "#fff" : "#adb5bd", // actiu blanc, inactiu gris
+              background: isScouting ? "#dc2626" : "transparent", // actiu vermell
               textDecoration: "none", 
               fontSize: "1.1rem",
               padding: "8px 12px",
               borderRadius: "4px",
-              transition: "color 0.2s ease, background-color 0.2s ease"
+              transition: "color 0.2s, background 0.2s"
             }}
-            onMouseOver={e => e.currentTarget.style.color = '#ffffff'}
-            onMouseOut={e => e.currentTarget.style.color = '#adb5bd'}
           >
-            Scouting & Potential
+            Buscador de talents
           </Link>
         </div>
       </nav>
-      
-      <div className="app-content-container"> {/* Optional: for consistent padding below nav */}
+      <div className="app-content-container">
         <Routes>
           <Route path="/" element={<Navigate to="/visualization" replace />} />
           <Route path="/visualization" element={<VisualizationPage />} />
@@ -65,8 +114,16 @@ function App() {
           {/* Add other top-level routes here if needed */}
         </Routes>
       </div>
-    </Router>
+    </>
   );
 }
 
-export default App;
+export default function AppWithLocation() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="*" element={<App />} />
+      </Routes>
+    </Router>
+  );
+}

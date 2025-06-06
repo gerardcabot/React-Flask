@@ -56,11 +56,11 @@ export default function PassMap({ playerId, season }) {
             totalAssists: assists,
           });
         } else {
-          setError("No pass data returned");
+          setError("No s'han retornat dades de passades");
         }
       })
       .catch(err => {
-        setError("Error fetching pass map");
+        setError("Error en obtenir el mapa de passsades");
         console.error(err);
       });
 
@@ -74,11 +74,11 @@ export default function PassMap({ playerId, season }) {
           const fullUrl = `http://localhost:5000${res.data.image_url}?t=${Date.now()}`;
           setHeatmapUrl(fullUrl);
         } else {
-          setHeatmapError("No heatmap image URL returned");
+          setHeatmapError("No s'ha retornat cap URL d'imatge del mapa de calor");
         }
       })
       .catch(err => {
-        setHeatmapError("Error fetching pass completion heatmap");
+        setHeatmapError("Error en obtenir el mapa de calor de finalització del pas");
         console.error(err);
       });
   }, [playerId, season]);
@@ -146,13 +146,13 @@ export default function PassMap({ playerId, season }) {
           strokeWidth={4}
         />
         <Rect x={10} y={10} width={15} height={15} fill="green" />
-        <Text x={30} y={10} text="Completed Pass" fontSize={12} />
+        <Text x={30} y={10} text="Passades completades" fontSize={12} />
         <Rect x={10} y={30} width={15} height={15} fill="red" />
-        <Text x={30} y={30} text="Incomplete Pass" fontSize={12} />
+        <Text x={30} y={30} text="Passades incompletes" fontSize={12} />
         <Rect x={10} y={50} width={15} height={15} fill="blue" />
-        <Text x={30} y={50} text="Assist" fontSize={12} />
+        <Text x={30} y={50} text="Assistències" fontSize={12} />
         <Rect x={10} y={70} width={15} height={15} fill="purple" />
-        <Text x={30} y={70} text="Final Third Pass (if applicable)" fontSize={12} />
+        <Text x={30} y={70} text="Passades a l'últim terç (si és aplicable)" fontSize={12} />
       </>
     );
   };
@@ -168,7 +168,7 @@ export default function PassMap({ playerId, season }) {
 
   return (
     <div>
-      <h3>PASSING</h3>
+      <h3>PASSADES</h3>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <div style={{ marginBottom: "10px" }}>
         <label>
@@ -177,7 +177,7 @@ export default function PassMap({ playerId, season }) {
             checked={filters.completed}
             onChange={() => handleFilterChange("completed")}
           />
-          Completed Passes
+          Passades completades
         </label>
         <label style={{ marginLeft: "10px" }}>
           <input
@@ -185,7 +185,7 @@ export default function PassMap({ playerId, season }) {
             checked={filters.incomplete}
             onChange={() => handleFilterChange("incomplete")}
           />
-          Incomplete Passes
+          Passades incompletes
         </label>
         <label style={{ marginLeft: "10px" }}>
           <input
@@ -193,7 +193,7 @@ export default function PassMap({ playerId, season }) {
             checked={filters.assists}
             onChange={() => handleFilterChange("assists")}
           />
-          Assists
+          Assistències
         </label>
         <label style={{ marginLeft: "10px" }}>
           <input
@@ -201,7 +201,7 @@ export default function PassMap({ playerId, season }) {
             checked={filters.finalThird}
             onChange={() => handleFilterChange("finalThird")}
           />
-          Passes to Final Third
+          Passades a l'últim terç
         </label>
       </div>
       <Stage width={canvasWidth} height={canvasHeight}>
@@ -231,12 +231,12 @@ export default function PassMap({ playerId, season }) {
         </Layer>
       </Stage>
       <div style={{ marginTop: "10px" }}>
-        <p>Pass Completion Rate: {stats.completionRate}%</p>
-        <p>Final Third Pass Completion Rate: {stats.finalThirdCompletionRate}%</p>
-        <p>Total Assists: {stats.totalAssists}</p>
+        <p>Percentatge de passades encertades: {stats.completionRate}%</p>
+        <p>Percentatge de passades a l'últim terç: {stats.finalThirdCompletionRate}%</p>
+        <p>Assistència total: {stats.totalAssists}</p>
       </div>
       <div style={{ marginTop: "20px" }}>
-        <h4>Pass Completion Percentage by Zone</h4>
+        <h4>Percentatge de passades completades per zona</h4>
         {heatmapError && <p style={{ color: "red" }}>{heatmapError}</p>}
         {heatmapUrl ? (
           <img
@@ -246,7 +246,7 @@ export default function PassMap({ playerId, season }) {
             style={{ maxWidth: "100%", border: "1px solid #ccc" }}
           />
         ) : (
-          !heatmapError && <p>Loading pass completion heatmap...</p>
+          !heatmapError && <p>Carregant el mapa de calor de passades...</p>
         )}
       </div>
     </div>

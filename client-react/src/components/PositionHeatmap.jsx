@@ -19,18 +19,18 @@ export default function PositionHeatmap({ playerId, season }) {
         const fullUrl = `http://localhost:5000${res.data.image_url}?t=${Date.now()}`;
         setImgUrl(fullUrl);
       } else {
-        setError("No image URL returned");
+        setError("No s'ha retornat cap URL d'imatge");
       }
     })
     .catch(err => {
-      setError("Error fetching heatmap");
+      setError("Error en obtenir el mapa de calor");
       console.error(err);
     });
   }, [playerId, season]);
 
   return (
     <div>
-      <h3>Position Heatmap</h3>
+      {/* <h3>Position Heatmap</h3> */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imgUrl ? (
         <img
@@ -40,7 +40,7 @@ export default function PositionHeatmap({ playerId, season }) {
           style={{ maxWidth: "100%", border: "1px solid #ccc" }}
         />
       ) : (
-        !error && <p>Loading heatmap...</p>
+        !error && <p>S'està carregant el mapa de calor...</p>
       )}
     </div>
   );
