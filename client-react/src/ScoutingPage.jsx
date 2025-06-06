@@ -246,8 +246,9 @@ function ScoutingPage() {
     }
     setIsBuildingCustomModel(true);
     setCustomModelBuildStatus(null);
+    const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
     axios.post("http://localhost:5000/api/custom_model/build", {
-      position_group: selectedPositionGroupForCustom,
+      position_group: backendPositionGroup,
       impact_kpis: selectedImpactKpisForCustom,
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
@@ -385,6 +386,13 @@ function ScoutingPage() {
     ...kpiOptionLabelStyle,
     background: "#fee2e2", 
     border: '1px solid #dc2626' 
+  };
+
+  const mapPositionGroupToBackend = (uiValue) => {
+    if (uiValue === "Migcampista") return "Midfielder";
+    if (uiValue === "Defensor") return "Defender";
+    if (uiValue === "Atacant") return "Attacker";
+    return uiValue;
   };
 
   return (
