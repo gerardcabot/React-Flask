@@ -148,7 +148,3 @@ pip install --timeout=100 -r requirements.txt
 ```bash
 py -3.11 -m venv venv
 ```
-
-```
-
-Aquest text està llest per ser copiat i enganxat directament al teu `README.md` a GitHub. Inclou el format Markdown correcte amb encapçalaments, llistes, blocs de codi i enllaços. Si necessites algun ajust o vols afegir més detalls, fes-m'ho saber!
