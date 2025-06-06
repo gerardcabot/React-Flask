@@ -1,85 +1,157 @@
-### Estrelles del Futur
+Aquí tens el text preparat per copiar i enganxar directament a un README.md, amb el format Markdown correcte i sense les marques IGNORE_WHEN_COPYING. He mantingut l'estructura i el contingut exactes, assegurant-me que sigui clar i compatible amb GitHub.
 
+```markdown
+# Estrelles del Futur
 Eina d'anàlisi i scouting de futbolistes amb models de potencial personalitzables.
 
-## Guia d'Instal·lació
+## Guia d'Instal·lació i Configuració (Des de Zero)
+Aquesta guia està dissenyada per configurar el projecte en un ordinador Windows nou, anticipant els problemes més comuns.
 
-Per executar l'aplicació localment, segueix aquestes passes des del teu terminal.
+### Requisits Previs: Eines de Desenvolupament
+Si el teu ordinador no té les eines de desenvolupament, instal·la-les en aquest ordre:
 
-### 1. Preparar el Projecte
+#### Instal·la Git:
+- Ves a [git-scm.com/download/win](https://git-scm.com/download/win) i descarrega l'instal·lador.
+- Durant la instal·lació, accepta les opcions per defecte. Assegura't que l'opció "Git from the command line and also from 3rd-party software" estigui seleccionada per poder usar git al terminal.
+- **Important**: Després d'instal·lar, tanca i obre de nou el terminal.
 
-Clona el repositori i navega a la carpeta del projecte:
+#### Instal·la Node.js:
+- Ves a [nodejs.org](https://nodejs.org) i descarrega la versió LTS (Long-Term Support).
+- Durant la instal·lació, pots marcar la casella "Automatically install the necessary tools...". Això obrirà un terminal addicional per instal·lar eines de compilació de Microsoft (pot trigar una bona estona, sigues pacient).
+- **Important**: Després d'instal·lar, tanca i obre de nou el terminal.
+
+#### Instal·la Python (Versió Recomanada):
+- Per assegurar la compatibilitat amb les llibreries del projecte, es recomana instal·lar **Python 3.11**.
+- Ves a [python.org/downloads/windows](https://www.python.org/downloads/windows) i busca un instal·lador per a la versió 3.11 (p. ex., Python 3.11.8).
+- **Molt Important**: A la primera pantalla de l'instal·lador, marca la casella "Add python.exe to PATH".
+
+### Pas 1: Preparar el Projecte
+Clona el repositori a la teva carpeta d'usuari, que és el lloc ideal per als teus projectes.
 
 ```bash
+# Navega a la teva carpeta desitjada
+cd ~/projectes
+
+# Clona el repositori
 git clone https://github.com/gerardcabot/React-Flask.git
+
+# Entra a la carpeta del projecte
 cd React-Flask
 ```
 
-### 2. Descarregar i Col·locar les Dades
-
+### Pas 2: Descarregar i Col·locar les Dades
 Les dades del projecte són massa grans per a GitHub i s'han de descarregar manualment.
-
-1. Descarrega les dades des de l'enllaç següent:  
-   [Enllaç de descàrrega](https://mega.nz/file/GU8lQJZL#sXN4YrdTBABAtt_p27fLBWcg6Kc7B4SalQU75gGbUEg)
-2. Descomprimeix el fitxer `data.zip` que has descarregat.
-3. Mou la carpeta `data` resultant a l'arrel del projecte (`React-Flask`). L'estructura de carpetes ha de ser:
+- Descarrega les dades des de l'enllaç següent: [Enllaç de descàrrega](#)
+- Descomprimeix el fitxer `data.zip` que has descarregat.
+- Mou la carpeta `data` resultant a l'arrel del projecte (`React-Flask`). L'estructura de carpetes ha de ser:
 
 ```
 React-Flask/
 ├── data/
 ├── client-react/
-├── ml_models/
 ├── server-flask/
 └── ...
 ```
 
-### 3. Instal·lar les Dependències
+### Pas 3: Instal·lar les Dependències
+Aquest projecte té dues parts (backend i frontend) i cadascuna té les seves pròpies dependències.
 
-Instal·la les dependències tant per al backend com per al frontend:
+#### A. Backend (Flask / Python)
+Navega a la carpeta del servidor:
 
 ```bash
-# Instal·lar dependències del frontend (React)
-npm install
-
-# Crear i activar un entorn virtual per a Python
-python -m venv venv
-source venv/bin/activate  # A Windows: venv\Scripts\activate
-
-# Instal·lar dependències del backend (Flask)
-pip install -r requirements.txt
+cd server-flask
 ```
 
-### 4. Executar l'Aplicació
-
-Necessitaràs dos terminals oberts a la carpeta arrel del projecte (`React-Flask`).
-
-**Terminal 1: Executar el Backend (Flask)**
+Crea i activa un entorn virtual amb Python 3.11:
 
 ```bash
-# Navega a la carpeta del servidor i inicia'l
-cd server-flask
+# Crea l'entorn virtual especificant la versió correcta
+py -3.11 -m venv venv
 
-# Activa l'entorn virtual
-venv/bin/activate  # a macOS
+# Activa l'entorn (el teu terminal mostrarà "(venv)" al principi)
+.\venv\Scripts\activate
+```
 
-venv\Scripts\activate #a Windows
+Instal·la les dependències de Python:
+Aquesta comanda inclou una solució per a xarxes corporatives (firewalls). Si no ets en una, també funcionarà.
 
-#Executa'l
+```bash
+pip install -r requirements.txt --trusted-host pypi.org --trusted-host files.pythonhosted.org
+```
+
+#### B. Frontend (React / Node.js)
+Navega a la carpeta del client des de l'arrel del projecte:
+
+```bash
+# Si ets a 'server-flask', torna a l'arrel primer
+cd ..
+
+# Entra a la carpeta del client
+cd client-react
+```
+
+Instal·la les dependències de Node.js:
+
+```bash
+npm install
+```
+
+### Pas 4: Executar l'Aplicació
+Necessitaràs dos terminals oberts per executar el backend i el frontend simultàniament.
+
+#### Terminal 1: Executar el Backend (Flask)
+
+```bash
+# Ves a la carpeta del servidor
+cd C:\ruta\al\teu\projecte\React-Flask\server-flask
+
+# Activa l'entorn virtual si no ho està
+.\venv\Scripts\activate
+
+# Executa el servidor
 python main.py
 ```
 
-El backend estarà funcionant a [http://localhost:5000](http://localhost:5000).
+El backend estarà funcionant a `http://localhost:5000`.
 
-**Terminal 2: Executar el Frontend (React)**
+#### Terminal 2: Executar el Frontend (React)
 
 ```bash
-# Navega a la carpeta del client i inicia'l
-cd client-react 
+# Ves a la carpeta del client
+cd C:\ruta\al\teu\projecte\React-Flask\client-react
 
 # Inicia el servidor de desenvolupament
 npm run dev
 ```
 
-El frontend estarà disponible a [http://localhost:5173](http://localhost:5173).
+El frontend estarà disponible a `http://localhost:5173`.
 
-Ja ho tens tot a punt! Obre [http://localhost:5173](http://localhost:5173) al teu navegador per utilitzar l'eina.
+Ja ho tens tot a punt! Obre `http://localhost:5173` al teu navegador per utilitzar l'eina.
+
+### Solució de Problemes Comuns (Troubleshooting)
+Si trobes algun error durant la instal·lació, aquí tens les solucions als problemes més habituals:
+
+#### Error: [SSL: CERTIFICATE_VERIFY_FAILED]
+- **Causa**: Estàs en una xarxa corporativa o amb un firewall que intercepta el trànsit segur.
+- **Solució**: Utilitza la comanda `pip install` amb el paràmetre `--trusted-host` com s'indica al pas 3A.
+
+#### Error: ReadTimeoutError durant pip install
+- **Causa**: La teva connexió a internet és lenta i `pip` es rendeix abans de descarregar paquets grans.
+- **Solució**: Afegeix el paràmetre `--timeout` a la comanda:
+
+```bash
+pip install --timeout=100 -r requirements.txt
+```
+
+#### Error: metadata-generation-failed o molts errors de compilació (C++)
+- **Causa**: Estàs utilitzant una versió de Python (p. ex., 3.12 o 3.13) que no és compatible amb les versions de les llibreries del projecte (com `numpy`).
+- **Solució**: Assegura't d'instal·lar la versió recomanada (Python 3.11) i crear l'entorn virtual amb:
+
+```bash
+py -3.11 -m venv venv
+```
+
+```
+
+Aquest text està llest per ser copiat i enganxat directament al teu `README.md` a GitHub. Inclou el format Markdown correcte amb encapçalaments, llistes, blocs de codi i enllaços. Si necessites algun ajust o vols afegir més detalls, fes-m'ho saber!
