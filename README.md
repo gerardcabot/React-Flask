@@ -1,6 +1,3 @@
-Aquí tens el text preparat per copiar i enganxar directament a un README.md, amb el format Markdown correcte i sense les marques IGNORE_WHEN_COPYING. He mantingut l'estructura i el contingut exactes, assegurant-me que sigui clar i compatible amb GitHub.
-
-```markdown
 # Estrelles del Futur
 Eina d'anàlisi i scouting de futbolistes amb models de potencial personalitzables.
 
