@@ -38,7 +38,7 @@ cd React-Flask
 
 ### Pas 2: Descarregar i Col·locar les Dades
 Les dades del projecte són massa grans per a GitHub i s'han de descarregar manualment.
-- Descarrega les dades des de l'enllaç següent: [Enllaç de descàrrega](#)
+- Descarrega les dades des de l'enllaç següent: [Enllaç de descàrrega](https://mega.nz/file/GU8lQJZL#sXN4YrdTBABAtt_p27fLBWcg6Kc7B4SalQU75gGbUEg)
 - Descomprimeix el fitxer `data.zip` que has descarregat.
 - Mou la carpeta `data` resultant a l'arrel del projecte (`React-Flask`). L'estructura de carpetes ha de ser:
 
