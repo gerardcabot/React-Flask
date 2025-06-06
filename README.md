@@ -56,11 +56,15 @@ Necessitaràs dos terminals oberts a la carpeta arrel del projecte (`React-Flask
 **Terminal 1: Executar el Backend (Flask)**
 
 ```bash
-# Activa l'entorn virtual
-source venv/bin/activate  # O venv\Scripts\activate a Windows
-
 # Navega a la carpeta del servidor i inicia'l
 cd server-flask
+
+# Activa l'entorn virtual
+venv/bin/activate  # a macOS
+
+venv\Scripts\activate #a Windows
+
+#Executa'l
 python main.py
 ```
 
@@ -69,6 +73,9 @@ El backend estarà funcionant a [http://localhost:5000](http://localhost:5000).
 **Terminal 2: Executar el Frontend (React)**
 
 ```bash
+# Navega a la carpeta del client i inicia'l
+cd client-react 
+
 # Inicia el servidor de desenvolupament
 npm run dev
 ```
