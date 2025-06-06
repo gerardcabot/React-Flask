@@ -1,9 +1,8 @@
-```markdown
-# Estrelles del Futur
+### Estrelles del Futur
 
 Eina d'anàlisi i scouting de futbolistes amb models de potencial personalitzables.
 
-## 🚀 Guia d'Instal·lació
+## Guia d'Instal·lació
 
 Per executar l'aplicació localment, segueix aquestes passes des del teu terminal.
 
@@ -75,4 +74,3 @@ npm run dev
 El frontend estarà disponible a [http://localhost:5173](http://localhost:5173).
 
 Ja ho tens tot a punt! Obre [http://localhost:5173](http://localhost:5173) al teu navegador per utilitzar l'eina.
-```
