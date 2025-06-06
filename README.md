@@ -84,9 +84,7 @@ Amb el frontend i el backend en marxa, obre el teu navegador a http://localhost:
 
 ## Installation
 
-Install dependencies using:
-
-```
+Install dependencies using: 
 pip install -r requirements.txt
 
-``` -->
+-->
