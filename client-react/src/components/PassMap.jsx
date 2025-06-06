@@ -33,7 +33,6 @@ export default function PassMap({ playerId, season }) {
     setHeatmapUrl(null);
     setHeatmapError(null);
 
-    // Fetch Pass Map data
     axios
       .get("http://localhost:5000/pass_map_plot", {
         params: { player_id: playerId, season }

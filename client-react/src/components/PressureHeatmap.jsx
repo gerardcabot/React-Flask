@@ -30,7 +30,6 @@ export default function PressureHeatmap({ playerId, season }) {
 
   return (
     <div>
-      {/* <h3>Pressure Heatmap</h3> */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imgUrl ? (
         <img

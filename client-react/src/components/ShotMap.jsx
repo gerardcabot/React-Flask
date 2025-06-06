@@ -140,7 +140,6 @@ export default function ShotMap({ playerId, season }) {
 
   return (
     <div style={{ position: "relative" }}>
-      {/* <h3>Shot Map</h3> */}
       {error && <p style={{ color: "red" }}>{error}</p>}
       <Stage width={canvasWidth} height={canvasHeight}>
         <Layer>

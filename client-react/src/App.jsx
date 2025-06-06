@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
-import "./App.css"; // Keep your global styles
-import VisualizationPage from "./VisualizationPage"; // Import the page component
-import ScoutingPage from "./ScoutingPage"; // Import the scouting page component
+import "./App.css"; 
+import VisualizationPage from "./VisualizationPage"; 
+import ScoutingPage from "./ScoutingPage"; 
 import React from "react";
 
 function HeaderBrand() {
@@ -46,7 +46,7 @@ function App() {
           fontWeight: 900,
           fontSize: "2.7rem",
           letterSpacing: "0.08em",
-          boxShadow: "none", // Elimina l'ombra per evitar el canvi de color
+          boxShadow: "none",
           marginBottom: "0.5rem",
           borderBottomLeftRadius: "18px",
           borderBottomRightRadius: "18px",
@@ -56,7 +56,6 @@ function App() {
           textShadow: "0 2px 8px rgba(0,0,0,0.03)"
         }}
       >
-        {/* Utilitza el component HeaderBrand per canviar el color segons la ruta */}
         <HeaderBrand />
       </header>
       <nav style={{
@@ -78,8 +77,8 @@ function App() {
             to="/visualization" 
             style={{ 
               fontWeight: 600, 
-              color: isVisualization ? "#fff" : "#adb5bd", // actiu blanc, inactiu gris
-              background: isVisualization ? "#1d4ed8" : "transparent", // actiu blau
+              color: isVisualization ? "#fff" : "#adb5bd", 
+              background: isVisualization ? "#1d4ed8" : "transparent",
               textDecoration: "none", 
               fontSize: "1.1rem",
               padding: "8px 12px",
@@ -93,8 +92,8 @@ function App() {
             to="/scouting" 
             style={{ 
               fontWeight: 600, 
-              color: isScouting ? "#fff" : "#adb5bd", // actiu blanc, inactiu gris
-              background: isScouting ? "#dc2626" : "transparent", // actiu vermell
+              color: isScouting ? "#fff" : "#adb5bd", 
+              background: isScouting ? "#dc2626" : "transparent", 
               textDecoration: "none", 
               fontSize: "1.1rem",
               padding: "8px 12px",
@@ -111,7 +110,6 @@ function App() {
           <Route path="/" element={<Navigate to="/visualization" replace />} />
           <Route path="/visualization" element={<VisualizationPage />} />
           <Route path="/scouting" element={<ScoutingPage />} />
-          {/* Add other top-level routes here if needed */}
         </Routes>
       </div>
     </>

@@ -30,13 +30,13 @@ const InfoTooltip = ({ text }) => {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid #dc2626', // vermell
+        border: '1px solid #dc2626', 
         borderRadius: '50%',
         width: '18px',
         height: '18px',
         textAlign: 'center',
         fontSize: '11px',
-        color: '#dc2626', // vermell
+        color: '#dc2626', 
         fontWeight: 'bold',
         userSelect: 'none',
         transition: 'background-color 0.2s, color 0.2s'
@@ -56,24 +56,24 @@ const InfoTooltip = ({ text }) => {
           id="tooltip-content"
           style={{
             position: 'absolute',
-            bottom: '125%', // Slightly adjusted to reduce chance of clipping
+            bottom: '125%', 
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '7px',
-            background: 'rgba(220,38,38,0.95)', // vermell fosc
+            background: 'rgba(220,38,38,0.95)', 
             color: 'white',
             padding: '12px',
             borderRadius: '6px',
             zIndex: 1000,
-            maxWidth: '300px', // Changed to max-width to allow shrinking on smaller screens
-            minWidth: '200px', // Ensures readability for shorter texts
+            maxWidth: '300px', 
+            minWidth: '200px', 
             fontSize: '0.9em',
             textAlign: 'left',
             boxShadow: '0 4px 10px rgba(0,0,0,0.35)',
             pointerEvents: 'none',
-            whiteSpace: 'normal', // Ensure text wraps
-            overflowWrap: 'break-word', // Break long words if necessary
-            lineHeight: '1.4' // Improve readability
+            whiteSpace: 'normal', 
+            overflowWrap: 'break-word', 
+            lineHeight: '1.4' 
           }}
         >
           {text}

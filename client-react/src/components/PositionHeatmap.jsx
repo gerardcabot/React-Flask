@@ -30,11 +30,10 @@ export default function PositionHeatmap({ playerId, season }) {
 
   return (
     <div>
-      {/* <h3>Position Heatmap</h3> */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imgUrl ? (
         <img
-          key={imgUrl} // ✅ prevent React from reusing old <img>
+          key={imgUrl} 
           src={imgUrl}
           alt="Position Heatmap"
           style={{ maxWidth: "100%", border: "1px solid #ccc" }}
