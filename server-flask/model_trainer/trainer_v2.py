@@ -1,4 +1,3 @@
-# server-flask/model_trainer/trainer.py
 import json
 import pandas as pd
 from datetime import datetime
@@ -19,7 +18,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.feature_
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# --- Configuration (relative to this trainer.py file if run directly, or passed if called) ---
+# --- Configuration  ---
 _TRAINER_SCRIPT_DIR = os.path.dirname(__file__)
 _PROJECT_ROOT = os.path.abspath(os.path.join(_TRAINER_SCRIPT_DIR, '..', '..')) 
 _DATA_DIR_FOR_TRAINER = os.path.join(_PROJECT_ROOT, 'data')
@@ -31,7 +30,7 @@ PLAYER_MINUTES_PATH = os.path.join(_DATA_DIR_FOR_TRAINER, 'player_season_minutes
 
 MIN_90S_PLAYED_FOR_P90_STATS = 3
 
-# --- KPI Definitions and Helper Functions (no changes here, kept for context) ---
+# --- KPI Definitions and Helper Functions  ---
 def generate_kpi_variants(base_name, include_sum=True, include_p90=True, include_p90_sqrt=False):
     variants = []
     if include_sum: variants.append(base_name)
@@ -121,7 +120,7 @@ def parse_location(loc_str):
         return tuple(map(float, literal_eval(loc_str.strip('[]()'))))
     except: return None
 
-# --- Feature Extraction Functions (no changes here, kept for context) ---
+# --- Feature Extraction Functions ---
 def get_feature_names_for_extraction():
     kpi_direct_names = [
         'conversion_rate_excl_xg_kpi', 'xg_performance', 'pass_completion_rate_kpi',
@@ -216,30 +215,23 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
         'ball_recoveries': 'Ball Recovery', 'miscontrols': 'Miscontrol', 
         'dispossessed_events': 'Dispossessed', 'pressures': 'Pressure', 
         'carries_total': 'Carry', 'blocks_total': 'Block', 
-        'fifty_fifties_total': '50/50', # Note: 50/50 might also be a duel_type
-        'shields_total': 'Shield', 'errors_leading_to_shot_or_goal': 'Error', # Error needs specific check for outcome
+        'fifty_fifties_total': '50/50', 
+        'shields_total': 'Shield', 'errors_leading_to_shot_or_goal': 'Error', 
         'bad_behaviours_total': 'Bad Behaviour'
     }
     for canonical_name, event_type_str in event_name_map.items():
         if canonical_name in s.index:
-            if canonical_name == 'errors_leading_to_shot_or_goal': # Specific logic for 'Error'
+            if canonical_name == 'errors_leading_to_shot_or_goal': 
                  error_df = event_df[event_df['type'] == 'Error'] if 'type' in event_df.columns else pd.DataFrame()
-                 # Assuming 'error_leads_to_shot' or similar boolean flag exists
                  s[canonical_name] = float(error_df.get('leads_to_shot', pd.Series(dtype=bool)).fillna(False).astype(bool).sum())
             elif canonical_name == 'fifty_fifties_total':
-                # Count from '50/50' event type OR 'Duel' type '50/50'
                 count_from_type = float(type_counts.get('50/50', 0))
                 
                 count_from_duel_type = 0
-                if 'Duel' in type_counts and 'duel_type_name' in event_df.columns: # duel_type_name from data loading
+                if 'Duel' in type_counts and 'duel_type_name' in event_df.columns: #
                     duel_df_temp = event_df[event_df['type'] == 'Duel']
                     count_from_duel_type = float((duel_df_temp['duel_type_name'].astype(str) == '50/50').sum())
-                
-                # Avoid double counting if '50/50' is a primary type AND a duel_type
-                # This assumes if a "50/50" event type exists, it's distinct from a "Duel" event with type "50/50"
-                # If they are not distinct, one of these counts should be preferred or logic adjusted.
-                # For now, let's assume they could be additive if data is structured that way, or one is primary.
-                # A safer bet might be to prioritize the specific '50/50' event type if it exists.
+
                 s[canonical_name] = count_from_type if count_from_type > 0 else count_from_duel_type
 
             else:
@@ -254,20 +246,16 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
     # Shots
     shots_df = event_df[event_df['type'] == 'Shot'].copy() if 'type' in event_df.columns else pd.DataFrame()
     if not shots_df.empty:
-        # Ensure outcome and type columns are parsed (should be done in data loading)
         shot_outcome_series = shots_df.get('shot_outcome_name', pd.Series(dtype=str)) 
         shot_type_series = shots_df.get('shot_type_name', pd.Series(dtype=str))
         shots_df = event_df[event_df['type'] == 'Shot'].copy() if 'type' in event_df.columns else pd.DataFrame()
         if not shots_df.empty:
-            # StatsBomb spec: shot_outcome is a dict with a 'name' field
             shot_outcome_series = shots_df.get('shot_outcome_name', pd.Series(dtype=str))
             if shot_outcome_series.empty and 'shot_outcome' in shots_df.columns:
-                # Try to extract name from dict
                 shot_outcome_series = shots_df['shot_outcome'].apply(lambda x: x.get('name') if isinstance(x, dict) else x)
             if 'goals' in s.index:
                 s['goals'] = float((shot_outcome_series == 'Goal').sum())
         
-        # if 'goals' in s.index: s['goals'] = float((shot_outcome_series == 'Goal').sum())
         if 'shots_on_target' in s.index: s['shots_on_target'] = float(shot_outcome_series.isin(['Saved', 'Goal', 'Post', 'Saved To Post', 'Saved Off Target']).sum())
         if 'sum_xg' in s.index: s['sum_xg'] = pd.to_numeric(shots_df.get('shot_statsbomb_xg', shots_df.get('statsbomb_xg')), errors='coerce').sum() # Check both common XG col names
         if 'shots_first_time' in s.index: s['shots_first_time'] = (shots_df.get('shot_first_time', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
@@ -320,7 +308,6 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
 
     # Dribbles
     dribble_df = event_df[event_df['type'] == 'Dribble'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    # dribbles_attempted ja s'hauria d'haver comptat a canonical_event_counts
     if not dribble_df.empty:
         dribble_outcome_series = dribble_df.get('dribble_outcome_name', pd.Series(dtype=str))
         if 'dribbles_completed' in s.index: s['dribbles_completed'] = float((dribble_outcome_series == 'Complete').sum())
@@ -354,55 +341,54 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
     
     # 50/50 Events (si és un tipus d'esdeveniment separat)
     fifty_fifty_df = event_df[event_df['type'] == '50/50'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not fifty_fifty_df.empty: # fifty_fifties_total ja s'hauria comptat
+    if not fifty_fifty_df.empty:
         fifty_outcome_series = fifty_fifty_df.get('outcome_name', fifty_fifty_df.get('outcome', pd.Series(dtype=str))) # outcome_name si ja parsejat
         if 'fifty_fifties_won' in s.index: s['fifty_fifties_won'] = float(fifty_outcome_series.isin(['Won', 'Success To Team']).sum())
         if 'fifty_fifties_lost' in s.index: s['fifty_fifties_lost'] = float(fifty_outcome_series.isin(['Lost', 'Success To Opposition']).sum())
 
     # Ball Recovery
     ball_recovery_df = event_df[event_df['type'] == 'Ball Recovery'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not ball_recovery_df.empty: # ball_recoveries ja comptat
+    if not ball_recovery_df.empty: 
         if 'ball_recoveries_offensive' in s.index: s['ball_recoveries_offensive'] = float((ball_recovery_df.get('offensive', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
         if 'ball_recoveries_failed' in s.index: s['ball_recoveries_failed'] = float((ball_recovery_df.get('recovery_failure', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
 
     # Blocks
     block_df = event_df[event_df['type'] == 'Block'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not block_df.empty: # blocks_total ja comptat
+    if not block_df.empty:
         if 'blocks_deflection' in s.index: s['blocks_deflection'] = float((block_df.get('deflection', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
         if 'blocks_offensive' in s.index: s['blocks_offensive'] = float((block_df.get('offensive', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
         if 'blocks_save_attempt' in s.index: s['blocks_save_attempt'] = float((block_df.get('save_block', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
 
     # Clearances
     clearance_df = event_df[event_df['type'] == 'Clearance'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not clearance_df.empty: # clearances ja comptat
+    if not clearance_df.empty:
         if 'clearances_aerial_won' in s.index: s['clearances_aerial_won'] = float((clearance_df.get('aerial_won', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
 
     # Fouls
     foul_committed_df = event_df[event_df['type'] == 'Foul Committed'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not foul_committed_df.empty: # fouls_committed ja comptat
+    if not foul_committed_df.empty: 
         if 'fouls_committed_penalty' in s.index: s['fouls_committed_penalty'] = float((foul_committed_df.get('penalty', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
     
     foul_won_df = event_df[event_df['type'] == 'Foul Won'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not foul_won_df.empty: # fouls_won ja comptat
+    if not foul_won_df.empty: 
         if 'fouls_won_penalty' in s.index: s['fouls_won_penalty'] = float((foul_won_df.get('penalty', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
 
     # Cards (from Bad Behaviour)
     bad_behaviour_df = event_df[event_df['type'] == 'Bad Behaviour'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not bad_behaviour_df.empty: # bad_behaviours_total ja comptat
-        card_series = bad_behaviour_df.get('bad_behaviour_card_name', pd.Series(dtype=str)) # assumint que es parseja a la càrrega
+    if not bad_behaviour_df.empty:
+        card_series = bad_behaviour_df.get('bad_behaviour_card_name', pd.Series(dtype=str))
         if 'yellow_cards' in s.index: s['yellow_cards'] = float((card_series == 'Yellow Card').sum())
         if 'red_cards' in s.index: s['red_cards'] = float((card_series.isin(['Red Card', 'Second Yellow'])).sum())
 
     # Interceptions
     interception_df = event_df[event_df['type'] == 'Interception'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not interception_df.empty: # interceptions ja comptat
-        interception_outcome_series = interception_df.get('interception_outcome_name', pd.Series(dtype=str)) # assumint parsejat
+    if not interception_df.empty:
+        interception_outcome_series = interception_df.get('interception_outcome_name', pd.Series(dtype=str)) 
         if 'interceptions_successful_gain_possession' in s.index: s['interceptions_successful_gain_possession'] = float(interception_outcome_series.isin(['Success', 'Success In Play', 'Won']).sum())
         if 'interceptions_failed_gain_possession' in s.index: s['interceptions_failed_gain_possession'] = float(interception_outcome_series.isin(['Lost', 'Lost In Play', 'Lost Out']).sum())
     
     # Carries (duration)
     carry_df = event_df[event_df['type'] == 'Carry'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    # carries_total ja comptat
     if not carry_df.empty and 'duration' in carry_df.columns:
         valid_durations = pd.to_numeric(carry_df['duration'], errors='coerce').dropna()
         if 'sum_carry_duration' in s.index: s['sum_carry_duration'] = float(valid_durations.sum())
@@ -410,7 +396,7 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
     
     # Miscontrol (aerial_won)
     miscontrol_df = event_df[event_df['type'] == 'Miscontrol'].copy() if 'type' in event_df.columns else pd.DataFrame()
-    if not miscontrol_df.empty: # miscontrols ja comptat
+    if not miscontrol_df.empty:
          if 'count_miscontrol_aerial_won' in s.index: 
              s['count_miscontrol_aerial_won'] = float((miscontrol_df.get('aerial_won', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
     
@@ -422,12 +408,10 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
         s['turnovers_total'] = s.get('miscontrols', 0.0) + s.get('dispossessed_events', 0.0) + \
                                (s.get('dribbles_attempted', 0.0) - s.get('dribbles_completed', 0.0))
     if 'turnovers_p90_inv_kpi_base' in s.index:
-        # Ja es calcula com a KPI directe
         s['turnovers_p90_inv_kpi_base'] = safe_division(s.get('turnovers_total',0.0), num_90s_played) if use_p90 else (999.0 if s.get('turnovers_total',0.0) == 0 else s.get('turnovers_total',0.0))
 
 
     # --- P90 Calculations ---
-    # metrics_for_p90_conversion hauria de ser la llista de all_base_sum_or_count_metrics
     metrics_for_p90_conversion_from_func = [
         m for m in get_feature_names_for_extraction() 
         if not m.endswith(('_p90', '_kpi', '_sqrt_', '_base')) and 
@@ -435,213 +419,29 @@ def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s
     ]
     
     for col_raw in metrics_for_p90_conversion_from_func:
-        if f'{col_raw}_p90' in s.index: # Comprova si la versió P90 és una característica esperada
+        if f'{col_raw}_p90' in s.index:
             s[f'{col_raw}_p90'] = safe_division(s.get(col_raw, 0.0), num_90s_played) if use_p90 else 0.0
-    
-    # Àlies P90 (assegurar que els noms base _p90 existeixen)
-    # Aquests s'han d'assignar DESPRÉS que els _p90 base s'hagin calculat
-    # Actualment, els àlies es defineixen per a KPI_DEFINITIONS, no directament aquí.
-    # Si 'progressive_carries_p90' és un àlies de 'carries_total_p90'
     if 'progressive_carries_p90' in s.index and 'carries_total_p90' in s.index :
         s['progressive_carries_p90'] = s['carries_total_p90']
-    if 'interceptions_p90' in s.index and 'interceptions_p90' in s.index: # ja és canònic
+    if 'interceptions_p90' in s.index and 'interceptions_p90' in s.index:
         pass # ja calculat
-    if 'clearances_p90' in s.index and 'clearances_p90' in s.index: # ja és canònic
+    if 'clearances_p90' in s.index and 'clearances_p90' in s.index: 
         pass
     if 'blocks_p90' in s.index and 'blocks_total_p90' in s.index:
         s['blocks_p90'] = s['blocks_total_p90']
-    if 'pressures_p90' in s.index and 'pressures_p90' in s.index: # ja és canònic
+    if 'pressures_p90' in s.index and 'pressures_p90' in s.index: 
         pass
 
     # SQRT P90
     sqrt_transformed_kpis_base_p90 = ["goals_p90", "sum_xg_p90", "goal_assists_p90"]
     for kpi_base_p90_name in sqrt_transformed_kpis_base_p90:
-        if f"{kpi_base_p90_name}_sqrt_" in s.index: # Comprova si la versió sqrt és esperada
-            val = s.get(kpi_base_p90_name, 0.0) # Pren el valor P90 ja calculat
+        if f"{kpi_base_p90_name}_sqrt_" in s.index: 
+            val = s.get(kpi_base_p90_name, 0.0) 
             s[f"{kpi_base_p90_name}_sqrt_"] = np.sqrt(val) if pd.notna(val) and val > 0 else 0.0
         
     return s.reindex(all_expected_features).fillna(0.0)
 
-
-
-
-# def extract_season_features(event_df, age_in_season, season_str_numeric, num_90s_played):
-#     s = pd.Series(dtype='float64')
-#     s['age'] = float(age_in_season) if age_in_season is not None else 0.0
-#     s['season_numeric'] = float(season_str_numeric) if season_str_numeric is not None else 0.0
-#     s['num_90s_played'] = float(num_90s_played) if pd.notna(num_90s_played) else 0.0
-#     s['matches_played_events'] = float(event_df['match_id'].nunique()) if 'match_id' in event_df.columns and not event_df.empty else 0.0
-#     use_p90 = s['num_90s_played'] >= MIN_90S_PLAYED_FOR_P90_STATS
-#     all_expected_features = get_feature_names_for_extraction()
-#     for fname in all_expected_features:
-#         if fname not in ['age', 'season_numeric', 'num_90s_played', 'matches_played_events']:
-#              s[fname] = 0.0
-#     if event_df.empty or len(event_df) == 0:
-#         if 'turnovers_p90_inv_kpi_base' in s.index: s['turnovers_p90_inv_kpi_base'] = 999.0
-#         sqrt_kpis_to_init = [k for k in all_expected_features if k.endswith("_sqrt_")]
-#         for skpi in sqrt_kpis_to_init: s[skpi] = 0.0
-#         return s.reindex(all_expected_features).fillna(0.0)
-#     type_counts = event_df['type'].value_counts() if 'type' in event_df.columns else pd.Series(dtype='int64')
-#     event_name_map = {
-#         'passes_total': 'Pass', 'shots_total': 'Shot', 'dribbles_attempted': 'Dribble', 
-#         'duels_total': 'Duel', 'interceptions': 'Interception', 'clearances': 'Clearance',
-#         'fouls_committed': 'Foul Committed', 'fouls_won': 'Foul Won', 
-#         'ball_recoveries': 'Ball Recovery', 'miscontrols': 'Miscontrol', 
-#         'dispossessed_events': 'Dispossessed', 'pressures': 'Pressure', 
-#         'carries_total': 'Carry', 'blocks_total': 'Block', 'fifty_fifties_total': '50/50',
-#         'shields_total': 'Shield', 'errors_leading_to_shot_or_goal': 'Error',
-#         'bad_behaviours_total': 'Bad Behaviour'
-#     }
-#     for canonical_name, event_type_str in event_name_map.items():
-#         if canonical_name in s.index:
-#             if canonical_name == 'errors_leading_to_shot_or_goal':
-#                  error_df = event_df[event_df['type'] == 'Error'] if 'type' in event_df.columns else pd.DataFrame()
-#                  s[canonical_name] = float(error_df.get('leads_to_shot', pd.Series(dtype=bool)).fillna(False).astype(bool).sum())
-#             elif canonical_name == 'fifty_fifties_total':
-#                 count_from_type = float(type_counts.get('50/50', 0))
-#                 count_from_duel_type = 0
-#                 if 'Duel' in type_counts and 'duel_type_name' in event_df.columns:
-#                     duel_df_temp = event_df[event_df['type'] == 'Duel']
-#                     count_from_duel_type = float((duel_df_temp['duel_type_name'].astype(str) == '50/50').sum())
-#                 s[canonical_name] = count_from_type if count_from_type > 0 else count_from_duel_type
-#             else: s[canonical_name] = float(type_counts.get(event_type_str, 0))
-#     if 'player_caused_ball_out' in s.index and 'out' in event_df.columns:
-#         s['player_caused_ball_out'] = float(event_df['out'].fillna(False).astype(bool).sum())
-#     shots_df = event_df[event_df['type'] == 'Shot'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not shots_df.empty:
-#         shot_outcome_series = shots_df.get('shot_outcome_name', pd.Series(dtype=str)) 
-#         shot_type_series = shots_df.get('shot_type_name', pd.Series(dtype=str))
-#         if 'goals' in s.index: s['goals'] = float((shot_outcome_series == 'Goal').sum())
-#         if 'shots_on_target' in s.index: s['shots_on_target'] = float(shot_outcome_series.isin(['Saved', 'Goal', 'Post', 'Saved To Post', 'Saved Off Target']).sum())
-#         if 'sum_xg' in s.index: s['sum_xg'] = pd.to_numeric(shots_df.get('shot_statsbomb_xg', shots_df.get('statsbomb_xg')), errors='coerce').sum()
-#         if 'shots_first_time' in s.index: s['shots_first_time'] = (shots_df.get('shot_first_time', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
-#         if 'shots_open_goal' in s.index: s['shots_open_goal'] = (shots_df.get('shot_open_goal', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
-#         if 'shots_deflected' in s.index: s['shots_deflected'] = ((shots_df.get('deflected', pd.Series(dtype=bool)).fillna(False).astype(bool)) | (shot_outcome_series == 'Deflected')).sum()
-#         if 'shots_aerial_won' in s.index: s['shots_aerial_won'] = (shots_df.get('shot_aerial_won', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
-#         if 'shots_blocked_by_opponent' in s.index: s['shots_blocked_by_opponent'] = float((shot_outcome_series == 'Blocked').sum())
-#         if 'shots_hit_post' in s.index: s['shots_hit_post'] = float((shot_outcome_series == 'Post').sum())
-#         if 'shots_off_target' in s.index: s['shots_off_target'] = float((shot_outcome_series.isin(['Off T', 'Wayward'])).sum())
-#         if 'shots_penalty' in s.index: s['shots_penalty'] = float((shot_type_series == 'Penalty').sum())
-#         if 'shots_freekick' in s.index: s['shots_freekick'] = float((shot_type_series == 'Free Kick').sum())
-#     if 'conversion_rate_excl_xg_kpi' in s.index: s['conversion_rate_excl_xg_kpi'] = safe_division(s.get('goals',0.0), s.get('shots_total',0.0)) * 100
-#     if 'xg_performance' in s.index: s['xg_performance'] = s.get('goals',0.0) - s.get('sum_xg',0.0)
-#     pass_df = event_df[event_df['type'] == 'Pass'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not pass_df.empty:
-#         pass_outcome_series = pass_df.get('pass_outcome_name', pd.Series(dtype=str))
-#         pass_height_series = pass_df.get('pass_height_name', pd.Series(dtype=str))
-#         if 'successful_passes' in s.index:
-#             if not pass_outcome_series.empty:
-#                 successful_mask = pass_outcome_series.isna() | (pass_outcome_series == 'nan') | (pass_outcome_series == '')
-#                 s['successful_passes'] = float(successful_mask.sum())
-#             else: s['successful_passes'] = 0.0
-#         if 'avg_pass_length' in s.index: s['avg_pass_length'] = pd.to_numeric(pass_df.get('pass_length'), errors='coerce').mean()
-#         if 'goal_assists' in s.index: s['goal_assists'] = float((pass_df.get('pass_goal_assist', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'shot_assists' in s.index: s['shot_assists'] = float((pass_df.get('pass_shot_assist', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'crosses_total' in s.index: s['crosses_total'] = float((pass_df.get('pass_cross', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'switches_total' in s.index: s['switches_total'] = float((pass_df.get('pass_switch', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'through_balls_total' in s.index: s['through_balls_total'] = float((pass_df.get('pass_through_ball', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'passes_ground' in s.index: s['passes_ground'] = float((pass_height_series == 'Ground Pass').sum())
-#         if 'passes_low' in s.index: s['passes_low'] = float((pass_height_series == 'Low Pass').sum())
-#         if 'passes_high' in s.index: s['passes_high'] = float((pass_height_series == 'High Pass').sum())
-#         if 'passes_outcome_incomplete' in s.index: s['passes_outcome_incomplete'] = float((pass_outcome_series == 'Incomplete').sum())
-#         if 'passes_outcome_out' in s.index: s['passes_outcome_out'] = float((pass_outcome_series == 'Out').sum())
-#         if 'passes_outcome_offside' in s.index: s['passes_outcome_offside'] = float((pass_outcome_series == 'Pass Offside').sum())
-#         if 'passes_outcome_injury_clearance' in s.index: s['passes_outcome_injury_clearance'] = float((pass_outcome_series == 'Injury Clearance').sum())
-#         if 'passes_backheel' in s.index: s['passes_backheel'] = float((pass_df.get('pass_backheel', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'passes_deflected_by_opponent' in s.index: s['passes_deflected_by_opponent'] = float((pass_df.get('deflected', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'passes_miscommunication' in s.index: s['passes_miscommunication'] = float((pass_df.get('miscommunication', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     if 'pass_completion_rate_kpi' in s.index: s['pass_completion_rate_kpi'] = safe_division(s.get('successful_passes',0.0), s.get('passes_total',0.0)) * 100
-#     if 'avg_pass_length_kpi' in s.index: s['avg_pass_length_kpi'] = s.get('avg_pass_length', 0.0) if pd.notna(s.get('avg_pass_length')) else 0.0
-#     dribble_df = event_df[event_df['type'] == 'Dribble'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not dribble_df.empty:
-#         dribble_outcome_series = dribble_df.get('dribble_outcome_name', pd.Series(dtype=str))
-#         if 'dribbles_completed' in s.index: s['dribbles_completed'] = float((dribble_outcome_series == 'Complete').sum())
-#         if 'dribbles_nutmeg' in s.index: s['dribbles_nutmeg'] = float((dribble_df.get('nutmeg', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'dribbles_overrun' in s.index: s['dribbles_overrun'] = float((dribble_df.get('overrun', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'dribbles_no_touch' in s.index: s['dribbles_no_touch'] = float((dribble_df.get('no_touch', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     if 'dribble_success_rate_kpi' in s.index: s['dribble_success_rate_kpi'] = safe_division(s.get('dribbles_completed', 0.0), s.get('dribbles_attempted',0.0)) * 100
-#     duel_df = event_df[event_df['type'] == 'Duel'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not duel_df.empty:
-#         duel_type_series = duel_df.get('duel_type_name', pd.Series(dtype=str))
-#         duel_outcome_series = duel_df.get('duel_outcome_name', pd.Series(dtype=str))
-#         if 'duels_tackle_type' in s.index: s['duels_tackle_type'] = float((duel_type_series == 'Tackle').sum())
-#         if 'tackles_attempted' in s.index: s['tackles_attempted'] = s.get('duels_tackle_type', 0.0)
-#         aerial_duels_mask = duel_type_series.str.contains("Aerial", case=False, na=False)
-#         if 'aerial_duels_total' in s.index: s['aerial_duels_total'] = float(aerial_duels_mask.sum())
-#         if 'duels_aerial_lost' in s.index: s['duels_aerial_lost'] = float((duel_type_series == 'Aerial Lost').sum())
-#         if 'tackles_won' in s.index:
-#             s['tackles_won'] = float(((duel_type_series == 'Tackle') & (duel_outcome_series.isin(['Won', 'Success', 'Success In Play', 'Success Out']))).sum())
-#         if 'aerial_duels_won' in s.index:
-#              s['aerial_duels_won'] = float((aerial_duels_mask & duel_outcome_series.isin(['Won', 'Success'])).sum())
-#     if 'tackle_win_rate_kpi' in s.index: s['tackle_win_rate_kpi'] = safe_division(s.get('tackles_won',0.0), s.get('tackles_attempted',0.0)) * 100
-#     if 'aerial_duel_win_rate_kpi' in s.index: s['aerial_duel_win_rate_kpi'] = safe_division(s.get('aerial_duels_won',0.0), s.get('aerial_duels_total',0.0)) * 100
-#     fifty_fifty_df = event_df[event_df['type'] == '50/50'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not fifty_fifty_df.empty:
-#         fifty_outcome_series = fifty_fifty_df.get('outcome_name', fifty_fifty_df.get('outcome', pd.Series(dtype=str)))
-#         if 'fifty_fifties_won' in s.index: s['fifty_fifties_won'] = float(fifty_outcome_series.isin(['Won', 'Success To Team']).sum())
-#         if 'fifty_fifties_lost' in s.index: s['fifty_fifties_lost'] = float(fifty_outcome_series.isin(['Lost', 'Success To Opposition']).sum())
-#     ball_recovery_df = event_df[event_df['type'] == 'Ball Recovery'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not ball_recovery_df.empty:
-#         if 'ball_recoveries_offensive' in s.index: s['ball_recoveries_offensive'] = float((ball_recovery_df.get('offensive', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'ball_recoveries_failed' in s.index: s['ball_recoveries_failed'] = float((ball_recovery_df.get('recovery_failure', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     block_df = event_df[event_df['type'] == 'Block'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not block_df.empty:
-#         if 'blocks_deflection' in s.index: s['blocks_deflection'] = float((block_df.get('deflection', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'blocks_offensive' in s.index: s['blocks_offensive'] = float((block_df.get('offensive', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#         if 'blocks_save_attempt' in s.index: s['blocks_save_attempt'] = float((block_df.get('save_block', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     clearance_df = event_df[event_df['type'] == 'Clearance'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not clearance_df.empty:
-#         if 'clearances_aerial_won' in s.index: s['clearances_aerial_won'] = float((clearance_df.get('aerial_won', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     foul_committed_df = event_df[event_df['type'] == 'Foul Committed'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not foul_committed_df.empty:
-#         if 'fouls_committed_penalty' in s.index: s['fouls_committed_penalty'] = float((foul_committed_df.get('penalty', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     foul_won_df = event_df[event_df['type'] == 'Foul Won'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not foul_won_df.empty:
-#         if 'fouls_won_penalty' in s.index: s['fouls_won_penalty'] = float((foul_won_df.get('penalty', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     bad_behaviour_df = event_df[event_df['type'] == 'Bad Behaviour'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not bad_behaviour_df.empty:
-#         card_series = bad_behaviour_df.get('bad_behaviour_card_name', pd.Series(dtype=str))
-#         if 'yellow_cards' in s.index: s['yellow_cards'] = float((card_series == 'Yellow Card').sum())
-#         if 'red_cards' in s.index: s['red_cards'] = float((card_series.isin(['Red Card', 'Second Yellow'])).sum())
-#     interception_df = event_df[event_df['type'] == 'Interception'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not interception_df.empty:
-#         interception_outcome_series = interception_df.get('interception_outcome_name', pd.Series(dtype=str))
-#         if 'interceptions_successful_gain_possession' in s.index: s['interceptions_successful_gain_possession'] = float(interception_outcome_series.isin(['Success', 'Success In Play', 'Won']).sum())
-#         if 'interceptions_failed_gain_possession' in s.index: s['interceptions_failed_gain_possession'] = float(interception_outcome_series.isin(['Lost', 'Lost In Play', 'Lost Out']).sum())
-#     carry_df = event_df[event_df['type'] == 'Carry'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not carry_df.empty and 'duration' in carry_df.columns:
-#         valid_durations = pd.to_numeric(carry_df['duration'], errors='coerce').dropna()
-#         if 'sum_carry_duration' in s.index: s['sum_carry_duration'] = float(valid_durations.sum())
-#         if 'avg_carry_duration' in s.index: s['avg_carry_duration'] = float(valid_durations.mean()) if not valid_durations.empty else 0.0
-#     miscontrol_df = event_df[event_df['type'] == 'Miscontrol'].copy() if 'type' in event_df.columns else pd.DataFrame()
-#     if not miscontrol_df.empty:
-#          if 'count_miscontrol_aerial_won' in s.index: 
-#              s['count_miscontrol_aerial_won'] = float((miscontrol_df.get('aerial_won', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum())
-#     if 'counterpress_actions' in s.index: s['counterpress_actions'] = (event_df.get('counterpress', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
-#     if 'actions_under_pressure' in s.index: s['actions_under_pressure'] = (event_df.get('under_pressure', pd.Series(dtype=bool)).fillna(False).astype(bool)).sum()
-#     if 'turnovers_total' in s.index:
-#         s['turnovers_total'] = s.get('miscontrols', 0.0) + s.get('dispossessed_events', 0.0) + \
-#                                (s.get('dribbles_attempted', 0.0) - s.get('dribbles_completed', 0.0))
-#     if 'turnovers_p90_inv_kpi_base' in s.index:
-#         s['turnovers_p90_inv_kpi_base'] = safe_division(s.get('turnovers_total',0.0), num_90s_played) if use_p90 else (999.0 if s.get('turnovers_total',0.0) == 0 else s.get('turnovers_total',0.0))
-#     metrics_for_p90_conversion_from_func = [
-#         m for m in get_feature_names_for_extraction() 
-#         if not m.endswith(('_p90', '_kpi', '_sqrt_', '_base')) and 
-#            not m in ['age', 'season_numeric', 'num_90s_played', 'matches_played_events', 'avg_carry_duration']
-#     ]
-#     for col_raw in metrics_for_p90_conversion_from_func:
-#         if f'{col_raw}_p90' in s.index:
-#             s[f'{col_raw}_p90'] = safe_division(s.get(col_raw, 0.0), num_90s_played) if use_p90 else 0.0
-#     if 'progressive_carries_p90' in s.index and 'carries_total_p90' in s.index : s['progressive_carries_p90'] = s['carries_total_p90']
-#     if 'blocks_p90' in s.index and 'blocks_total_p90' in s.index: s['blocks_p90'] = s['blocks_total_p90']
-#     sqrt_transformed_kpis_base_p90 = ["goals_p90", "sum_xg_p90", "goal_assists_p90"]
-#     for kpi_base_p90_name in sqrt_transformed_kpis_base_p90:
-#         if f"{kpi_base_p90_name}_sqrt_" in s.index:
-#             val = s.get(kpi_base_p90_name, 0.0)
-#             s[f"{kpi_base_p90_name}_sqrt_"] = np.sqrt(val) if pd.notna(val) and val > 0 else 0.0
-#     return s.reindex(all_expected_features).fillna(0.0)
-
-# --- Target Generation Functions (no changes here, kept for context) ---
+# --- Target Generation Functions  ---
 def derive_kpi_weights_from_impact_correlation(df_all_features, position_group, impact_kpi_list, kpi_definitions_for_pos):
     pos_df = df_all_features[df_all_features['general_position_identifier'] == position_group].copy()
     if pos_df.empty or len(impact_kpi_list) == 0 or len(kpi_definitions_for_pos) == 0:
@@ -743,7 +543,7 @@ def generate_potential_target(df_all_player_seasons, derived_kpi_weights_config)
                 df.loc[pos_mask, 'potential_target'] = scaled_potential.clip(0, 200).round(2)
     return df[['player_id_identifier', 'target_season_identifier', 'potential_target', 'raw_composite_score']]
 
-# --- Config Saving Function (no changes here, kept for context) ---
+# --- Config Saving Function ---
 def trainer_save_model_run_config(filepath, model_name, feature_cols, model_params, 
                                   user_kpi_definitions_for_weights,
                                   user_composite_impact_kpis,
@@ -785,7 +585,7 @@ def trainer_save_model_run_config(filepath, model_name, feature_cols, model_para
     except TypeError as e: logger_trainer.error(f"TypeError during JSON serialization for {position_group_trained} custom model config: {e}.")
 
 
-# --- Main Training Function (MODIFIED) ---
+# --- Main Training Function  ---
 def build_and_train_model_from_script_logic(
     custom_model_id: str,
     position_group_to_train: str,
@@ -810,9 +610,7 @@ def build_and_train_model_from_script_logic(
     except FileNotFoundError: logger_trainer.warning(f"Trainer Warning: Player minutes file '{PLAYER_MINUTES_PATH}' not found."); minutes_df_dict = {}
     except Exception as e: logger_trainer.error(f"Trainer Error loading minutes file: {e}."); minutes_df_dict = {}
 
-    # MODIFICACIÓ: Canvi de nom de la llista per reflectir que conté tots els jugadors
     all_season_features = []
-    # MODIFICACIÓ: L'etiqueta del log ara indica que es processen tots els jugadors per a la definició del rendiment
     logger_trainer.info("Trainer Pass 1: Extracting base features for ALL player-seasons to define performance universe.")
     
     player_items = []
@@ -830,7 +628,6 @@ def build_and_train_model_from_script_logic(
             if not (isinstance(season_str, str) and '_' in season_str): continue
             
             age_at_season = get_age_at_fixed_point_in_season(dob, season_str)
-            # MODIFICACIÓ: S'ha eliminat el filtre `if age_at_season > 21`. Ara processem totes les edats.
             if age_at_season is None: continue 
             
             season_numeric = int(season_str.split('_')[0])
@@ -839,7 +636,6 @@ def build_and_train_model_from_script_logic(
             current_season_event_df = pd.DataFrame()
             try:
                 temp_df = pd.read_csv(event_file_path, dtype=object, low_memory=False)
-                # ... (la resta de la lògica de càrrega de CSV es manté igual)
                 current_season_event_df = temp_df
             except: pass 
             
@@ -854,7 +650,6 @@ def build_and_train_model_from_script_logic(
         msg = "Trainer: No player seasons data found for Pass 1. Cannot build model."
         logger_trainer.error(msg); return False, msg
     
-    # MODIFICACIÓ: Canvi de nom del DataFrame
     df_all_seasons_with_base_features = pd.DataFrame(all_season_features).fillna(0.0)
     logger_trainer.info(f"Trainer Pass 1 Complete. Extracted base features for {len(df_all_seasons_with_base_features)} player-seasons (all ages).")
 
@@ -868,20 +663,17 @@ def build_and_train_model_from_script_logic(
         target_kpis_to_use = user_kpi_definitions_for_weight_derivation.get(pos_g_loop, original_kpi_defs.get(pos_g_loop, []))
         if not impact_kpis_to_use or not target_kpis_to_use:
             logger_trainer.warning(f"  Trainer: KPI definitions missing for {pos_g_loop}. Using equal weights.")
-            # ... (la resta de la lògica de pesos es manté)
         
         derived_kpi_weights_all_groups[pos_g_loop] = derive_kpi_weights_from_impact_correlation(
             df_all_seasons_with_base_features, pos_g_loop, impact_kpis_to_use, target_kpis_to_use
         )
     
-    # MODIFICACIÓ: Ara `generate_potential_target` rep el DataFrame amb tots els jugadors
     df_with_heuristic_targets = generate_potential_target(df_all_seasons_with_base_features.copy(), derived_kpi_weights_all_groups)
     df_all_seasons_with_base_features = pd.merge(
         df_all_seasons_with_base_features,
         df_with_heuristic_targets[['player_id_identifier', 'target_season_identifier', 'potential_target', 'raw_composite_score']],
         on=['player_id_identifier', 'target_season_identifier'], how='left').fillna(0.0)
 
-    # MODIFICACIÓ: CÀLCUL DEL NOU OBJECTIU (PEAK PERFORMANCE)
     logger_trainer.info("Trainer: Calculating PEAK career potential for each player.")
     peak_potentials = df_all_seasons_with_base_features.groupby('player_id_identifier')['potential_target'].max().reset_index()
     peak_potentials.rename(columns={'potential_target': 'peak_potential_target'}, inplace=True)
@@ -893,7 +685,6 @@ def build_and_train_model_from_script_logic(
         how='left'
     )
 
-    # MODIFICACIÓ: FILTRAR PER A CREAR LES INSTÀNCIES D'ENTRENAMENT (NOMÉS U21)
     logger_trainer.info("Trainer: Filtering dataset to U21 seasons to create ML training instances.")
     df_u21_instances_for_ml = df_all_seasons_with_base_features[df_all_seasons_with_base_features['age'] <= 21].copy()
     
@@ -905,10 +696,8 @@ def build_and_train_model_from_script_logic(
     all_player_ml_feature_vectors = []
     base_metric_names = get_feature_names_for_extraction()
     
-    # Ordenar el DataFrame complet per accedir a l'historial correctament
     df_all_seasons_with_base_features.sort_values(by=['player_id_identifier', 'season_numeric'], inplace=True)
 
-    # MODIFICACIÓ: Iterar sobre les instàncies U21 i construir les seves característiques
     for idx, current_u21_season_row in df_u21_instances_for_ml.iterrows():
         if (idx + 1) % 100 == 0:
             logger_trainer.info(f"  Trainer Pass 2 - Processed ML features for {idx + 1}/{len(df_u21_instances_for_ml)} U21 instances...")
@@ -916,26 +705,22 @@ def build_and_train_model_from_script_logic(
         player_id = current_u21_season_row['player_id_identifier']
         current_season_numeric = current_u21_season_row['season_numeric']
 
-        # Obtenir l'historial del jugador del DataFrame complet
         historical_df_for_player = df_all_seasons_with_base_features[
             (df_all_seasons_with_base_features['player_id_identifier'] == player_id) &
             (df_all_seasons_with_base_features['season_numeric'] < current_season_numeric)
         ].copy()
 
-        # Utilitzar la funció auxiliar per construir les característiques ML
         instance_ml_features = trainer_construct_ml_features_for_player_season(
             current_season_base_features_row=current_u21_season_row,
             historical_base_features_df=historical_df_for_player,
             all_base_metric_names=base_metric_names
         )
 
-        # Afegir identificadors i el NOU objectiu
         instance_ml_features['player_id_identifier'] = player_id
         instance_ml_features['player_name_identifier'] = current_u21_season_row['player_name_identifier']
         instance_ml_features['target_season_identifier'] = current_u21_season_row['target_season_identifier']
         instance_ml_features['general_position_identifier'] = current_u21_season_row['general_position_identifier']
         
-        # MODIFICACIÓ CLAU: L'objectiu ara és el 'peak_potential_target'
         instance_ml_features['peak_potential_target'] = current_u21_season_row['peak_potential_target']
         
         instance_ml_features['raw_composite_score_heuristic_value'] = current_u21_season_row.get('raw_composite_score', 0.0)
@@ -952,14 +737,11 @@ def build_and_train_model_from_script_logic(
         msg = f"Trainer: Not enough data for {position_group_to_train} ({len(pos_df_for_training_all_features)}) after ML feature construction. Cannot train model."
         logger_trainer.error(msg); return False, msg
 
-    # MODIFICACIÓ: Actualitzar les columnes d'ID per excloure el nou objectiu de les característiques
     id_cols_ml = ['player_id_identifier', 'player_name_identifier', 'target_season_identifier',
                   'general_position_identifier', 'peak_potential_target', 'raw_composite_score_heuristic_value']
     all_available_ml_features_for_pos = [c for c in pos_df_for_training_all_features.columns if c not in id_cols_ml]
     
-    # ... (la resta de la lògica de selecció de característiques es manté) ...
     final_ml_feature_cols_for_model = []
-    # (Aquesta secció es manté sense canvis)
     if user_ml_feature_subset and isinstance(user_ml_feature_subset, list) and len(user_ml_feature_subset) > 0:
         logger_trainer.info(f"  Trainer: Using user-defined subset of {len(user_ml_feature_subset)} ML features for training.")
         final_ml_feature_cols_for_model = [feat for feat in user_ml_feature_subset if feat in all_available_ml_features_for_pos]
@@ -995,7 +777,6 @@ def build_and_train_model_from_script_logic(
     logger_trainer.info(f"  Trainer: Final ML features for {position_group_to_train} model ({len(final_ml_feature_cols_for_model)}): {final_ml_feature_cols_for_model[:5]}...")
 
     X_for_model = pos_df_for_training_all_features[final_ml_feature_cols_for_model].copy()
-    # MODIFICACIÓ: La variable 'y' ara és el 'peak_potential_target'
     y_for_model = pos_df_for_training_all_features['peak_potential_target'].copy()
     groups_for_split = pos_df_for_training_all_features['player_id_identifier']
     
@@ -1012,9 +793,6 @@ def build_and_train_model_from_script_logic(
     X_scaled_full = scaler_pos.fit_transform(X_for_model)
     joblib.dump(scaler_pos, pos_scaler_path)
     
-    # ... (la resta de la lògica d'entrenament, avaluació i desat es manté igual) ...
-    # El codi ja gestiona correctament la divisió de dades amb GroupKFold,
-    # la cerca d'hiperparàmetres i l'entrenament final. No calen canvis aquí.
     
     X_train_scaled, X_test_scaled, y_train, y_test = pd.DataFrame(), pd.DataFrame(), pd.Series(dtype='float64'), pd.Series(dtype='float64')
     groups_train_for_search = None
