@@ -586,6 +586,9 @@ def trainer_save_model_run_config(filepath, model_name, feature_cols, model_para
 
 
 # --- Main Training Function  ---
+# ... (tot el codi anterior a la funció es manté igual) ...
+
+# --- Main Training Function (MODIFIED FOR 2015/2016 EVALUATION) ---
 def build_and_train_model_from_script_logic(
     custom_model_id: str,
     position_group_to_train: str,
@@ -594,9 +597,14 @@ def build_and_train_model_from_script_logic(
     base_output_dir_for_custom_model: str,
     user_ml_feature_subset: list = None
 ):
-    logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train} using trainer.py logic.")
-    logger_trainer.info(f"  Target: PEAK CAREER PERFORMANCE. Training Data: ALL players. Training Instances: U21 seasons.")
+    # <<< MODIFICACIÓ: Definim la temporada que serà el nostre conjunt de test
+    EVALUATION_SEASON = "2015_2016"
+    
+    logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train}")
+    # <<< MODIFICACIÓ: Actualitzem el log per reflectir la nova estratègia d'avaluació
+    logger_trainer.info(f"  STRATEGY: Train on all U21 data EXCEPT {EVALUATION_SEASON}, Evaluate EXCLUSIVELY on {EVALUATION_SEASON}.")
 
+    # ... (La primera part de la funció, fins a la construcció de 'full_ml_features_df', es manté igual) ...
     try:
         with open(PLAYER_INDEX_PATH, 'r', encoding='utf-8') as f: player_index = json.load(f)
     except FileNotFoundError: 
@@ -720,9 +728,7 @@ def build_and_train_model_from_script_logic(
         instance_ml_features['player_name_identifier'] = current_u21_season_row['player_name_identifier']
         instance_ml_features['target_season_identifier'] = current_u21_season_row['target_season_identifier']
         instance_ml_features['general_position_identifier'] = current_u21_season_row['general_position_identifier']
-        
         instance_ml_features['peak_potential_target'] = current_u21_season_row['peak_potential_target']
-        
         instance_ml_features['raw_composite_score_heuristic_value'] = current_u21_season_row.get('raw_composite_score', 0.0)
         all_player_ml_feature_vectors.append(instance_ml_features)
 
@@ -762,7 +768,6 @@ def build_and_train_model_from_script_logic(
                     if user_base_kpi in ml_feat_candidate:
                         is_related = True; break
                 if is_related: temp_feature_list.append(ml_feat_candidate)
-            
             context_features_to_add = ['current_age', 'current_season_numeric', 'current_num_90s_played', 'current_matches_played_events', 'num_hist_seasons']
             for cf in context_features_to_add:
                 if cf in all_available_ml_features_for_pos: temp_feature_list.append(cf)
@@ -776,95 +781,93 @@ def build_and_train_model_from_script_logic(
         logger_trainer.error(msg); return False, msg
     logger_trainer.info(f"  Trainer: Final ML features for {position_group_to_train} model ({len(final_ml_feature_cols_for_model)}): {final_ml_feature_cols_for_model[:5]}...")
 
-    X_for_model = pos_df_for_training_all_features[final_ml_feature_cols_for_model].copy()
-    y_for_model = pos_df_for_training_all_features['peak_potential_target'].copy()
-    groups_for_split = pos_df_for_training_all_features['player_id_identifier']
+    X = pos_df_for_training_all_features[final_ml_feature_cols_for_model].copy()
+    y = pos_df_for_training_all_features['peak_potential_target'].copy()
     
-    for col in X_for_model.columns: X_for_model[col] = pd.to_numeric(X_for_model[col], errors='coerce')
-    X_for_model.fillna(0, inplace=True)
+    for col in X.columns: X[col] = pd.to_numeric(X[col], errors='coerce')
+    X.fillna(0, inplace=True)
+    
+    # <<< MODIFICACIÓ: SEPARACIÓ MANUAL DE TRAIN/TEST PER TEMPORADA >>>
+    logger_trainer.info(f"  Trainer: Manually splitting data. Test set = season {EVALUATION_SEASON}.")
+    
+    # Identifiquem els índexs per a cada conjunt
+    test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
+    train_indices = pos_df_for_training_all_features['target_season_identifier'] != EVALUATION_SEASON
 
+    X_train_df = X[train_indices]
+    y_train = y[train_indices]
+    X_test_df = X[test_indices]
+    y_test = y[test_indices]
+
+    # <<< MODIFICACIÓ: Informem de la mida dels conjunts
+    logger_trainer.info(f"  Trainer: Training set size: {len(X_train_df)} instances.")
+    logger_trainer.info(f"  Trainer: Test set (season {EVALUATION_SEASON}) size: {len(X_test_df)} instances.")
+    
+    if X_train_df.empty:
+        msg = f"Trainer: Training set is empty after removing {EVALUATION_SEASON}. Cannot train."
+        logger_trainer.error(msg); return False, msg
+    if X_test_df.empty:
+        logger_trainer.warning(f"  Trainer: Test set for season {EVALUATION_SEASON} is empty. No evaluation will be possible.")
+    
+    # <<< MODIFICACIÓ: Entrenem l'escalador NOMÉS amb les dades d'entrenament
     pos_model_output_dir = os.path.join(base_output_dir_for_custom_model, custom_model_id, position_group_to_train.lower())
     os.makedirs(pos_model_output_dir, exist_ok=True)
+    
+    scaler_pos = StandardScaler()
+    X_train_scaled = scaler_pos.fit_transform(X_train_df)
+    
+    # Si hi ha dades de test, les transformem amb l'escalador ja entrenat
+    X_test_scaled = np.array([])
+    if not X_test_df.empty:
+        X_test_scaled = scaler_pos.transform(X_test_df)
+    
+    # <<< MODIFICACIÓ: Guardem l'escalador i els altres artefactes
     pos_trained_model_path = os.path.join(pos_model_output_dir, f'potential_model_{position_group_to_train.lower()}_{custom_model_id}.joblib')
     pos_model_config_path = os.path.join(pos_model_output_dir, f'model_config_{position_group_to_train.lower()}_{custom_model_id}.json')
     pos_scaler_path = os.path.join(pos_model_output_dir, f'feature_scaler_{position_group_to_train.lower()}_{custom_model_id}.joblib')
-
-    # --- CORRECCIÓ: Dividim primer, després fem fit del scaler només amb train ---
-    X_train, X_test, y_train, y_test = pd.DataFrame(), pd.DataFrame(), pd.Series(dtype='float64'), pd.Series(dtype='float64')
-    groups_train_for_search = None
-    cv_for_search = 3
-    evaluation_metrics_dict = None
-    unique_groups = groups_for_split.nunique()
-    min_samples_for_gkf_split = 10
-    if unique_groups < 2 or X_for_model.shape[0] < min_samples_for_gkf_split:
-        logger_trainer.warning(f"  Trainer: Insufficient groups/samples for GroupKFold for {position_group_to_train}. Using simple train_test_split.")
-        if X_for_model.shape[0] < 2:
-            X_train, y_train = X_for_model, y_for_model
-            X_test, y_test = pd.DataFrame(), pd.Series(dtype='float64')
-        else:
-            test_size_actual = 0.2 if X_for_model.shape[0] >= 5 else (1 / X_for_model.shape[0])
-            try:
-                X_train, X_test, y_train, y_test = train_test_split(X_for_model, y_for_model, test_size=test_size_actual, random_state=42)
-            except ValueError as e_split:
-                logger_trainer.warning(f"  Trainer: train_test_split failed for {position_group_to_train}: {e_split}. Training on all data.")
-                X_train, y_train = X_for_model, y_for_model
-                X_test, y_test = pd.DataFrame(), pd.Series(dtype='float64')
-    else:
-        gkf_outer = GroupKFold(n_splits=min(5, unique_groups))
-        try:
-            train_idx, test_idx = next(gkf_outer.split(X_for_model, y_for_model, groups_for_split))
-            X_train, X_test = X_for_model.iloc[train_idx], X_for_model.iloc[test_idx]
-            y_train, y_test = y_for_model.iloc[train_idx], y_for_model.iloc[test_idx]
-            groups_train_outer = groups_for_split.iloc[train_idx]
-            n_cv_splits_inner = min(3, groups_train_outer.nunique()) if groups_train_outer.nunique() >= 2 else 2
-            if n_cv_splits_inner < 2 or X_train.shape[0] < n_cv_splits_inner * 2:
-                cv_for_search = 3
-                groups_train_for_search = None
-                logger_trainer.info(f"  Trainer: Not enough groups for inner GroupKFold. Using {cv_for_search}-fold CV for RandomizedSearch.")
-            else:
-                cv_for_search = GroupKFold(n_splits=n_cv_splits_inner)
-                groups_train_for_search = groups_train_outer
-                logger_trainer.info(f"  Trainer: Using inner GroupKFold ({n_cv_splits_inner} splits) for RandomizedSearch.")
-        except Exception as e_gkf:
-            logger_trainer.error(f"  Trainer: Error in GroupKFold split for {position_group_to_train}: {e_gkf}. Fallback to train_test_split.")
-            test_size_actual = 0.2 if X_for_model.shape[0] >= 5 else (1 / X_for_model.shape[0])
-            if X_for_model.shape[0] < 2 or X_for_model.shape[0] * (1 - test_size_actual) < 1:
-                X_train, y_train = X_for_model, y_for_model
-                X_test, y_test = pd.DataFrame(), pd.Series(dtype='float64')
-            else:
-                 X_train, X_test, y_train, y_test = train_test_split(X_for_model, y_for_model, test_size=test_size_actual, random_state=42)
-    
-    if X_train.shape[0] == 0:
-        msg = f"Trainer: Training set empty for {position_group_to_train}. Cannot train model."
-        logger_trainer.error(msg); return False, msg
-    if X_test.shape[0] == 0:
-        logger_trainer.warning(f"  Trainer: Test set empty for {position_group_to_train}. No evaluation metrics will be available.")
-
-    # --- CORRECCIÓ: Fit scaler només amb train, després transforma train i test ---
-    scaler_pos = StandardScaler()
-    X_train_scaled = scaler_pos.fit_transform(X_train)
-    X_test_scaled = scaler_pos.transform(X_test) if X_test.shape[0] > 0 else np.array([])
-
     joblib.dump(scaler_pos, pos_scaler_path)
     
+    # <<< MODIFICACIÓ: La secció de GroupKFold i train_test_split ja no és necessària.
+    # El RandomizedSearchCV es farà ara només sobre el conjunt d'entrenament.
+    
+    # Per a la cerca d'hiperparàmetres, podem seguir utilitzant GroupKFold dins del conjunt d'entrenament
+    groups_train_for_search = pos_df_for_training_all_features[train_indices]['player_id_identifier']
+    unique_groups_train = groups_train_for_search.nunique()
+    
+    cv_for_search = 3 # CV simple per defecte
+    if unique_groups_train >= 2:
+        n_cv_splits_inner = min(3, unique_groups_train)
+        if X_train_scaled.shape[0] >= n_cv_splits_inner * 2:
+            cv_for_search = GroupKFold(n_splits=n_cv_splits_inner)
+            logger_trainer.info(f"  Trainer: Using inner GroupKFold ({n_cv_splits_inner} splits) on the training set for RandomizedSearch.")
+        else:
+            groups_train_for_search = None # No es pot fer GroupKFold
+    else:
+        groups_train_for_search = None # No es pot fer GroupKFold
+        
     xgb_model_for_search = XGBRegressor(random_state=42, objective='reg:squarederror', n_jobs=-1)
     xgb_param_grid = { 'n_estimators': [100, 200, 300, 500], 'learning_rate': [0.01, 0.03, 0.05, 0.1], 'max_depth': [3, 4, 5, 6, 7], 'subsample': [0.6, 0.7, 0.8, 0.9, 1.0], 'colsample_bytree': [0.6, 0.7, 0.8, 0.9], 'gamma': [0, 0.1, 0.2], 'reg_alpha': [0, 0.005, 0.01, 0.05], 'reg_lambda': [0.1, 0.5, 1, 1.5] }
-    n_iter_search = 20 if X_train_scaled.shape[0] > 50 else max(1, int(X_train_scaled.shape[0] * 0.1)) 
+    n_iter_search = 20 if X_train_scaled.shape[0] > 50 else max(1, int(X_train_scaled.shape[0] * 0.1))
     if X_train_scaled.shape[0] < 10: n_iter_search = max(1, X_train_scaled.shape[0] // 2)
-    random_search = RandomizedSearchCV( estimator=xgb_model_for_search, param_distributions=xgb_param_grid, n_iter=n_iter_search, cv=cv_for_search, scoring='r2', random_state=42, n_jobs=-1, verbose=0)
+    random_search = RandomizedSearchCV(estimator=xgb_model_for_search, param_distributions=xgb_param_grid, n_iter=n_iter_search, cv=cv_for_search, scoring='r2', random_state=42, n_jobs=-1, verbose=0)
     
     logger_trainer.info(f"  Trainer: Starting RandomizedSearchCV for {position_group_to_train} on {X_train_scaled.shape[0]} training samples (n_iter={n_iter_search}).")
     best_xgb_model, best_params_for_config, hyperparam_search_done = None, None, False
+    
     try:
-        search_groups_param = groups_train_for_search if isinstance(cv_for_search, GroupKFold) and groups_train_for_search is not None else None
+        search_groups_param = groups_train_for_search if isinstance(cv_for_search, GroupKFold) else None
         random_search.fit(X_train_scaled, y_train, groups=search_groups_param)
         best_params_from_search = random_search.best_params_
         logger_trainer.info(f"  Trainer: Best XGBoost Params for {position_group_to_train} from Search: {best_params_from_search}")
         best_xgb_model = XGBRegressor(**best_params_from_search, random_state=42, objective='reg:squarederror', n_jobs=-1)
+        
+        # <<< MODIFICACIÓ: Early stopping amb el nostre conjunt de test específic
         if X_test_scaled.shape[0] > 0:
             best_xgb_model.set_params(early_stopping_rounds=10)
             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
-        else: best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+        else:
+            best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+        
         best_params_for_config, hyperparam_search_done = best_params_from_search, True
     except Exception as e_search:
         logger_trainer.error(f"  Trainer: Error during RandomizedSearchCV for {position_group_to_train}: {e_search}. Training with default params.")
@@ -873,21 +876,32 @@ def build_and_train_model_from_script_logic(
         if X_test_scaled.shape[0] > 0:
             best_xgb_model.set_params(early_stopping_rounds=10)
             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
-        else: best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+        else:
+            best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
         best_params_for_config, hyperparam_search_done = best_xgb_model.get_params(), False
     
     joblib.dump(best_xgb_model, pos_trained_model_path)
+    
+    # <<< MODIFICACIÓ: L'avaluació es fa sempre sobre el conjunt de test (2015/2016), si existeix.
+    evaluation_metrics_dict = None
     if X_test_scaled.shape[0] > 0 and y_test.shape[0] > 0:
         y_pred_test = np.clip(best_xgb_model.predict(X_test_scaled), 0, 200)
-        mae, rmse, r2 = mean_absolute_error(y_test, y_pred_test), np.sqrt(mean_squared_error(y_test, y_pred_test)), r2_score(y_test, y_pred_test)
-        evaluation_metrics_dict = {'MAE': round(mae, 3), 'RMSE': round(rmse, 3), 'R2': round(r2, 3)}
-        logger_trainer.info(f"  Trainer: Evaluation for {position_group_to_train} (ID: {custom_model_id}) on test set ({X_test_scaled.shape[0]} samples): MAE: {mae:.3f}, RMSE: {rmse:.3f}, R^2: {r2:.3f}")
+        mae = mean_absolute_error(y_test, y_pred_test)
+        mse = mean_squared_error(y_test, y_pred_test)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_test, y_pred_test)
+        evaluation_metrics_dict = {'MAE': round(mae, 3), 'MSE': round(mse, 3), 'RMSE': round(rmse, 3), 'R2': round(r2, 3)}
+        
+        # <<< MODIFICACIÓ: El log ara especifica clarament sobre què s'avalua.
+        logger_trainer.info(f"  Trainer: Evaluation for {position_group_to_train} (ID: {custom_model_id}) on test set (SEASON {EVALUATION_SEASON}, {X_test_scaled.shape[0]} samples):")
+        logger_trainer.info(f"    MAE: {mae:.3f}, MSE: {mse:.3f}, RMSE: {rmse:.3f}, R^2: {r2:.3f}")
+        
         if hasattr(best_xgb_model, 'feature_importances_'):
             importances = best_xgb_model.feature_importances_
             if len(final_ml_feature_cols_for_model) == len(importances):
                 feat_imp_df = pd.DataFrame({'feature': final_ml_feature_cols_for_model, 'importance': importances}).sort_values('importance', ascending=False).head(20)
                 logger_trainer.info(f"  Trainer: Top Feature Importances for {position_group_to_train} (ID: {custom_model_id}):\n{feat_imp_df.to_string(index=False)}")
-    
+
     trainer_save_model_run_config(
         pos_model_config_path, model_name=f"XGBRegressor_Custom_{custom_model_id}", feature_cols=final_ml_feature_cols_for_model, 
         model_params=best_xgb_model.get_params(), user_kpi_definitions_for_weights=user_kpi_definitions_for_weight_derivation,
@@ -898,7 +912,6 @@ def build_and_train_model_from_script_logic(
     
     logger_trainer.info(f"Custom Model for {position_group_to_train} (ID: {custom_model_id}) trained and artifacts saved to {pos_model_output_dir}")
     return True, f"Model for {position_group_to_train} (ID: {custom_model_id}) built successfully."
-
 
 # --- Functions to expose constants and logic to main.py (no changes needed) ---
 def get_trainer_kpi_definitions_for_weight_derivation():
@@ -985,7 +998,7 @@ if __name__ == "__main__":
     for pos_group in ["Attacker", "Midfielder", "Defender"]:
         logger_trainer.info(f"\n--- Generating peak potential model for: {pos_group} ---")
         success, message = build_and_train_model_from_script_logic(
-            custom_model_id="peak_potential_v1",
+            custom_model_id="peak_potential_v2_15_16",
             position_group_to_train=pos_group,
             user_kpi_definitions_for_weight_derivation=KPI_DEFINITIONS_FOR_WEIGHT_DERIVATION,
             user_composite_impact_kpis=COMPOSITE_IMPACT_KPIS,

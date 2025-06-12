@@ -1,0 +1,94 @@
+﻿id,name,age_in_season,position,season_for_prediction,predicted_potential
+6609,Denis Suárez Fernández,21,Midfielder,2015_2016,118.06562805175781
+6736,Álvaro Medrán Just,21,Midfielder,2015_2016,114.7093505859375
+6926,Alen Halilović,19,Midfielder,2015_2016,114.7093505859375
+5678,Jefferson Andrés Lerma Solís,21,Midfielder,2015_2016,114.7093505859375
+5719,Marco Asensio Willemsen,19,Midfielder,2015_2016,114.7093505859375
+6697,Daniel Ceballos Fernández,19,Midfielder,2015_2016,114.7093505859375
+6764,Pablo Fornals Malla,19,Midfielder,2015_2016,114.7093505859375
+6829,Samuel Castillejo Azuaga,20,Midfielder,2015_2016,113.5615005493164
+5456,Mateo Kovačić,21,Midfielder,2015_2016,112.63164520263672
+18867,Matías Nahuel Leiva Esquivel,19,Midfielder,2015_2016,112.63164520263672
+6655,Fabián Ruiz Peña,19,Midfielder,2015_2016,112.63164520263672
+6701,Joan Jordán Moreno,21,Midfielder,2015_2016,112.63164520263672
+3601,Charly Musonda Junior,19,Midfielder,2015_2016,112.63164520263672
+10037,Danilo Barbosa da Silva,19,Midfielder,2015_2016,111.58390045166016
+6659,Víctor Camarasa Ferrando,21,Midfielder,2015_2016,109.94440460205078
+24453,Josip Radošević,21,Midfielder,2015_2016,108.54813385009766
+6563,Juan Pablo Añor Acosta,21,Midfielder,2015_2016,108.45381927490234
+27251,Francisco José Perdomo Borges,21,Midfielder,2015_2016,108.44023895263672
+6377,Ángel Martín Correa,20,Midfielder,2015_2016,107.5003890991211
+6381,Saúl Ñíguez Esclapez,21,Midfielder,2015_2016,106.58488464355469
+10868,Ricardo Jorge Luz Horta,21,Midfielder,2015_2016,106.37610626220703
+12021,Óliver Torres Muñoz,21,Midfielder,2015_2016,106.32646942138672
+6612,Rubén Duarte Sánchez,20,Defender,2015_2016,94.84183502197266
+5259,José María Giménez de Vargas,20,Defender,2015_2016,94.18534851074219
+4353,Aymeric Laporte,21,Defender,2015_2016,92.61202239990234
+6802,Jonathan Castro Otto,21,Defender,2015_2016,92.42887878417969
+24782,Jonhatan Montiel Caballero,17,Midfielder,2015_2016,90.43749237060547
+30454,Francisco José Sánchez Rodríguez,19,Midfielder,2015_2016,90.43749237060547
+7005,João Pedro Cavaco Cancelo,21,Defender,2015_2016,88.89224243164062
+6596,José Luis Gayà Peña,20,Defender,2015_2016,88.31147003173828
+11813,Emiliano Buendía,19,Defender,2015_2016,87.31428527832031
+6918,Isaac Ajayi Success,19,Attacker,2015_2016,84.6893539428711
+17054,Emiliano Daniel Velázquez Maldonado,21,Defender,2015_2016,83.67091369628906
+3324,Eric Bertrand Bailly,21,Defender,2015_2016,83.28955841064453
+24132,Francisco Miguel Varela Martín,21,Defender,2015_2016,81.63452911376953
+6856,Carlos Martín Vigaray,21,Defender,2015_2016,81.10367584228516
+6844,Federico Ricca Rostagnol,21,Defender,2015_2016,81.00114440917969
+7692,Mauricio Lemos Merladet,20,Defender,2015_2016,80.82630157470703
+6679,Aritz Elustondo Irribaria,21,Defender,2015_2016,80.74896240234375
+6592,Rúben Miguel Nunes Vezo,21,Defender,2015_2016,80.70209503173828
+6880,Arnaldo Antonio Sanabria Ayala,19,Attacker,2015_2016,80.29529571533203
+5484,Lucas Hernández Pi,19,Defender,2015_2016,79.72991943359375
+8818,Jorge Meré Pérez,18,Defender,2015_2016,79.37466430664062
+6935,Adrián Marín Gómez,18,Defender,2015_2016,79.37284851074219
+4418,Matheus Dória Macedo,21,Defender,2015_2016,77.35476684570312
+8522,Armindo Tué Na Bangna,21,Attacker,2015_2016,74.42285919189453
+220761,Miguel Ángel Muñoz Alonso,20,Defender,2015_2016,74.12879180908203
+26256,Igor Lichnovsky Osorio,21,Defender,2015_2016,73.42992401123047
+6737,Alfonso Pedraza Sag,19,Defender,2015_2016,71.005859375
+6807,Roberto Suárez Pier,20,Defender,2015_2016,70.92417907714844
+10852,Miguel Filipe Nunes Cardoso,21,Midfielder,2015_2016,68.48338317871094
+23972,José Joaquín Matos García,20,Defender,2015_2016,67.40161895751953
+21877,Ignacio Monsalve Vicente,21,Defender,2015_2016,66.31768035888672
+21229,Sergi Samper Montaña,20,Midfielder,2015_2016,64.8080062866211
+24711,David Carmona Sierra,18,Defender,2015_2016,63.8011360168457
+27401,Bernard Mensah,21,Midfielder,2015_2016,63.124114990234375
+24577,Salvador Ruiz Rodríguez,20,Defender,2015_2016,62.64161682128906
+6765,Rodrigo Hernández Cascante,19,Midfielder,2015_2016,62.50680923461914
+4558,Pape Cheikh Diop Gueye,18,Midfielder,2015_2016,62.50680923461914
+16338,Uche Henry Agbo,20,Midfielder,2015_2016,61.258460998535156
+6676,Igor Zubeldia Elorza,18,Defender,2015_2016,61.13505172729492
+6393,Iñaki Williams Arthuer,21,Attacker,2015_2016,59.723167419433594
+75537,David Goldar Gómez,21,Defender,2015_2016,58.79429244995117
+6834,Gerard Gumbau Garriga,21,Midfielder,2015_2016,58.0789680480957
+6749,Diego González Polanco,20,Defender,2015_2016,57.48994445800781
+34728,Diego Alende López,18,Defender,2015_2016,53.860897064208984
+23936,Antonio Jesús Cotán Pérez,20,Midfielder,2015_2016,53.57560729980469
+11675,Moisés Gómez Bordonado,21,Attacker,2015_2016,52.722320556640625
+6594,Santiago Mina Lorenzo,20,Attacker,2015_2016,51.250423431396484
+24173,Carlos Castro García,20,Attacker,2015_2016,50.301151275634766
+6616,Munir El Haddadi Mohamed,20,Attacker,2015_2016,50.1722297668457
+49433,Hachim Mastour,17,Midfielder,2015_2016,49.72957992553711
+23849,Francisco José Villalba Rodrigo,17,Midfielder,2015_2016,49.72957992553711
+23785,Théo Bongonda Mbul''Ofeko Batombo,20,Attacker,2015_2016,49.222957611083984
+6685,Mikel Oyarzabal Ugarte,18,Attacker,2015_2016,49.08999252319336
+6847,Adalberto Peñaranda Maestre,18,Attacker,2015_2016,49.08999252319336
+6840,Marcos Llorente Moreno,20,Midfielder,2015_2016,48.530460357666016
+197562,Iñigo Barrenetxea García,21,Midfielder,2015_2016,45.89881896972656
+3508,Sandro Ramírez Castillo,20,Attacker,2015_2016,42.5832633972168
+16426,Wanderson Maciel Sousa Campos,21,Attacker,2015_2016,42.25060272216797
+6725,Zakaria Bakkali,19,Attacker,2015_2016,40.93429183959961
+7797,Rodrigo Javier De Paul,21,Attacker,2015_2016,40.5393180847168
+23924,Mamadou Sylla Diallo,21,Attacker,2015_2016,38.37718963623047
+23802,Juan Muñoz Muñoz,20,Attacker,2015_2016,37.01596450805664
+6906,Jon Bautista Orgilles,20,Attacker,2015_2016,33.21857452392578
+21147,Borja Mayoral Moya,18,Attacker,2015_2016,30.3137264251709
+24143,Álvaro Vadillo Cifuentes,21,Attacker,2015_2016,29.92668914794922
+20063,Javier Ontiveros Parra,18,Attacker,2015_2016,27.49582862854004
+27340,Dejan Dražić,20,Attacker,2015_2016,27.49582862854004
+27481,Carlos Carbonell Gil,20,Attacker,2015_2016,27.49582862854004
+31467,Eneko Capilla González,20,Attacker,2015_2016,27.49582862854004
+31469,Andrés Pascual Santoja,19,Attacker,2015_2016,27.49582862854004
+8866,Carlos Fernández Luna,19,Attacker,2015_2016,27.49582862854004

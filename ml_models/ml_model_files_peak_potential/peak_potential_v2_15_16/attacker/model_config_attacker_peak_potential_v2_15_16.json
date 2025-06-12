@@ -1,5 +1,5 @@
 {
-    "model_type": "XGBRegressor_Custom_peak_potential_v1_for_Attacker",
+    "model_type": "XGBRegressor_Custom_peak_potential_v2_15_16_for_Attacker",
     "description": "Custom Model: Position-Specific (Attacker) XGBoost. Predicts PEAK CAREER POTENTIAL based on U21 data. Trained on all player data.",
     "features_used_for_ml_model": [
         "current_aerial_duels_won",
@@ -173,13 +173,13 @@
         "num_hist_seasons"
     ],
     "ml_model_parameters": {
-        "subsample": 1.0,
-        "reg_lambda": 0.5,
-        "reg_alpha": 0.01,
-        "n_estimators": 200,
-        "max_depth": 5,
-        "learning_rate": 0.01,
-        "gamma": 0,
+        "subsample": 0.9,
+        "reg_lambda": 0.1,
+        "reg_alpha": 0.005,
+        "n_estimators": 100,
+        "max_depth": 3,
+        "learning_rate": 0.05,
+        "gamma": 0.2,
         "colsample_bytree": 0.6
     },
     "target_variable_generation": {
@@ -243,8 +243,9 @@
     "hyperparameter_search_used": true,
     "position_group_trained_for": "Attacker",
     "evaluation_metrics_on_test_set": {
-        "MAE": 31.93,
-        "RMSE": 48.745,
-        "R2": 0.372
+        "MAE": 14.229,
+        "MSE": 304.471,
+        "RMSE": 17.449,
+        "R2": 0.601
     }
 }

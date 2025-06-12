@@ -429,7 +429,7 @@ function ScoutingPage() {
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
-              Jugador (temporades disponibles per a menors de 21 anys):
+              Jugador (menors de 21 anys):
             </label>
             <select
               id="player-select"

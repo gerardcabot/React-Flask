@@ -38,7 +38,8 @@ BASE_DIR_SERVER_FLASK = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "data")
 
 # V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_v14_rebuild_trainer", "v14_rebuild") # Ruta ajustada
-V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_peak_potential", "peak_potential_v1")
+# V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_peak_potential", "peak_potential_v1")
+V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_peak_potential", "peak_potential_v2_15_16")
 
 PLAYER_MINUTES_PATH = os.path.join(DATA_DIR, "player_season_minutes_with_names.csv")
 # LOADED_V14_MODELS = {}
@@ -707,7 +708,7 @@ def scouting_predict():
         is_custom_model = True 
 
         if model_identifier == "default_v14":
-            effective_model_id_for_path = "peak_potential_v1"
+            effective_model_id_for_path = "peak_potential_v2_15_16"
             is_custom_model = False 
             model_pos_dir = os.path.join(V14_MODEL_BASE_DIR, position_group_for_prediction.lower())
             model_base_path_to_use = V14_MODEL_BASE_DIR 
