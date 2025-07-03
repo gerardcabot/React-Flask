@@ -16,6 +16,8 @@ import datetime
 import uuid 
 import boto3
 from io import BytesIO, StringIO
+import gc
+
 
 from model_trainer.trainer_v2 import (
     build_and_train_model_from_script_logic,
@@ -587,18 +589,6 @@ def player_events_route():
 #         logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
 #         return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
 
-# @app.route("/pass_completion_heatmap")
-# def pass_completion_heatmap_route():
-#     return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
-
-# @app.route("/position_heatmap")
-# def position_heatmap_route():
-#     return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
-
-# @app.route("/pressure_heatmap")
-# def pressure_heatmap_route():
-#     return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
-
 @app.route("/pass_completion_heatmap")
 def pass_completion_heatmap_route():
     player_id = request.args.get("player_id")
@@ -609,6 +599,11 @@ def pass_completion_heatmap_route():
         if df is None or df.empty: return jsonify({"error": "No data found for this player/season"}), 404
         
         df_passes = df[df.get("type") == "Pass"].copy()
+        
+        # Alliberem memòria del DataFrame original que ja no necessitem
+        del df
+        gc.collect()
+
         if df_passes.empty or not all(c in df_passes.columns for c in ["location", "pass_outcome"]):
             return jsonify({"error": "Required pass columns are missing"}), 400
 
@@ -623,7 +618,6 @@ def pass_completion_heatmap_route():
         pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
         fig, ax = pitch.draw(figsize=(4.125, 6))
         fig.set_facecolor('#22312b')
-        
         bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, values=df_valid_loc.completed, statistic='mean', positional='full')
 
         for section_data in bin_statistic:
@@ -633,15 +627,15 @@ def pass_completion_heatmap_route():
                 if 'x_grid' in section_data and 'y_grid' in section_data and section_data['x_grid'] is not None and section_data['y_grid'] is not None:
                     section_data['statistic'] = np.zeros((section_data['y_grid'].shape[0]-1, section_data['x_grid'].shape[1]-1), dtype=float)
                 else:
-                    logger.warning(f"Missing grid info for a section in pass completion heatmap for {player_id}/{season}, section: {section_data.get('pos_section')}")
                     section_data['statistic'] = np.array([[0.0]])
-
+        
         pitch.heatmap_positional(bin_statistic, ax=ax, cmap='Blues', edgecolors='#22312b', vmin=0, vmax=1)
         path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
         
         img_io = BytesIO()
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+        # Reduïm la qualitat (DPI) per estalviar memòria
+        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
         img_io.seek(0)
         plt.close(fig)
         
@@ -663,6 +657,10 @@ def position_heatmap_route():
         
         df["location_eval"] = df["location"].apply(safe_literal_eval)
         df_valid_loc = df[df["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
+        
+        del df
+        gc.collect()
+
         if df_valid_loc.empty: return jsonify({"error": "No valid location data for heatmap"}), 404
 
         df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
@@ -678,7 +676,7 @@ def position_heatmap_route():
         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
 
         img_io = BytesIO()
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
         img_io.seek(0)
         plt.close(fig)
         
@@ -698,6 +696,9 @@ def pressure_heatmap_route():
         df_pressure = pd.DataFrame()
         if df_events is not None and 'type' in df_events.columns:
             df_pressure = df_events[df_events["type"] == "Pressure"].copy()
+        
+        del df_events
+        gc.collect()
 
         df_valid_loc = pd.DataFrame({"x": [], "y": []}) 
         if not df_pressure.empty and "location" in df_pressure.columns:
@@ -722,7 +723,7 @@ def pressure_heatmap_route():
                 plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#efefef')
         
         img_io = BytesIO()
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
         img_io.seek(0)
         plt.close(fig)
         
