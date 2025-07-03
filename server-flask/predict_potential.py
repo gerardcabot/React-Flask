@@ -33,7 +33,8 @@ _MODELS_DIR = os.path.join(_PROJECT_ROOT, 'ml_models', 'ml_model_files_peak_pote
 # --- PARÀMETRES DE LA PREDICCIÓ ---
 MODEL_ID = "peak_potential_v2_15_16"
 # MODEL_ID = "peak_potential_v1" 
-MAX_AGE_FOR_PREDICTION = 21
+# MAX_AGE_FOR_PREDICTION = 21
+MAX_AGE_FOR_PREDICTION = 35
 
 # LÍNIA CORREGIDA AMB Optional[str]
 def generate_predictions(model_id: str, target_season: Optional[str] = None, num_players_to_display: int = 30):
@@ -48,7 +49,7 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
         output_filename = f"predictions_season_{target_season}.csv"
     else:
         logging.info(f"\n{'#'*60}\n# INICIANT PREDICCIONS PER A TOTES LES TEMPORADES \n{'#'*60}")
-        output_filename = "predictions_all_seasons_v15_16_new.csv"
+        output_filename = "predictions_all_seasons_v15_16_double_new.csv"
 
     # --- 1. Càrrega de Dades Base ---
     try:

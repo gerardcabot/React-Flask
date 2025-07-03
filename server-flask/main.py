@@ -14,6 +14,8 @@ import numpy as np
 import joblib
 import datetime
 import uuid 
+import boto3
+from io import BytesIO, StringIO
 
 from model_trainer.trainer_v2 import (
     build_and_train_model_from_script_logic,
@@ -28,6 +30,25 @@ from model_trainer.trainer_v2 import (
     get_trainer_all_possible_ml_feature_names 
 )
 
+
+# --- CONFIGURACIÓN DE CONEXIÓN A R2 (CORRECTO) ---
+R2_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
+
+s3_client = None
+if R2_ENDPOINT_URL and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME:
+    logger.info("R2 environment variables found. Initializing S3 client.")
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=R2_ENDPOINT_URL,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name='auto'  # 'auto' is correct for R2
+    )
+else:
+    logger.warning("R2 environment variables not set. S3 client not initialized. App will likely fail.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -71,86 +92,143 @@ def _format_value_counts(series, sort_index=False):
     if sort_index: counts = counts.sort_index()
     return [{"name": str(idx), "value": int(val)} for idx, val in counts.items()]
 
-def load_player_data(player_id, season, data_dir):
-    def try_load_one(player_id, season, data_dir):
-        file_path_json = os.path.join(data_dir, str(season), f"{player_id}.json")
-        if os.path.exists(file_path_json):
-            try:
-                logger.debug(f"Loading JSON: {file_path_json}")
-                return pd.read_json(file_path_json, convert_dates=False)
-            except Exception as e:
-                logger.error(f"Error loading JSON {file_path_json}: {e}")
-                pass
+# def load_player_data(player_id, season, data_dir):
+#     def try_load_one(player_id, season, data_dir):
+#         file_path_json = os.path.join(data_dir, str(season), f"{player_id}.json")
+#         if os.path.exists(file_path_json):
+#             try:
+#                 logger.debug(f"Loading JSON: {file_path_json}")
+#                 return pd.read_json(file_path_json, convert_dates=False)
+#             except Exception as e:
+#                 logger.error(f"Error loading JSON {file_path_json}: {e}")
+#                 pass
 
-        file_path_csv = os.path.join(data_dir, str(season), "players", f"{player_id}_{season}.csv")
-        if os.path.exists(file_path_csv):
-            try:
-                logger.debug(f"Loading CSV: {file_path_csv}")
-                df = pd.read_csv(file_path_csv, low_memory=False)
-                loc_cols = [col for col in df.columns if 'location' in col or 'end_location' in col]
-                for col in loc_cols:
-                    if col in df.columns: df[col] = df[col].apply(lambda x: safe_literal_eval(x) if pd.notna(x) else None)
+#         file_path_csv = os.path.join(data_dir, str(season), "players", f"{player_id}_{season}.csv")
+#         if os.path.exists(file_path_csv):
+#             try:
+#                 logger.debug(f"Loading CSV: {file_path_csv}")
+#                 df = pd.read_csv(file_path_csv, low_memory=False)
+#                 loc_cols = [col for col in df.columns if 'location' in col or 'end_location' in col]
+#                 for col in loc_cols:
+#                     if col in df.columns: df[col] = df[col].apply(lambda x: safe_literal_eval(x) if pd.notna(x) else None)
 
-                bool_cols_to_check = [
-                    'counterpress', 
-                    'offensive', 
-                    'recovery_failure',
-                    'deflection',
-                    'save_block',
-                    'aerial_won',
-                    'nutmeg',
-                    'overrun',
-                    'no_touch', 
-                    'leads_to_shot',
-                    'advantage', 
-                    'penalty',   
-                    'defensive',
-                    'backheel',
-                    'deflected', 
-                    'miscommunication',
-                    'cross',
-                    'cut_back',
-                    'switch',
-                    'shot_assist',
-                    'goal_assist',
-                    'follows_dribble',
-                    'first_time',
-                    'open_goal',
-                    'deflected',
-                    'under_pressure',
-                    'out'
-                ]
-                bool_cols_to_check = sorted(list(set(bool_cols_to_check)))
+#                 bool_cols_to_check = [
+#                     'counterpress', 
+#                     'offensive', 
+#                     'recovery_failure',
+#                     'deflection',
+#                     'save_block',
+#                     'aerial_won',
+#                     'nutmeg',
+#                     'overrun',
+#                     'no_touch', 
+#                     'leads_to_shot',
+#                     'advantage', 
+#                     'penalty',   
+#                     'defensive',
+#                     'backheel',
+#                     'deflected', 
+#                     'miscommunication',
+#                     'cross',
+#                     'cut_back',
+#                     'switch',
+#                     'shot_assist',
+#                     'goal_assist',
+#                     'follows_dribble',
+#                     'first_time',
+#                     'open_goal',
+#                     'deflected',
+#                     'under_pressure',
+#                     'out'
+#                 ]
+#                 bool_cols_to_check = sorted(list(set(bool_cols_to_check)))
 
 
-                for col in bool_cols_to_check:
-                    if col in df.columns:
-                        if df[col].dtype == 'object':
-                            df[col] = df[col].astype(str).str.lower().map(
-                                {'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}
-                            ).astype('boolean') 
-                        elif pd.api.types.is_numeric_dtype(df[col]):
-                            df[col] = df[col].map({1.0: True, 1: True, 0.0: False, 0: False}).astype('boolean')
+#                 for col in bool_cols_to_check:
+#                     if col in df.columns:
+#                         if df[col].dtype == 'object':
+#                             df[col] = df[col].astype(str).str.lower().map(
+#                                 {'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}
+#                             ).astype('boolean') 
+#                         elif pd.api.types.is_numeric_dtype(df[col]):
+#                             df[col] = df[col].map({1.0: True, 1: True, 0.0: False, 0: False}).astype('boolean')
                 
-                numeric_cols_to_check = ['duration', 'pass_length', 'pass_angle', 'shot_statsbomb_xg', 'statsbomb_xg'] 
-                for col in numeric_cols_to_check:
-                    if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
-                return df
-            except Exception as e: logger.error(f"Error loading CSV {file_path_csv}: {e}"); pass
-        logger.warning(f"No data file found for player {player_id} in season {season} (tried JSON: {file_path_json}, CSV: {file_path_csv})")
-        return None
+#                 numeric_cols_to_check = ['duration', 'pass_length', 'pass_angle', 'shot_statsbomb_xg', 'statsbomb_xg'] 
+#                 for col in numeric_cols_to_check:
+#                     if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
+#                 return df
+#             except Exception as e: logger.error(f"Error loading CSV {file_path_csv}: {e}"); pass
+#         logger.warning(f"No data file found for player {player_id} in season {season} (tried JSON: {file_path_json}, CSV: {file_path_csv})")
+#         return None
 
+#     if season == "all":
+#         dfs = []
+#         for season_folder_name in os.listdir(data_dir):
+#             season_folder_path = os.path.join(data_dir, season_folder_name)
+#             if os.path.isdir(season_folder_path) and '_' in season_folder_name:
+#                 df_season = try_load_one(player_id, season_folder_name, data_dir)
+#                 if df_season is not None and not df_season.empty: dfs.append(df_season)
+#         if dfs: return pd.concat(dfs, ignore_index=True)
+#         else: logger.info(f"No data found for player {player_id} across any seasons."); return pd.DataFrame()
+#     else:
+#         return try_load_one(player_id, season, data_dir)
+
+def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya no se usa, pero lo dejamos
+    def try_load_one_from_r2(player_id, season):
+        if not s3_client:
+            logger.error("Cannot load from R2: S3 client not initialized.")
+            return None
+            
+        # La ruta al archivo dentro del bucket
+        file_key_csv = f"data/{season}/players/{player_id}_{season}.csv"
+        
+        try:
+            logger.debug(f"Attempting to load from R2: {R2_BUCKET_NAME}/{file_key_csv}")
+            response = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=file_key_csv)
+            
+            # Leer el contenido en un DataFrame de pandas
+            csv_content = response['Body'].read().decode('utf-8')
+            df = pd.read_csv(StringIO(csv_content), low_memory=False)
+
+            # --- TU LÓGICA DE PROCESADO SE MANTIENE EXACTAMENTE IGUAL ---
+            loc_cols = [col for col in df.columns if 'location' in col or 'end_location' in col]
+            for col in loc_cols:
+                if col in df.columns: df[col] = df[col].apply(lambda x: safe_literal_eval(x) if pd.notna(x) else None)
+            
+            bool_cols_to_check = [
+                'counterpress', 'offensive', 'recovery_failure', 'deflection', 'save_block', 'aerial_won', 'nutmeg', 'overrun',
+                'no_touch', 'leads_to_shot', 'advantage', 'penalty', 'defensive', 'backheel', 'deflected', 'miscommunication',
+                'cross', 'cut_back', 'switch', 'shot_assist', 'goal_assist', 'follows_dribble', 'first_time', 'open_goal',
+                'under_pressure', 'out'
+            ]
+            bool_cols_to_check = sorted(list(set(bool_cols_to_check)))
+
+            for col in bool_cols_to_check:
+                if col in df.columns:
+                    if df[col].dtype == 'object':
+                        df[col] = df[col].astype(str).str.lower().map({'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}).astype('boolean')
+                    elif pd.api.types.is_numeric_dtype(df[col]):
+                        df[col] = df[col].map({1.0: True, 1: True, 0.0: False, 0: False}).astype('boolean')
+            
+            numeric_cols_to_check = ['duration', 'pass_length', 'pass_angle', 'shot_statsbomb_xg', 'statsbomb_xg']
+            for col in numeric_cols_to_check:
+                if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+            return df
+        except s3_client.exceptions.NoSuchKey:
+            logger.warning(f"R2 object not found: {R2_BUCKET_NAME}/{file_key_csv}")
+            return None
+        except Exception as e:
+            logger.error(f"Error loading {file_key_csv} from R2: {e}", exc_info=True)
+            return None
+
+    # El modo "all" es ineficiente y no funcionará sin listar el bucket.
+    # Por ahora, lo simplificamos para que la app funcione.
     if season == "all":
-        dfs = []
-        for season_folder_name in os.listdir(data_dir):
-            season_folder_path = os.path.join(data_dir, season_folder_name)
-            if os.path.isdir(season_folder_path) and '_' in season_folder_name:
-                df_season = try_load_one(player_id, season_folder_name, data_dir)
-                if df_season is not None and not df_season.empty: dfs.append(df_season)
-        if dfs: return pd.concat(dfs, ignore_index=True)
-        else: logger.info(f"No data found for player {player_id} across any seasons."); return pd.DataFrame()
+        logger.warning("Loading 'all' seasons is not fully supported in production environment. Returning empty DataFrame.")
+        return pd.DataFrame()
     else:
-        return try_load_one(player_id, season, data_dir)
+        return try_load_one_from_r2(player_id, season)
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'), static_url_path='/static')
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
@@ -396,13 +474,24 @@ def structure_kpis_for_frontend(kpi_definitions_by_position):
 @app.route("/")
 def home(): return jsonify({"message": "Welcome to the Player Stats API."})
 
-player_index_path_main = os.path.join(DATA_DIR, "player_index.json")
+# player_index_path_main = os.path.join(DATA_DIR, "player_index.json")
+# player_index_main_data = {}
+# if os.path.exists(player_index_path_main):
+#     try:
+#         with open(player_index_path_main, "r", encoding="utf-8") as f: player_index_main_data = json.load(f)
+#     except Exception as e: logger.error(f"Error loading player_index.json for main: {e}")
+# else: logger.warning("main.py: player_index.json not found.")
+
 player_index_main_data = {}
-if os.path.exists(player_index_path_main):
+if s3_client:
     try:
-        with open(player_index_path_main, "r", encoding="utf-8") as f: player_index_main_data = json.load(f)
-    except Exception as e: logger.error(f"Error loading player_index.json for main: {e}")
-else: logger.warning("main.py: player_index.json not found.")
+        logger.info(f"Loading player_index.json from R2 bucket: {R2_BUCKET_NAME}")
+        response = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key="data/player_index.json")
+        content = response['Body'].read().decode('utf-8')
+        player_index_main_data = json.loads(content)
+        logger.info("Successfully loaded player_index.json from R2.")
+    except Exception as e:
+        logger.error(f"Error loading player_index.json from R2: {e}")
 
 @app.route("/players")
 def players_route():
@@ -433,68 +522,80 @@ def player_events_route():
         return df.to_json(orient="records", date_format="iso", default_handler=str)
     except Exception as e: logger.error(f"Error in /player_events: {e}", exc_info=True); return jsonify({"error": str(e)}), 500
 
+# @app.route("/pass_completion_heatmap")
+# def pass_completion_heatmap_route():
+#     player_id = request.args.get("player_id")
+#     season = request.args.get("season")
+#     if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
+#     try:
+#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
+#         os.makedirs(player_dir, exist_ok=True)
+#         image_filename = f"{str(player_id)}_{season}_pass_compl_heatmap.png"
+#         image_path = os.path.join(player_dir, image_filename)
+#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
+
+#         df = load_player_data(player_id, season, DATA_DIR)
+#         if df is None or df.empty:
+#             logger.warning(f"No data for pass completion heatmap {player_id}/{season}")
+#             return jsonify({"error": "No data found"}), 404
+
+#         df_passes = df[df.get("type") == "Pass"].copy() if "type" in df.columns else pd.DataFrame()
+
+#         if df_passes.empty or not all(c in df_passes.columns for c in ["location", "pass_outcome"]):
+#             logger.warning(f"Required columns missing for pass completion heatmap {player_id}/{season}")
+#             return jsonify({"error": "Required columns for pass completion missing"}), 400
+
+#         df_passes["location_eval"] = df_passes["location"].apply(safe_literal_eval)
+#         df_valid_loc = df_passes[df_passes["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
+
+#         if df_valid_loc.empty:
+#             logger.warning(f"No valid pass location data for pass completion heatmap {player_id}/{season}")
+#             return jsonify({"error": "No valid pass location data"}), 404
+
+#         df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
+#         df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
+#         df_valid_loc["completed"] = df_valid_loc["pass_outcome"].isna() 
+
+#         pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
+#         fig, ax = pitch.draw(figsize=(4.125, 6))
+#         fig.set_facecolor('#22312b')
+
+#         bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, values=df_valid_loc.completed, statistic='mean', positional='full')
+
+#         for section_data in bin_statistic:
+#             if 'statistic' in section_data and isinstance(section_data['statistic'], np.ndarray):
+#                 section_data['statistic'] = np.nan_to_num(section_data['statistic'], nan=0.0)
+#             elif 'statistic' not in section_data or section_data['statistic'] is None : 
+#                 if 'x_grid' in section_data and 'y_grid' in section_data and section_data['x_grid'] is not None and section_data['y_grid'] is not None:
+#                     section_data['statistic'] = np.zeros((section_data['y_grid'].shape[0]-1, section_data['x_grid'].shape[1]-1), dtype=float)
+#                 else:
+#                     logger.warning(f"Missing grid info for a section in pass completion heatmap for {player_id}/{season}, section: {section_data.get('pos_section')}")
+#                     section_data['statistic'] = np.array([[0.0]])
+
+
+#         pitch.heatmap_positional(bin_statistic, ax=ax, cmap='Blues', edgecolors='#22312b', vmin=0, vmax=1)
+#         path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
+#         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
+
+#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         plt.close(fig)
+#         return jsonify({"image_url": image_url})
+#     except Exception as e:
+#         logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
+#         return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
+
 @app.route("/pass_completion_heatmap")
 def pass_completion_heatmap_route():
-    player_id = request.args.get("player_id")
-    season = request.args.get("season")
-    if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-    try:
-        player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-        os.makedirs(player_dir, exist_ok=True)
-        image_filename = f"{str(player_id)}_{season}_pass_compl_heatmap.png"
-        image_path = os.path.join(player_dir, image_filename)
-        image_url = f"/static/images/{str(player_id)}/{image_filename}"
+    return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
 
-        df = load_player_data(player_id, season, DATA_DIR)
-        if df is None or df.empty:
-            logger.warning(f"No data for pass completion heatmap {player_id}/{season}")
-            return jsonify({"error": "No data found"}), 404
+@app.route("/position_heatmap")
+def position_heatmap_route():
+    return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
 
-        df_passes = df[df.get("type") == "Pass"].copy() if "type" in df.columns else pd.DataFrame()
-
-        if df_passes.empty or not all(c in df_passes.columns for c in ["location", "pass_outcome"]):
-            logger.warning(f"Required columns missing for pass completion heatmap {player_id}/{season}")
-            return jsonify({"error": "Required columns for pass completion missing"}), 400
-
-        df_passes["location_eval"] = df_passes["location"].apply(safe_literal_eval)
-        df_valid_loc = df_passes[df_passes["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-
-        if df_valid_loc.empty:
-            logger.warning(f"No valid pass location data for pass completion heatmap {player_id}/{season}")
-            return jsonify({"error": "No valid pass location data"}), 404
-
-        df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-        df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-        df_valid_loc["completed"] = df_valid_loc["pass_outcome"].isna() 
-
-        pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-        fig, ax = pitch.draw(figsize=(4.125, 6))
-        fig.set_facecolor('#22312b')
-
-        bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, values=df_valid_loc.completed, statistic='mean', positional='full')
-
-        for section_data in bin_statistic:
-            if 'statistic' in section_data and isinstance(section_data['statistic'], np.ndarray):
-                section_data['statistic'] = np.nan_to_num(section_data['statistic'], nan=0.0)
-            elif 'statistic' not in section_data or section_data['statistic'] is None : 
-                if 'x_grid' in section_data and 'y_grid' in section_data and section_data['x_grid'] is not None and section_data['y_grid'] is not None:
-                    section_data['statistic'] = np.zeros((section_data['y_grid'].shape[0]-1, section_data['x_grid'].shape[1]-1), dtype=float)
-                else:
-                    logger.warning(f"Missing grid info for a section in pass completion heatmap for {player_id}/{season}, section: {section_data.get('pos_section')}")
-                    section_data['statistic'] = np.array([[0.0]])
-
-
-        pitch.heatmap_positional(bin_statistic, ax=ax, cmap='Blues', edgecolors='#22312b', vmin=0, vmax=1)
-        path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-        pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
-
-        # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        plt.close(fig)
-        return jsonify({"image_url": image_url})
-    except Exception as e:
-        logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
+@app.route("/pressure_heatmap")
+def pressure_heatmap_route():
+    return jsonify({"error": "Heatmap generation is temporarily disabled in production."}), 503
 
 
 @app.route("/pass_map_zona_stats")
@@ -728,24 +829,73 @@ def scouting_predict():
         scaler_file = os.path.join(model_pos_dir, f"feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib")
         config_file = os.path.join(model_pos_dir, f"model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json")
 
-        if not all(os.path.exists(p) for p in [model_file, scaler_file, config_file]):
-            logger.error(f"Missing files for model {effective_model_id_for_path}, Pos {position_group_for_prediction}.")
-            logger.error(f"  Checked model: {model_file}")
-            logger.error(f"  Checked scaler: {scaler_file}")
-            logger.error(f"  Checked config: {config_file}")
-            return jsonify({"error": f"Missing files for model ID {effective_model_id_for_path}, Pos {position_group_for_prediction}"}), 404
+        # if not all(os.path.exists(p) for p in [model_file, scaler_file, config_file]):
+        #     logger.error(f"Missing files for model {effective_model_id_for_path}, Pos {position_group_for_prediction}.")
+        #     logger.error(f"  Checked model: {model_file}")
+        #     logger.error(f"  Checked scaler: {scaler_file}")
+        #     logger.error(f"  Checked config: {config_file}")
+        #     return jsonify({"error": f"Missing files for model ID {effective_model_id_for_path}, Pos {position_group_for_prediction}"}), 404
         
-        model_to_load = joblib.load(model_file); scaler_to_load = joblib.load(scaler_file)
-        with open(config_file, 'r') as f_cfg: model_cfg = json.load(f_cfg)
-        expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
-        if not expected_ml_feature_names_for_model: return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
+        # model_to_load = joblib.load(model_file); scaler_to_load = joblib.load(scaler_file)
+        # with open(config_file, 'r') as f_cfg: model_cfg = json.load(f_cfg)
+        # expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
+        # if not expected_ml_feature_names_for_model: return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
+
+        # NUEVO BLOQUE PARA PEGAR EN SU LUGAR
+
+        model_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
+        scaler_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
+        config_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
+
+        try:
+            if not s3_client:
+                return jsonify({"error": "S3 client not initialized. Check server configuration."}), 500
+                
+            # Cargar modelo
+            logger.info(f"Loading model from R2: {model_key}")
+            with BytesIO() as f_model:
+                s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
+                f_model.seek(0)
+                model_to_load = joblib.load(f_model)
+
+            # Cargar scaler
+            logger.info(f"Loading scaler from R2: {scaler_key}")
+            with BytesIO() as f_scaler:
+                s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
+                f_scaler.seek(0)
+                scaler_to_load = joblib.load(f_scaler)
+
+            # Cargar config
+            logger.info(f"Loading config from R2: {config_key}")
+            response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
+            config_content = response_cfg['Body'].read().decode('utf-8')
+            model_cfg = json.loads(config_content)
+            
+            expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
+            if not expected_ml_feature_names_for_model:
+                return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
+
+        except Exception as e:
+            logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: {model_key}, {scaler_key}, {config_key}. Error: {e}", exc_info=True)
+            return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}."}), 500
+
+        # FIN DEL NUEVO BLOQUE
 
         player_seasons_all = player_metadata.get("seasons", [])
         if not player_seasons_all: return jsonify({"error": "No seasons for player"}), 404
         
         df_all_base_features_for_player_list_pred = []
         try:
-            minutes_df_global = pd.read_csv(PLAYER_MINUTES_PATH)
+            # minutes_df_global = pd.read_csv(PLAYER_MINUTES_PATH)
+            minutes_df_global = pd.DataFrame()
+            if s3_client:
+                try:
+                    response_minutes = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key="data/player_season_minutes_with_names.csv")
+                    minutes_content = response_minutes['Body'].read().decode('utf-8')
+                    minutes_df_global = pd.read_csv(StringIO(minutes_content))
+                except Exception as e:
+                    logger.error(f"Error loading player_season_minutes_with_names.csv from R2: {e}")
+                    return jsonify({"error": "Could not load essential minutes data from cloud storage."}), 500
             minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
         except FileNotFoundError:
             logger.error(f"Player minutes file '{PLAYER_MINUTES_PATH}' not found for prediction.")
@@ -909,97 +1059,98 @@ def pass_map_plot_route():
         logger.error(f"Error in /pass_map_plot for {player_id}/{season}: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-@app.route("/position_heatmap")
-def position_heatmap_route():
-    player_id = request.args.get("player_id")
-    season = request.args.get("season")
-    if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-    try:
-        player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-        os.makedirs(player_dir, exist_ok=True)
-        image_filename = f"{str(player_id)}_{season}_pos_heatmap.png"
-        image_path = os.path.join(player_dir, image_filename)
-        image_url = f"/static/images/{str(player_id)}/{image_filename}"
+# @app.route("/position_heatmap")
+# def position_heatmap_route():
+#     player_id = request.args.get("player_id")
+#     season = request.args.get("season")
+#     if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
+#     try:
+#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
+#         os.makedirs(player_dir, exist_ok=True)
+#         image_filename = f"{str(player_id)}_{season}_pos_heatmap.png"
+#         image_path = os.path.join(player_dir, image_filename)
+#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
 
-        df = load_player_data(player_id, season, DATA_DIR)
-        if df is None or df.empty or "location" not in df.columns:
-            logger.warning(f"No data or location column for position heatmap {player_id}/{season}")
-            return jsonify({"error": "No data or location column missing for heatmap"}), 404
+#         df = load_player_data(player_id, season, DATA_DIR)
+#         if df is None or df.empty or "location" not in df.columns:
+#             logger.warning(f"No data or location column for position heatmap {player_id}/{season}")
+#             return jsonify({"error": "No data or location column missing for heatmap"}), 404
 
-        df["location_eval"] = df["location"].apply(safe_literal_eval)
-        df_valid_loc = df[df["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-        if df_valid_loc.empty:
-            logger.warning(f"No valid location data for position heatmap {player_id}/{season}")
-            return jsonify({"error": "No valid location data for heatmap"}), 404
+#         df["location_eval"] = df["location"].apply(safe_literal_eval)
+#         df_valid_loc = df[df["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
+#         if df_valid_loc.empty:
+#             logger.warning(f"No valid location data for position heatmap {player_id}/{season}")
+#             return jsonify({"error": "No valid location data for heatmap"}), 404
 
-        df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-        df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
+#         df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
+#         df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
 
-        pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-        fig, ax = pitch.draw(figsize=(4.125, 6))
-        fig.set_facecolor('#22312b')
+#         pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
+#         fig, ax = pitch.draw(figsize=(4.125, 6))
+#         fig.set_facecolor('#22312b')
 
-        bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, statistic='count', positional='full', normalize=True)
-        pitch.heatmap_positional(bin_statistic, ax=ax, cmap='coolwarm', edgecolors='#22312b')
-        path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-        pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
+#         bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, statistic='count', positional='full', normalize=True)
+#         pitch.heatmap_positional(bin_statistic, ax=ax, cmap='coolwarm', edgecolors='#22312b')
+#         path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
+#         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
 
-        # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        plt.close(fig)
-        return jsonify({"image_url": image_url})
-    except Exception as e:
-        logger.error(f"Error generating position heatmap for {player_id}/{season}: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to generate position heatmap: {str(e)}"}), 500
+#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         plt.close(fig)
+#         return jsonify({"image_url": image_url})
+#     except Exception as e:
+#         logger.error(f"Error generating position heatmap for {player_id}/{season}: {e}", exc_info=True)
+#         return jsonify({"error": f"Failed to generate position heatmap: {str(e)}"}), 500
 
-@app.route("/pressure_heatmap")
-def pressure_heatmap_route():
-    player_id = request.args.get("player_id")
-    season = request.args.get("season")
-    if not player_id or not season:
-        return jsonify({"image_url": None, "message": "Missing player_id or season"})
-    try:
-        player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-        os.makedirs(player_dir, exist_ok=True)
-        image_filename = f"{str(player_id)}_{season}_pressure_heatmap.png"
-        image_path = os.path.join(player_dir, image_filename)
-        image_url = f"/static/images/{str(player_id)}/{image_filename}"
+# @app.route("/pressure_heatmap")
+# def pressure_heatmap_route():
+#     player_id = request.args.get("player_id")
+#     season = request.args.get("season")
+#     if not player_id or not season:
+#         return jsonify({"image_url": None, "message": "Missing player_id or season"})
+#     try:
+#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
+#         os.makedirs(player_dir, exist_ok=True)
+#         image_filename = f"{str(player_id)}_{season}_pressure_heatmap.png"
+#         image_path = os.path.join(player_dir, image_filename)
+#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
 
-        df_events = load_player_data(player_id, season, DATA_DIR)
-        df_pressure = pd.DataFrame()
+#         df_events = load_player_data(player_id, season, DATA_DIR)
+#         df_pressure = pd.DataFrame()
 
-        if df_events is not None and not df_events.empty and 'type' in df_events.columns:
-            df_pressure = df_events[df_events["type"] == "Pressure"].copy()
+#         if df_events is not None and not df_events.empty and 'type' in df_events.columns:
+#             df_pressure = df_events[df_events["type"] == "Pressure"].copy()
 
-        df_valid_loc = pd.DataFrame({"x": [], "y": []}) 
-        if not df_pressure.empty and "location" in df_pressure.columns:
-            df_pressure["location_eval"] = df_pressure["location"].apply(safe_literal_eval)
-            temp_df_valid_loc = df_pressure[df_pressure["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-            if not temp_df_valid_loc.empty:
-                df_valid_loc["x"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-                df_valid_loc["y"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[1])
+#         df_valid_loc = pd.DataFrame({"x": [], "y": []}) 
+#         if not df_pressure.empty and "location" in df_pressure.columns:
+#             df_pressure["location_eval"] = df_pressure["location"].apply(safe_literal_eval)
+#             temp_df_valid_loc = df_pressure[df_pressure["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
+#             if not temp_df_valid_loc.empty:
+#                 df_valid_loc["x"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[0])
+#                 df_valid_loc["y"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[1])
 
-        pitch = Pitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#000000', line_color='#efefef')
-        fig, ax = pitch.draw(figsize=(6.6, 4.125))
-        fig.set_facecolor('#000000')
+#         pitch = Pitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#000000', line_color='#efefef')
+#         fig, ax = pitch.draw(figsize=(6.6, 4.125))
+#         fig.set_facecolor('#000000')
 
-        if not df_valid_loc.empty and not df_valid_loc['x'].empty:
-            bin_statistic = pitch.bin_statistic(df_valid_loc.x, df_valid_loc.y, statistic='count', bins=(25, 25))
-            if 'statistic' in bin_statistic and np.any(bin_statistic['statistic']):
-                bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)
-                pcm = pitch.heatmap(bin_statistic, ax=ax, cmap='hot', edgecolors='#000000')
-                cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
-                cbar.outline.set_edgecolor('#efefef')
-                cbar.ax.yaxis.set_tick_params(color='#efefef')
-                plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#efefef')
+#         if not df_valid_loc.empty and not df_valid_loc['x'].empty:
+#             bin_statistic = pitch.bin_statistic(df_valid_loc.x, df_valid_loc.y, statistic='count', bins=(25, 25))
+#             if 'statistic' in bin_statistic and np.any(bin_statistic['statistic']):
+#                 bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)
+#                 pcm = pitch.heatmap(bin_statistic, ax=ax, cmap='hot', edgecolors='#000000')
+#                 cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
+#                 cbar.outline.set_edgecolor('#efefef')
+#                 cbar.ax.yaxis.set_tick_params(color='#efefef')
+#                 plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#efefef')
 
-        # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-        plt.close(fig)
-        return jsonify({"image_url": image_url})
-    except Exception as e:
-        logger.error(f"Error generating pressure heatmap for {player_id}/{season}: {e}", exc_info=True)
-        return jsonify({"image_url": None, "error": f"Failed to generate pressure heatmap: {str(e)}"})
+#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+#         plt.close(fig)
+#         return jsonify({"image_url": image_url})
+#     except Exception as e:
+#         logger.error(f"Error generating pressure heatmap for {player_id}/{season}: {e}", exc_info=True)
+#         return jsonify({"image_url": None, "error": f"Failed to generate pressure heatmap: {str(e)}"})
+
 
 @app.route("/available_aggregated_metrics")
 def available_aggregated_metrics_route():

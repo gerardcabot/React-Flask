@@ -792,7 +792,18 @@ def build_and_train_model_from_script_logic(
     
     # Identifiquem els índexs per a cada conjunt
     test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
-    train_indices = pos_df_for_training_all_features['target_season_identifier'] != EVALUATION_SEASON
+    # train_indices = pos_df_for_training_all_features['target_season_identifier'] != EVALUATION_SEASON
+    EVALUATION_SEASON_START_YEAR = int(EVALUATION_SEASON.split('_')[0])
+
+    # Afegim la columna 'season_numeric' a 'pos_df_for_training_all_features' si no existeix
+    # (Normalment es crea a 'all_player_ml_feature_vectors', però assegurem-nos que hi és)
+    if 'season_numeric' not in pos_df_for_training_all_features.columns:
+        # Aquesta línia potser no és necessària si el DataFrame ja la conté, però és una bona pràctica de seguretat
+        pos_df_for_training_all_features['season_numeric'] = pos_df_for_training_all_features['target_season_identifier'].apply(lambda x: int(x.split('_')[0]))
+
+    # La divisió correcta: entrenar NOMÉS amb temporades ANTERIORS a la d'avaluació
+    test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
+    train_indices = pos_df_for_training_all_features['season_numeric'] < EVALUATION_SEASON_START_YEAR
 
     X_train_df = X[train_indices]
     y_train = y[train_indices]
