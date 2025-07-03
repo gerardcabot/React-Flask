@@ -1,3 +1,24 @@
-**/venv/
-**/node_modules/
-data.zip
+# **/venv/
+# **/node_modules/
+# data.zip
+# change to upload web
+# Ignorar la carpeta de datos masivos
+/data/
+
+# Ignorar los modelos de Machine Learning compilados
+/ml_models/
+
+# Ignorar archivos de entorno de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Ignorar dependencias de Node.js
+/node_modules/
+
+# Archivos de build del frontend
+/dist/
