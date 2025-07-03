@@ -1,6 +1,96 @@
+// import { useEffect, useState } from "react";
+// import axios from "axios";
+// import { Stage, Layer, Rect, Line, Text } from "react-konva";
+
+
+
+// export default function PassMap({ playerId, season }) {
+//   const [passes, setPasses] = useState([]);
+//   const [error, setError] = useState(null);
+//   const [filters, setFilters] = useState({
+//     completed: true,
+//     incomplete: true,
+//     assists: true,
+//     finalThird: false
+//   });
+//   const [stats, setStats] = useState({
+//     completionRate: 0,
+//     finalThirdCompletionRate: 0,
+//     totalAssists: 0,
+//   });
+//   const [heatmapUrl, setHeatmapUrl] = useState(null);
+//   const [heatmapError, setHeatmapError] = useState(null);
+
+//   const pitchWidth = 120;
+//   const pitchHeight = 80;
+//   const canvasWidth = 600;
+//   const canvasHeight = 400;
+//   const scaleX = canvasWidth / pitchWidth;
+//   const scaleY = canvasHeight / pitchHeight;
+
+//   useEffect(() => {
+//     if (!playerId || !season) return;
+//     setPasses([]);
+//     setError(null);
+//     setHeatmapUrl(null);
+//     setHeatmapError(null);
+
+//     axios
+//       .get("http://localhost:5000/pass_map_plot", {
+//         params: { player_id: playerId, season }
+//       })
+//       .then(res => {
+//         if (res.data.passes) {
+//           const passData = res.data.passes;
+//           setPasses(passData);
+
+//           // Calculate overall statistics
+//           const totalPasses = passData.length;
+//           const completedPasses = passData.filter(p => p.completed).length;
+//           const finalThirdPasses = passData.filter(p => p.final_third).length;
+//           const completedFinalThirdPasses = passData.filter(p => p.completed && p.final_third).length;
+//           const assists = passData.filter(p => p.assist).length;
+
+//           setStats({
+//             completionRate: totalPasses > 0 ? (completedPasses / totalPasses * 100).toFixed(2) : 0,
+//             finalThirdCompletionRate: finalThirdPasses > 0 ? (completedFinalThirdPasses / finalThirdPasses * 100).toFixed(2) : 0,
+//             totalAssists: assists,
+//           });
+//         } else {
+//           setError("No s'han retornat dades de passades");
+//         }
+//       })
+//       .catch(err => {
+//         setError("Error en obtenir el mapa de passsades");
+//         console.error(err);
+//       });
+
+//     // Fetch Pass Completion Heatmap
+//     axios
+//       .get("http://localhost:5000/pass_completion_heatmap", {
+//         params: { player_id: playerId, season }
+//       })
+//       .then(res => {
+//         if (res.data.image_url) {
+//           const fullUrl = `http://localhost:5000${res.data.image_url}?t=${Date.now()}`;
+//           setHeatmapUrl(fullUrl);
+//         } else {
+//           setHeatmapError("No s'ha retornat cap URL d'imatge del mapa de calor");
+//         }
+//       })
+//       .catch(err => {
+//         setHeatmapError("Error en obtenir el mapa de calor de finalització del pas");
+//         console.error(err);
+//       });
+//   }, [playerId, season]);
+
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Stage, Layer, Rect, Line, Text } from "react-konva";
+
+// 1. Definir la variable de la API al principio del archivo
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function PassMap({ playerId, season }) {
   const [passes, setPasses] = useState([]);
@@ -33,8 +123,9 @@ export default function PassMap({ playerId, season }) {
     setHeatmapUrl(null);
     setHeatmapError(null);
 
+    // 2. Modificar la primera llamada a axios
     axios
-      .get("http://localhost:5000/pass_map_plot", {
+      .get(`${API_URL}/pass_map_plot`, {
         params: { player_id: playerId, season }
       })
       .then(res => {
@@ -42,7 +133,6 @@ export default function PassMap({ playerId, season }) {
           const passData = res.data.passes;
           setPasses(passData);
 
-          // Calculate overall statistics
           const totalPasses = passData.length;
           const completedPasses = passData.filter(p => p.completed).length;
           const finalThirdPasses = passData.filter(p => p.final_third).length;
@@ -63,21 +153,21 @@ export default function PassMap({ playerId, season }) {
         console.error(err);
       });
 
-    // Fetch Pass Completion Heatmap
+    // 3. Modificar la segunda llamada a axios y la construcción de la URL
     axios
-      .get("http://localhost:5000/pass_completion_heatmap", {
+      .get(`${API_URL}/pass_completion_heatmap`, {
         params: { player_id: playerId, season }
       })
       .then(res => {
         if (res.data.image_url) {
-          const fullUrl = `http://localhost:5000${res.data.image_url}?t=${Date.now()}`;
+          const fullUrl = `${API_URL}${res.data.image_url}?t=${Date.now()}`;
           setHeatmapUrl(fullUrl);
         } else {
-          setHeatmapError("No s'ha retornat cap URL d'imatge del mapa de calor");
+          setHeatmapError(res.data.error || "No s'ha retornat cap URL d'imatge del mapa de calor");
         }
       })
       .catch(err => {
-        setHeatmapError("Error en obtenir el mapa de calor de finalització del pas");
+        setHeatmapError(err.response?.data?.error || "Error en obtenir el mapa de calor de finalització del pas");
         console.error(err);
       });
   }, [playerId, season]);

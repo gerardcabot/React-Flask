@@ -1,6 +1,65 @@
+// import { useEffect, useState } from "react";
+// import axios from "axios";
+// import { Stage, Layer, Rect, Line, RegularPolygon, Text } from "react-konva";
+
+// export default function ShotMap({ playerId, season }) {
+//   const [shots, setShots] = useState([]);
+//   const [error, setError] = useState(null);
+//   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, xg: 0 });
+//   const [stats, setStats] = useState({
+//     totalGoals: 0,
+//     totalXg: 0,
+//     overallXgDiff: 0,
+//   });
+
+//   const pitchWidth = 120;
+//   const pitchHeight = 80;
+//   const canvasWidth = 600;
+//   const canvasHeight = 400;
+//   const scaleX = canvasWidth / pitchWidth;
+//   const scaleY = canvasHeight / pitchHeight;
+
+//   useEffect(() => {
+//     if (!playerId || !season) return;
+//     setShots([]);
+//     setError(null);
+
+//     axios
+//       .get("http://localhost:5000/shot_map", {
+//         params: { player_id: playerId, season }
+//       })
+//       .then(res => {
+//         if (res.data.shots) {
+//           const shotData = res.data.shots;
+//           setShots(shotData);
+
+//           // Calculate statistics
+//           const totalGoals = shotData.filter(shot => shot.goal).length;
+//           const totalXg = shotData.reduce((sum, shot) => sum + shot.xg, 0).toFixed(2);
+//           const overallXgDiff = (totalGoals - parseFloat(totalXg)).toFixed(2);
+
+//           setStats({
+//             totalGoals,
+//             totalXg: parseFloat(totalXg),
+//             overallXgDiff: parseFloat(overallXgDiff),
+//           });
+//         } else {
+//           setError("No shot data returned");
+//         }
+//       })
+//       .catch(err => {
+//         console.error("Axios error:", err.response ? err.response.data : err.message);
+//         setError("Error fetching shot map: " + (err.response ? err.response.data.error : err.message));
+//       });
+//   }, [playerId, season]);
+
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Stage, Layer, Rect, Line, RegularPolygon, Text } from "react-konva";
+
+// 1. Definir la variable de la API al principio del archivo
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function ShotMap({ playerId, season }) {
   const [shots, setShots] = useState([]);
@@ -24,8 +83,9 @@ export default function ShotMap({ playerId, season }) {
     setShots([]);
     setError(null);
 
+    // 2. Modificar la llamada a axios
     axios
-      .get("http://localhost:5000/shot_map", {
+      .get(`${API_URL}/shot_map`, {
         params: { player_id: playerId, season }
       })
       .then(res => {
@@ -33,7 +93,6 @@ export default function ShotMap({ playerId, season }) {
           const shotData = res.data.shots;
           setShots(shotData);
 
-          // Calculate statistics
           const totalGoals = shotData.filter(shot => shot.goal).length;
           const totalXg = shotData.reduce((sum, shot) => sum + shot.xg, 0).toFixed(2);
           const overallXgDiff = (totalGoals - parseFloat(totalXg)).toFixed(2);

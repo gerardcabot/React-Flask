@@ -3,6 +3,8 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import React from "react";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 function calculatePlayerAge(dob, season) {
   if (!dob || !season) return null;
@@ -107,11 +109,13 @@ function ScoutingPage() {
   const [kpiSearchTerm, setKpiSearchTerm] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:5000/players")
+    // axios.get("http://localhost:5000/players")
+    axios.get(`${API_URL}/players`)
       .then(res => setAllPlayers(res.data || []))
       .catch(() => { setAllPlayers([]); setPredictionError("No s'ha pogut carregar la llista de jugadors."); });
 
-    axios.get("http://localhost:5000/api/custom_model/available_kpis")
+    // axios.get("http://localhost:5000/api/custom_model/available_kpis")
+    axios.get(`${API_URL}/api/custom_model/available_kpis`)
       .then(res => {
         setStructuredKpiOptions(res.data?.structured_kpis || []);
         setSelectedImpactKpisForCustom([]);
@@ -121,7 +125,8 @@ function ScoutingPage() {
         setStructuredKpiOptions([]);
       });
 
-    axios.get("http://localhost:5000/api/custom_model/available_ml_features")
+    // axios.get("http://localhost:5000/api/custom_model/available_ml_features")
+    axios.get(`${API_URL}/api/custom_model/available_ml_features`)
       .then(res => {
         setAvailableMlFeaturesOptions(res.data?.available_ml_features || []);
       })
@@ -134,7 +139,8 @@ function ScoutingPage() {
   useEffect(() => {
     if (modelTypeForPrediction === 'custom') {
       setIsLoadingPrediction(true);
-      axios.get("http://localhost:5000/api/custom_model/list")
+      // axios.get("http://localhost:5000/api/custom_model/list")
+      axios.get(`${API_URL}/api/custom_model/list`)
         .then(res => {
           setAvailableCustomModels(res.data?.custom_models || []);
           setIsLoadingPrediction(false);
@@ -194,7 +200,8 @@ function ScoutingPage() {
     setIsLoadingPrediction(true);
     setPredictionResult(null);
     setPredictionError("");
-    axios.get("http://localhost:5000/scouting_predict", {
+    // axios.get("http://localhost:5000/scouting_predict", {
+    axios.get(`${API_URL}/scouting_predict`, {
       params: {
         player_id: selectedPlayer.player_id,
         season: selectedSeason,
@@ -247,7 +254,8 @@ function ScoutingPage() {
     setIsBuildingCustomModel(true);
     setCustomModelBuildStatus(null);
     const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
-    axios.post("http://localhost:5000/api/custom_model/build", {
+    // axios.post("http://localhost:5000/api/custom_model/build", {
+    axios.post(`${API_URL}/api/custom_model/build`, {
       position_group: backendPositionGroup,
       impact_kpis: selectedImpactKpisForCustom,
       target_kpis: selectedTargetKpisForCustom,
@@ -258,7 +266,8 @@ function ScoutingPage() {
         setCustomModelBuildStatus({ success: true, message: res.data.message, id: res.data.custom_model_id });
         setIsBuildingCustomModel(false);
         if (modelTypeForPrediction === 'custom') {
-          axios.get("http://localhost:5000/api/custom_model/list")
+          // axios.get("http://localhost:5000/api/custom_model/list")
+          axios.get(`${API_URL}/api/custom_model/list`)
             .then(listRes => setAvailableCustomModels(listRes.data?.custom_models || []));
         }
       })
