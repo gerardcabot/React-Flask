@@ -232,7 +232,8 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
         return try_load_one_from_r2(player_id, season)
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'), static_url_path='/static')
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+# CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 def _calculate_goalkeeper_metrics(player_df, player_id_str):
