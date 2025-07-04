@@ -22,3 +22,5 @@ env/
 
 # Archivos de build del frontend
 /dist/
+
+/server-flask/generated_images/

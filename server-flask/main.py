@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, redirect, redirect
 import os
 import pandas as pd
 from flask_cors import CORS
@@ -588,150 +588,53 @@ def player_events_route():
 #     except Exception as e:
 #         logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
 #         return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
-
 @app.route("/pass_completion_heatmap")
 def pass_completion_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
-    if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-    try:
-        df = load_player_data(player_id, season, DATA_DIR)
-        if df is None or df.empty: return jsonify({"error": "No data found for this player/season"}), 404
-        
-        df_passes = df[df.get("type") == "Pass"].copy()
-        
-        # Alliberem memòria del DataFrame original que ja no necessitem
-        del df
-        gc.collect()
+    if not player_id or not season:
+        return jsonify({"error": "Missing player_id or season"}), 400
 
-        if df_passes.empty or not all(c in df_passes.columns for c in ["location", "pass_outcome"]):
-            return jsonify({"error": "Required pass columns are missing"}), 400
+    public_r2_url = os.environ.get('R2_PUBLIC_URL')
+    if not public_r2_url:
+        return jsonify({"error": "Server is not configured with R2_PUBLIC_URL"}), 500
 
-        df_passes["location_eval"] = df_passes["location"].apply(safe_literal_eval)
-        df_valid_loc = df_passes[df_passes["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-        if df_valid_loc.empty: return jsonify({"error": "No valid pass location data found"}), 404
-
-        df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-        df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-        df_valid_loc["completed"] = df_valid_loc["pass_outcome"].isna() 
-
-        pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-        fig, ax = pitch.draw(figsize=(4.125, 6))
-        fig.set_facecolor('#22312b')
-        bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, values=df_valid_loc.completed, statistic='mean', positional='full')
-
-        for section_data in bin_statistic:
-            if 'statistic' in section_data and isinstance(section_data['statistic'], np.ndarray):
-                section_data['statistic'] = np.nan_to_num(section_data['statistic'], nan=0.0)
-            elif 'statistic' not in section_data or section_data['statistic'] is None : 
-                if 'x_grid' in section_data and 'y_grid' in section_data and section_data['x_grid'] is not None and section_data['y_grid'] is not None:
-                    section_data['statistic'] = np.zeros((section_data['y_grid'].shape[0]-1, section_data['x_grid'].shape[1]-1), dtype=float)
-                else:
-                    section_data['statistic'] = np.array([[0.0]])
-        
-        pitch.heatmap_positional(bin_statistic, ax=ax, cmap='Blues', edgecolors='#22312b', vmin=0, vmax=1)
-        path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-        pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
-        
-        img_io = BytesIO()
-        # Reduïm la qualitat (DPI) per estalviar memòria
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
-        img_io.seek(0)
-        plt.close(fig)
-        
-        return send_file(img_io, mimetype='image/png')
-        
-    except Exception as e:
-        logger.error(f"Error in /pass_completion_heatmap: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
+    # Construïm el nom de l'arxiu exactament com el vas pujar a R2
+    image_filename = f"{player_id}_{season}_pass_completion_heatmap.png"
+    image_url = f"{public_r2_url}/{image_filename}"
+    
+    # Redirigim el navegador de l'usuari a la URL pública de la imatge
+    return redirect(image_url)
 
 @app.route("/position_heatmap")
 def position_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
-    if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-    try:
-        df = load_player_data(player_id, season, DATA_DIR)
-        if df is None or df.empty or "location" not in df.columns:
-            return jsonify({"error": "No data or location column missing for heatmap"}), 404
+    if not player_id or not season:
+        return jsonify({"error": "Missing player_id or season"}), 400
         
-        df["location_eval"] = df["location"].apply(safe_literal_eval)
-        df_valid_loc = df[df["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-        
-        del df
-        gc.collect()
+    public_r2_url = os.environ.get('R2_PUBLIC_URL')
+    if not public_r2_url:
+        return jsonify({"error": "Server is not configured with R2_PUBLIC_URL"}), 500
 
-        if df_valid_loc.empty: return jsonify({"error": "No valid location data for heatmap"}), 404
-
-        df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-        df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-        
-        pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-        fig, ax = pitch.draw(figsize=(4.125, 6))
-        fig.set_facecolor('#22312b')
-        
-        bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, statistic='count', positional='full', normalize=True)
-        pitch.heatmap_positional(bin_statistic, ax=ax, cmap='coolwarm', edgecolors='#22312b')
-        path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-        pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
-
-        img_io = BytesIO()
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
-        img_io.seek(0)
-        plt.close(fig)
-        
-        return send_file(img_io, mimetype='image/png')
-        
-    except Exception as e:
-        logger.error(f"Error generating position heatmap for {player_id}/{season}: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to generate position heatmap: {str(e)}"}), 500
+    image_filename = f"{player_id}_{season}_position_heatmap.png"
+    image_url = f"{public_r2_url}/{image_filename}"
+    return redirect(image_url)
 
 @app.route("/pressure_heatmap")
 def pressure_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
-    if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-    try:
-        df_events = load_player_data(player_id, season, DATA_DIR)
-        df_pressure = pd.DataFrame()
-        if df_events is not None and 'type' in df_events.columns:
-            df_pressure = df_events[df_events["type"] == "Pressure"].copy()
-        
-        del df_events
-        gc.collect()
+    if not player_id or not season:
+        return jsonify({"error": "Missing player_id or season"}), 400
 
-        df_valid_loc = pd.DataFrame({"x": [], "y": []}) 
-        if not df_pressure.empty and "location" in df_pressure.columns:
-            df_pressure["location_eval"] = df_pressure["location"].apply(safe_literal_eval)
-            temp_df_valid_loc = df_pressure[df_pressure["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-            if not temp_df_valid_loc.empty:
-                df_valid_loc["x"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-                df_valid_loc["y"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[1])
+    public_r2_url = os.environ.get('R2_PUBLIC_URL')
+    if not public_r2_url:
+        return jsonify({"error": "Server is not configured with R2_PUBLIC_URL"}), 500
         
-        pitch = Pitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#000000', line_color='#efefef')
-        fig, ax = pitch.draw(figsize=(6.6, 4.125))
-        fig.set_facecolor('#000000')
-
-        if not df_valid_loc.empty and not df_valid_loc['x'].empty:
-            bin_statistic = pitch.bin_statistic(df_valid_loc.x, df_valid_loc.y, statistic='count', bins=(25, 25))
-            if 'statistic' in bin_statistic and np.any(bin_statistic['statistic']):
-                bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)
-                pcm = pitch.heatmap(bin_statistic, ax=ax, cmap='hot', edgecolors='#000000')
-                cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
-                cbar.outline.set_edgecolor('#efefef')
-                cbar.ax.yaxis.set_tick_params(color='#efefef')
-                plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#efefef')
-        
-        img_io = BytesIO()
-        fig.savefig(img_io, format='png', bbox_inches='tight', facecolor=fig.get_facecolor(), dpi=72)
-        img_io.seek(0)
-        plt.close(fig)
-        
-        return send_file(img_io, mimetype='image/png')
-        
-    except Exception as e:
-        logger.error(f"Error generating pressure heatmap for {player_id}/{season}: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to generate pressure heatmap: {str(e)}"}), 500
+    image_filename = f"{player_id}_{season}_pressure_heatmap.png"
+    image_url = f"{public_r2_url}/{image_filename}"
+    return redirect(image_url)
 
 
 @app.route("/pass_map_zona_stats")
