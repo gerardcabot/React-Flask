@@ -235,7 +235,8 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'), static_url_path='/static')
 # CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/*": {"origins": "*"}})
+# CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "https://react-flask-psi.vercel.app"}})
 
 
 def _calculate_goalkeeper_metrics(player_df, player_id_str):
@@ -1040,22 +1041,43 @@ def available_ml_features_for_custom_model():
         logger.error(f"Error fetching available ML features: {e}", exc_info=True)
         return jsonify({"error": str(e), "available_ml_features": []}), 500
 
+# @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
+# def goalkeeper_analysis_route(player_id, season):
+#     """Serves comprehensive GK analysis including stats and chart data."""
+#     if not player_id or not season:
+#         return jsonify({"error": "Missing player_id or season"}), 400
+#     try:
+#         df_player = load_player_data(player_id, season, DATA_DIR)
+#         analysis_results = _calculate_goalkeeper_metrics(df_player, player_id)
+
+#         if analysis_results.get("error"):
+#             logger.warning(f"GK Analysis for {player_id}/{season} resulted in error: {analysis_results.get('error')}")
+#             return jsonify(analysis_results), 404
+#         return jsonify(analysis_results)
+#     except Exception as e:
+#         logger.error(f"Exception in goalkeeper_analysis_route for {player_id}, {season}: {e}", exc_info=True)
+#         return jsonify({"error": f"Unexpected server error: {str(e)}"}), 500
+
 @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
 def goalkeeper_analysis_route(player_id, season):
-    """Serves comprehensive GK analysis including stats and chart data."""
+    """Serveix una anàlisi completa del porter incloent estadístiques i dades de gràfics."""
     if not player_id or not season:
-        return jsonify({"error": "Missing player_id or season"}), 400
+        return jsonify({"error": "Falta player_id o season"}), 400
     try:
         df_player = load_player_data(player_id, season, DATA_DIR)
         analysis_results = _calculate_goalkeeper_metrics(df_player, player_id)
 
+        # Alliberem memòria del DataFrame un cop ja no el necessitem
+        del df_player
+        gc.collect() # <--- AFEGEIX AQUESTA LÍNIA
+
         if analysis_results.get("error"):
-            logger.warning(f"GK Analysis for {player_id}/{season} resulted in error: {analysis_results.get('error')}")
+            logger.warning(f"L'anàlisi del porter per a {player_id}/{season} ha resultat en un error: {analysis_results.get('error')}")
             return jsonify(analysis_results), 404
         return jsonify(analysis_results)
     except Exception as e:
-        logger.error(f"Exception in goalkeeper_analysis_route for {player_id}, {season}: {e}", exc_info=True)
-        return jsonify({"error": f"Unexpected server error: {str(e)}"}), 500
+        logger.error(f"Excepció a goalkeeper_analysis_route per a {player_id}, {season}: {e}", exc_info=True)
+        return jsonify({"error": f"Error inesperat del servidor: {str(e)}"}), 500
 
 @app.route("/pass_map_plot")
 def pass_map_plot_route():
