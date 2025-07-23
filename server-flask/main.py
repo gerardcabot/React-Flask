@@ -239,6 +239,7 @@ app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'
 CORS(app, resources={r"/*": {"origins": "https://react-flask-psi.vercel.app"}})
 
 
+
 def _calculate_goalkeeper_metrics(player_df, player_id_str):
     empty_results = {
         "player_id": player_id_str, "error": None,
