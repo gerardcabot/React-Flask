@@ -22,7 +22,7 @@ import { Chart } from 'chart.js'; // Només necessitem Chart per la referència,
 import { Line } from 'react-chartjs-2';
 import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
 
-Chart.register(CategoryScale, LinearScale, ArcElement, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+// Chart.register(CategoryScale, LinearScale, ArcElement, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 import PassMap from "./components/PassMap";
 import ShotMap from "./components/ShotMap";
