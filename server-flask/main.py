@@ -1251,6 +1251,89 @@ def available_aggregated_metrics_route():
         return jsonify({"error": str(e)}), 500
 
 
+# @app.route("/player_seasonal_metric_trend")
+# def player_seasonal_metric_trend_route():
+#     player_id = request.args.get("player_id")
+#     metric_to_aggregate = request.args.get("metric") 
+
+#     if not player_id or not metric_to_aggregate:
+#         return jsonify({"error": "Missing player_id or metric"}), 400
+
+#     try:
+#         player_metadata = None
+#         if isinstance(player_index_main_data, dict):
+#             player_metadata = next((data for name, data in player_index_main_data.items() if str(data.get("player_id")) == player_id), None)
+#         elif isinstance(player_index_main_data, list):
+#             player_metadata = next((data for data in player_index_main_data if str(data.get("player_id")) == player_id), None)
+
+#         if not player_metadata:
+#             return jsonify({"error": "Player not found"}), 404
+
+#         player_seasons = sorted(player_metadata.get("seasons", []))
+#         if not player_seasons:
+#             return jsonify({"trend_data": [], "metric_label": metric_to_aggregate}), 200
+
+#         try:
+#             minutes_df_global = pd.read_csv(PLAYER_MINUTES_PATH)
+#             minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
+#         except FileNotFoundError:
+#             logger.error(f"Player minutes file '{PLAYER_MINUTES_PATH}' not found for trend.")
+#             return jsonify({"error": "Player minutes file not found."}), 500
+
+#         trend_data_list = []
+#         all_possible_base_features = trainer_get_feature_names() 
+
+#         if metric_to_aggregate not in all_possible_base_features:
+#             return jsonify({"error": f"Metric '{metric_to_aggregate}' is not a valid aggregatable metric."}), 400
+
+#         for season_str in player_seasons:
+#             player_minutes_row = minutes_df_global[
+#                 (minutes_df_global['player_id'].astype(str) == player_id) & 
+#                 (minutes_df_global['season_name_std'] == season_str)
+#             ]
+#             total_minutes = player_minutes_row['total_minutes_played'].iloc[0] if not player_minutes_row.empty else 0.0
+#             num_90s = trainer_safe_division(total_minutes, 90.0)
+            
+#             dob = player_metadata.get("dob")
+#             age_at_season = 0 
+#             if dob:
+#                 age_at_season = get_age_at_fixed_point_in_season(dob, season_str) or 0 
+            
+#             season_numeric = int(season_str.split('_')[0]) 
+
+#             df_events_season = load_player_data(player_id, season_str, DATA_DIR)
+#             if df_events_season is None: df_events_season = pd.DataFrame()
+            
+#             base_features_series = trainer_extract_base_features(
+#                 df_events_season, 
+#                 age_at_season, 
+#                 season_numeric, 
+#                 num_90s
+#             )
+            
+#             metric_value = base_features_series.get(metric_to_aggregate, 0.0) 
+#             if pd.isna(metric_value):
+#                 metric_value = 0.0
+            
+#             trend_data_list.append({
+#                 "season": season_str,
+#                 "value": float(metric_value), 
+#                 "metric_name": metric_to_aggregate 
+#             })
+        
+#         metric_label_friendly = format_base_feature_label(metric_to_aggregate) 
+
+#         return jsonify({
+#             "trend_data": trend_data_list, 
+#             "metric_label": metric_label_friendly,
+#             "metric_id": metric_to_aggregate
+#         })
+
+#     except Exception as e:
+#         logger.error(f"Error in /player_seasonal_metric_trend for player {player_id}, metric {metric_to_aggregate}: {e}", exc_info=True)
+#         return jsonify({"error": str(e)}), 500
+
+
 @app.route("/player_seasonal_metric_trend")
 def player_seasonal_metric_trend_route():
     player_id = request.args.get("player_id")
@@ -1264,7 +1347,7 @@ def player_seasonal_metric_trend_route():
         if isinstance(player_index_main_data, dict):
             player_metadata = next((data for name, data in player_index_main_data.items() if str(data.get("player_id")) == player_id), None)
         elif isinstance(player_index_main_data, list):
-            player_metadata = next((data for data in player_index_main_data if str(data.get("player_id")) == player_id), None)
+             player_metadata = next((data for data in player_index_main_data if str(data.get("player_id")) == player_id), None)
 
         if not player_metadata:
             return jsonify({"error": "Player not found"}), 404
@@ -1273,12 +1356,20 @@ def player_seasonal_metric_trend_route():
         if not player_seasons:
             return jsonify({"trend_data": [], "metric_label": metric_to_aggregate}), 200
 
-        try:
-            minutes_df_global = pd.read_csv(PLAYER_MINUTES_PATH)
-            minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
-        except FileNotFoundError:
-            logger.error(f"Player minutes file '{PLAYER_MINUTES_PATH}' not found for trend.")
-            return jsonify({"error": "Player minutes file not found."}), 500
+        # --- INICI DEL BLOC MODIFICAT ---
+        minutes_df_global = pd.DataFrame()
+        if s3_client:
+            try:
+                response_minutes = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key="data/player_season_minutes_with_names.csv")
+                minutes_content = response_minutes['Body'].read().decode('utf-8')
+                minutes_df_global = pd.read_csv(StringIO(minutes_content))
+                minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
+            except Exception as e:
+                logger.error(f"Error loading player_season_minutes_with_names.csv from R2: {e}")
+                return jsonify({"error": "Could not load essential minutes data from cloud storage."}), 500
+        else:
+             return jsonify({"error": "Server not configured for cloud data access."}), 500
+        # --- FINAL DEL BLOC MODIFICAT ---
 
         trend_data_list = []
         all_possible_base_features = trainer_get_feature_names() 
@@ -1302,7 +1393,8 @@ def player_seasonal_metric_trend_route():
             season_numeric = int(season_str.split('_')[0]) 
 
             df_events_season = load_player_data(player_id, season_str, DATA_DIR)
-            if df_events_season is None: df_events_season = pd.DataFrame()
+            if df_events_season is None: 
+                df_events_season = pd.DataFrame()
             
             base_features_series = trainer_extract_base_features(
                 df_events_season, 
@@ -1311,8 +1403,14 @@ def player_seasonal_metric_trend_route():
                 num_90s
             )
             
-            metric_value = base_features_series.get(metric_to_aggregate, 0.0) 
-            if pd.isna(metric_value):
+            metric_value = base_features_series.get(metric_to_aggregate, 0.0)
+
+            try:
+                numeric_metric_value = float(metric_value)
+            except (ValueError, TypeError):
+                numeric_metric_value = float('nan')
+
+            if not math.isfinite(numeric_metric_value):
                 metric_value = 0.0
             
             trend_data_list.append({
