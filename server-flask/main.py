@@ -748,6 +748,49 @@ def available_kpis_for_custom_model():
         logger.error(f"Error fetching available KPIs for custom model: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
+# @app.route("/api/custom_model/build", methods=['POST'])
+# def handle_build_custom_model():
+#     data = request.get_json()
+#     if not data: return jsonify({"error": "Missing JSON payload"}), 400
+
+#     position_group = data.get("position_group")
+#     user_impact_kpis_list = data.get("impact_kpis")
+#     user_target_kpis_list = data.get("target_kpis")
+#     custom_model_name_prefix = data.get("model_name", f"custom_{position_group.lower() if position_group else 'model'}")
+    
+#     user_ml_feature_selection = data.get("ml_features", None)
+
+#     if not all([position_group, user_impact_kpis_list, user_target_kpis_list]):
+#         return jsonify({"error": "Missing required fields: position_group, impact_kpis (for correlation), target_kpis (for weighting)"}), 400
+#     if position_group not in ["Attacker", "Midfielder", "Defender"]:
+#         return jsonify({"error": f"Invalid position_group: {position_group}"}), 400
+    
+#     if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
+#         return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
+
+
+#     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+
+#     user_impact_kpis_config = {position_group: user_impact_kpis_list}
+#     user_target_kpis_for_weight_derivation_config = {position_group: user_target_kpis_list}
+
+#     try:
+#         success, message = build_and_train_model_from_script_logic(
+#             custom_model_id=custom_model_id,
+#             position_group_to_train=position_group,
+#             user_composite_impact_kpis=user_impact_kpis_config,
+#             user_kpi_definitions_for_weight_derivation=user_target_kpis_for_weight_derivation_config,
+#             user_ml_feature_subset=user_ml_feature_selection,
+#             base_output_dir_for_custom_model=CUSTOM_MODELS_DIR
+#         )
+#         if success:
+#             return jsonify({"message": message, "custom_model_id": custom_model_id}), 201
+#         else:
+#             return jsonify({"error": message}), 500
+#     except Exception as e:
+#         logger.error(f"Error building custom model '{custom_model_id}': {e}", exc_info=True)
+#         return jsonify({"error": f"Internal server error during custom model build: {str(e)}"}), 500
+
 @app.route("/api/custom_model/build", methods=['POST'])
 def handle_build_custom_model():
     data = request.get_json()
@@ -768,20 +811,22 @@ def handle_build_custom_model():
     if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
         return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
 
-
     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
 
     user_impact_kpis_config = {position_group: user_impact_kpis_list}
     user_target_kpis_for_weight_derivation_config = {position_group: user_target_kpis_list}
 
     try:
+        # --- CANVI CLAU: Passem el client S3 i el nom del bucket al trainer ---
         success, message = build_and_train_model_from_script_logic(
+            s3_client=s3_client,
+            r2_bucket_name=R2_BUCKET_NAME,
             custom_model_id=custom_model_id,
             position_group_to_train=position_group,
             user_composite_impact_kpis=user_impact_kpis_config,
             user_kpi_definitions_for_weight_derivation=user_target_kpis_for_weight_derivation_config,
             user_ml_feature_subset=user_ml_feature_selection,
-            base_output_dir_for_custom_model=CUSTOM_MODELS_DIR
+            base_output_dir_for_custom_model=CUSTOM_MODELS_DIR # Aquest paràmetre ja no s'utilitzarà per a rutes locals
         )
         if success:
             return jsonify({"message": message, "custom_model_id": custom_model_id}), 201

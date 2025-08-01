@@ -11,6 +11,8 @@ import joblib
 import warnings
 import logging 
 from ast import literal_eval 
+from io import BytesIO, StringIO
+
 
 logger_trainer = logging.getLogger(__name__ + "_trainer") 
 
@@ -589,41 +591,381 @@ def trainer_save_model_run_config(filepath, model_name, feature_cols, model_para
 # ... (tot el codi anterior a la funció es manté igual) ...
 
 # --- Main Training Function (MODIFIED FOR 2015/2016 EVALUATION) ---
+# def build_and_train_model_from_script_logic(
+#     custom_model_id: str,
+#     position_group_to_train: str,
+#     user_kpi_definitions_for_weight_derivation: dict,
+#     user_composite_impact_kpis: dict,
+#     base_output_dir_for_custom_model: str,
+#     user_ml_feature_subset: list = None
+# ):
+#     # <<< MODIFICACIÓ: Definim la temporada que serà el nostre conjunt de test
+#     EVALUATION_SEASON = "2015_2016"
+    
+#     logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train}")
+#     # <<< MODIFICACIÓ: Actualitzem el log per reflectir la nova estratègia d'avaluació
+#     logger_trainer.info(f"  STRATEGY: Train on all U21 data EXCEPT {EVALUATION_SEASON}, Evaluate EXCLUSIVELY on {EVALUATION_SEASON}.")
+
+#     # ... (La primera part de la funció, fins a la construcció de 'full_ml_features_df', es manté igual) ...
+#     try:
+#         with open(PLAYER_INDEX_PATH, 'r', encoding='utf-8') as f: player_index = json.load(f)
+#     except FileNotFoundError: 
+#         msg = f"Trainer Error: Player index file not found at {PLAYER_INDEX_PATH}"
+#         logger_trainer.error(msg); return False, msg
+#     try:
+#         minutes_df = pd.read_csv(PLAYER_MINUTES_PATH)
+#         minutes_df['season_name_std'] = minutes_df['season_name'].str.replace('/', '_', regex=False)
+#         minutes_df_dict = { (str(row['player_id']), row['season_name_std']): row['total_minutes_played']
+#                             for _, row in minutes_df.iterrows() }
+#     except FileNotFoundError: logger_trainer.warning(f"Trainer Warning: Player minutes file '{PLAYER_MINUTES_PATH}' not found."); minutes_df_dict = {}
+#     except Exception as e: logger_trainer.error(f"Trainer Error loading minutes file: {e}."); minutes_df_dict = {}
+
+#     all_season_features = []
+#     logger_trainer.info("Trainer Pass 1: Extracting base features for ALL player-seasons to define performance universe.")
+    
+#     player_items = []
+#     if isinstance(player_index, dict): player_items = player_index.items()
+#     elif isinstance(player_index, list): player_items = [(p.get("name", str(p.get("player_id"))), p) for p in player_index]
+
+#     for i, (player_name_from_key, p_info) in enumerate(player_items):
+#         if (i + 1) % 200 == 0: logger_trainer.info(f"  Trainer Pass 1 - Processed {i+1}/{len(player_items)} players...")
+#         player_id_str, dob, specific_pos_idx = str(p_info.get("player_id")), p_info.get("dob"), p_info.get("position")
+#         if not all([player_id_str, dob, specific_pos_idx]): continue
+#         general_pos_idx = get_general_position(specific_pos_idx)
+#         if general_pos_idx in ["Goalkeeper", "Unknown"]: continue
+
+#         for season_str in p_info.get("seasons", []):
+#             if not (isinstance(season_str, str) and '_' in season_str): continue
+            
+#             age_at_season = get_age_at_fixed_point_in_season(dob, season_str)
+#             if age_at_season is None: continue 
+            
+#             season_numeric = int(season_str.split('_')[0])
+#             total_minutes = minutes_df_dict.get((player_id_str, season_str), 0.0); num_90s = safe_division(total_minutes, 90.0)
+#             event_file_path = os.path.join(BASE_EVENT_DATA_PATH, season_str, "players", f"{player_id_str}_{season_str}.csv")
+#             current_season_event_df = pd.DataFrame()
+#             try:
+#                 temp_df = pd.read_csv(event_file_path, dtype=object, low_memory=False)
+#                 current_season_event_df = temp_df
+#             except: pass 
+            
+#             base_features_series = extract_season_features(current_season_event_df, age_at_season, season_numeric, num_90s)
+#             base_features_series['player_id_identifier'] = player_id_str
+#             base_features_series['player_name_identifier'] = player_name_from_key
+#             base_features_series['target_season_identifier'] = season_str
+#             base_features_series['general_position_identifier'] = general_pos_idx
+#             all_season_features.append(base_features_series)
+
+#     if not all_season_features: 
+#         msg = "Trainer: No player seasons data found for Pass 1. Cannot build model."
+#         logger_trainer.error(msg); return False, msg
+    
+#     df_all_seasons_with_base_features = pd.DataFrame(all_season_features).fillna(0.0)
+#     logger_trainer.info(f"Trainer Pass 1 Complete. Extracted base features for {len(df_all_seasons_with_base_features)} player-seasons (all ages).")
+
+#     logger_trainer.info(f"\nTrainer: Deriving KPI weights using data from all players...")
+#     derived_kpi_weights_all_groups = {} 
+#     original_kpi_defs = KPI_DEFINITIONS_FOR_WEIGHT_DERIVATION
+#     original_impact_kpis = COMPOSITE_IMPACT_KPIS
+
+#     for pos_g_loop in ["Attacker", "Midfielder", "Defender"]:
+#         impact_kpis_to_use = user_composite_impact_kpis.get(pos_g_loop, original_impact_kpis.get(pos_g_loop, []))
+#         target_kpis_to_use = user_kpi_definitions_for_weight_derivation.get(pos_g_loop, original_kpi_defs.get(pos_g_loop, []))
+#         if not impact_kpis_to_use or not target_kpis_to_use:
+#             logger_trainer.warning(f"  Trainer: KPI definitions missing for {pos_g_loop}. Using equal weights.")
+        
+#         derived_kpi_weights_all_groups[pos_g_loop] = derive_kpi_weights_from_impact_correlation(
+#             df_all_seasons_with_base_features, pos_g_loop, impact_kpis_to_use, target_kpis_to_use
+#         )
+    
+#     df_with_heuristic_targets = generate_potential_target(df_all_seasons_with_base_features.copy(), derived_kpi_weights_all_groups)
+#     df_all_seasons_with_base_features = pd.merge(
+#         df_all_seasons_with_base_features,
+#         df_with_heuristic_targets[['player_id_identifier', 'target_season_identifier', 'potential_target', 'raw_composite_score']],
+#         on=['player_id_identifier', 'target_season_identifier'], how='left').fillna(0.0)
+
+#     logger_trainer.info("Trainer: Calculating PEAK career potential for each player.")
+#     peak_potentials = df_all_seasons_with_base_features.groupby('player_id_identifier')['potential_target'].max().reset_index()
+#     peak_potentials.rename(columns={'potential_target': 'peak_potential_target'}, inplace=True)
+    
+#     df_all_seasons_with_base_features = pd.merge(
+#         df_all_seasons_with_base_features,
+#         peak_potentials,
+#         on='player_id_identifier',
+#         how='left'
+#     )
+
+#     logger_trainer.info("Trainer: Filtering dataset to U21 seasons to create ML training instances.")
+#     df_u21_instances_for_ml = df_all_seasons_with_base_features[df_all_seasons_with_base_features['age'] <= 21].copy()
+    
+#     if df_u21_instances_for_ml.empty:
+#         msg = "Trainer: No U21 player seasons found to use as training instances. Cannot build model."
+#         logger_trainer.error(msg); return False, msg
+
+#     logger_trainer.info(f"\nTrainer Pass 2: Constructing full ML input features for {len(df_u21_instances_for_ml)} U21 instances...")
+#     all_player_ml_feature_vectors = []
+#     base_metric_names = get_feature_names_for_extraction()
+    
+#     df_all_seasons_with_base_features.sort_values(by=['player_id_identifier', 'season_numeric'], inplace=True)
+
+#     for idx, current_u21_season_row in df_u21_instances_for_ml.iterrows():
+#         if (idx + 1) % 100 == 0:
+#             logger_trainer.info(f"  Trainer Pass 2 - Processed ML features for {idx + 1}/{len(df_u21_instances_for_ml)} U21 instances...")
+
+#         player_id = current_u21_season_row['player_id_identifier']
+#         current_season_numeric = current_u21_season_row['season_numeric']
+
+#         historical_df_for_player = df_all_seasons_with_base_features[
+#             (df_all_seasons_with_base_features['player_id_identifier'] == player_id) &
+#             (df_all_seasons_with_base_features['season_numeric'] < current_season_numeric)
+#         ].copy()
+
+#         instance_ml_features = trainer_construct_ml_features_for_player_season(
+#             current_season_base_features_row=current_u21_season_row,
+#             historical_base_features_df=historical_df_for_player,
+#             all_base_metric_names=base_metric_names
+#         )
+
+#         instance_ml_features['player_id_identifier'] = player_id
+#         instance_ml_features['player_name_identifier'] = current_u21_season_row['player_name_identifier']
+#         instance_ml_features['target_season_identifier'] = current_u21_season_row['target_season_identifier']
+#         instance_ml_features['general_position_identifier'] = current_u21_season_row['general_position_identifier']
+#         instance_ml_features['peak_potential_target'] = current_u21_season_row['peak_potential_target']
+#         instance_ml_features['raw_composite_score_heuristic_value'] = current_u21_season_row.get('raw_composite_score', 0.0)
+#         all_player_ml_feature_vectors.append(instance_ml_features)
+
+#     if not all_player_ml_feature_vectors:
+#         msg = "Trainer: No ML feature vectors constructed in Pass 2. Cannot train."
+#         logger_trainer.error(msg); return False, msg
+#     full_ml_features_df = pd.DataFrame(all_player_ml_feature_vectors).fillna(0.0)
+#     logger_trainer.info(f"Trainer Pass 2 Complete. Full ML features constructed for {len(full_ml_features_df)} U21 instances.")
+
+#     pos_df_for_training_all_features = full_ml_features_df[full_ml_features_df['general_position_identifier'] == position_group_to_train].copy()
+#     if pos_df_for_training_all_features.empty or len(pos_df_for_training_all_features) < 10:
+#         msg = f"Trainer: Not enough data for {position_group_to_train} ({len(pos_df_for_training_all_features)}) after ML feature construction. Cannot train model."
+#         logger_trainer.error(msg); return False, msg
+
+#     id_cols_ml = ['player_id_identifier', 'player_name_identifier', 'target_season_identifier',
+#                   'general_position_identifier', 'peak_potential_target', 'raw_composite_score_heuristic_value']
+#     all_available_ml_features_for_pos = [c for c in pos_df_for_training_all_features.columns if c not in id_cols_ml]
+    
+#     final_ml_feature_cols_for_model = []
+#     if user_ml_feature_subset and isinstance(user_ml_feature_subset, list) and len(user_ml_feature_subset) > 0:
+#         logger_trainer.info(f"  Trainer: Using user-defined subset of {len(user_ml_feature_subset)} ML features for training.")
+#         final_ml_feature_cols_for_model = [feat for feat in user_ml_feature_subset if feat in all_available_ml_features_for_pos]
+#         if not final_ml_feature_cols_for_model:
+#             logger_trainer.warning("  Trainer: None of the user-selected ML features are valid/generated. Using all available as fallback.")
+#             final_ml_feature_cols_for_model = all_available_ml_features_for_pos
+#     else:
+#         logger_trainer.info(f"  Trainer: Deriving ML feature set from user-selected target KPIs for {position_group_to_train}.")
+#         selected_base_kpis_for_features = user_kpi_definitions_for_weight_derivation.get(position_group_to_train, [])
+#         if not selected_base_kpis_for_features:
+#             logger_trainer.warning(f"  Trainer: No base KPIs from user to guide feature selection for {position_group_to_train}. Using all {len(all_available_ml_features_for_pos)} generated ML features.");
+#             final_ml_feature_cols_for_model = all_available_ml_features_for_pos
+#         else:
+#             temp_feature_list = []
+#             for ml_feat_candidate in all_available_ml_features_for_pos:
+#                 is_related = False
+#                 for user_base_kpi in selected_base_kpis_for_features:
+#                     if user_base_kpi in ml_feat_candidate:
+#                         is_related = True; break
+#                 if is_related: temp_feature_list.append(ml_feat_candidate)
+#             context_features_to_add = ['current_age', 'current_season_numeric', 'current_num_90s_played', 'current_matches_played_events', 'num_hist_seasons']
+#             for cf in context_features_to_add:
+#                 if cf in all_available_ml_features_for_pos: temp_feature_list.append(cf)
+#             final_ml_feature_cols_for_model = sorted(list(set(temp_feature_list)))
+#             if not final_ml_feature_cols_for_model:
+#                  logger_trainer.warning(f"  Trainer: No ML features derived from selected base KPIs for {position_group_to_train}. Using all generated features as fallback.")
+#                  final_ml_feature_cols_for_model = all_available_ml_features_for_pos
+    
+#     if not final_ml_feature_cols_for_model:
+#         msg = f"Trainer: No ML feature columns identified for {position_group_to_train}. Cannot train."
+#         logger_trainer.error(msg); return False, msg
+#     logger_trainer.info(f"  Trainer: Final ML features for {position_group_to_train} model ({len(final_ml_feature_cols_for_model)}): {final_ml_feature_cols_for_model[:5]}...")
+
+#     X = pos_df_for_training_all_features[final_ml_feature_cols_for_model].copy()
+#     y = pos_df_for_training_all_features['peak_potential_target'].copy()
+    
+#     for col in X.columns: X[col] = pd.to_numeric(X[col], errors='coerce')
+#     X.fillna(0, inplace=True)
+    
+#     # <<< MODIFICACIÓ: SEPARACIÓ MANUAL DE TRAIN/TEST PER TEMPORADA >>>
+#     logger_trainer.info(f"  Trainer: Manually splitting data. Test set = season {EVALUATION_SEASON}.")
+    
+#     # Identifiquem els índexs per a cada conjunt
+#     test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
+#     # train_indices = pos_df_for_training_all_features['target_season_identifier'] != EVALUATION_SEASON
+#     EVALUATION_SEASON_START_YEAR = int(EVALUATION_SEASON.split('_')[0])
+
+#     # Afegim la columna 'season_numeric' a 'pos_df_for_training_all_features' si no existeix
+#     # (Normalment es crea a 'all_player_ml_feature_vectors', però assegurem-nos que hi és)
+#     if 'season_numeric' not in pos_df_for_training_all_features.columns:
+#         # Aquesta línia potser no és necessària si el DataFrame ja la conté, però és una bona pràctica de seguretat
+#         pos_df_for_training_all_features['season_numeric'] = pos_df_for_training_all_features['target_season_identifier'].apply(lambda x: int(x.split('_')[0]))
+
+#     # La divisió correcta: entrenar NOMÉS amb temporades ANTERIORS a la d'avaluació
+#     test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
+#     train_indices = pos_df_for_training_all_features['season_numeric'] < EVALUATION_SEASON_START_YEAR
+
+#     X_train_df = X[train_indices]
+#     y_train = y[train_indices]
+#     X_test_df = X[test_indices]
+#     y_test = y[test_indices]
+
+#     # <<< MODIFICACIÓ: Informem de la mida dels conjunts
+#     logger_trainer.info(f"  Trainer: Training set size: {len(X_train_df)} instances.")
+#     logger_trainer.info(f"  Trainer: Test set (season {EVALUATION_SEASON}) size: {len(X_test_df)} instances.")
+    
+#     if X_train_df.empty:
+#         msg = f"Trainer: Training set is empty after removing {EVALUATION_SEASON}. Cannot train."
+#         logger_trainer.error(msg); return False, msg
+#     if X_test_df.empty:
+#         logger_trainer.warning(f"  Trainer: Test set for season {EVALUATION_SEASON} is empty. No evaluation will be possible.")
+    
+#     # <<< MODIFICACIÓ: Entrenem l'escalador NOMÉS amb les dades d'entrenament
+#     pos_model_output_dir = os.path.join(base_output_dir_for_custom_model, custom_model_id, position_group_to_train.lower())
+#     os.makedirs(pos_model_output_dir, exist_ok=True)
+    
+#     scaler_pos = StandardScaler()
+#     X_train_scaled = scaler_pos.fit_transform(X_train_df)
+    
+#     # Si hi ha dades de test, les transformem amb l'escalador ja entrenat
+#     X_test_scaled = np.array([])
+#     if not X_test_df.empty:
+#         X_test_scaled = scaler_pos.transform(X_test_df)
+    
+#     # <<< MODIFICACIÓ: Guardem l'escalador i els altres artefactes
+#     pos_trained_model_path = os.path.join(pos_model_output_dir, f'potential_model_{position_group_to_train.lower()}_{custom_model_id}.joblib')
+#     pos_model_config_path = os.path.join(pos_model_output_dir, f'model_config_{position_group_to_train.lower()}_{custom_model_id}.json')
+#     pos_scaler_path = os.path.join(pos_model_output_dir, f'feature_scaler_{position_group_to_train.lower()}_{custom_model_id}.joblib')
+#     joblib.dump(scaler_pos, pos_scaler_path)
+    
+#     # <<< MODIFICACIÓ: La secció de GroupKFold i train_test_split ja no és necessària.
+#     # El RandomizedSearchCV es farà ara només sobre el conjunt d'entrenament.
+    
+#     # Per a la cerca d'hiperparàmetres, podem seguir utilitzant GroupKFold dins del conjunt d'entrenament
+#     groups_train_for_search = pos_df_for_training_all_features[train_indices]['player_id_identifier']
+#     unique_groups_train = groups_train_for_search.nunique()
+    
+#     cv_for_search = 3 # CV simple per defecte
+#     if unique_groups_train >= 2:
+#         n_cv_splits_inner = min(3, unique_groups_train)
+#         if X_train_scaled.shape[0] >= n_cv_splits_inner * 2:
+#             cv_for_search = GroupKFold(n_splits=n_cv_splits_inner)
+#             logger_trainer.info(f"  Trainer: Using inner GroupKFold ({n_cv_splits_inner} splits) on the training set for RandomizedSearch.")
+#         else:
+#             groups_train_for_search = None # No es pot fer GroupKFold
+#     else:
+#         groups_train_for_search = None # No es pot fer GroupKFold
+        
+#     xgb_model_for_search = XGBRegressor(random_state=42, objective='reg:squarederror', n_jobs=-1)
+#     xgb_param_grid = { 'n_estimators': [100, 200, 300, 500], 'learning_rate': [0.01, 0.03, 0.05, 0.1], 'max_depth': [3, 4, 5, 6, 7], 'subsample': [0.6, 0.7, 0.8, 0.9, 1.0], 'colsample_bytree': [0.6, 0.7, 0.8, 0.9], 'gamma': [0, 0.1, 0.2], 'reg_alpha': [0, 0.005, 0.01, 0.05], 'reg_lambda': [0.1, 0.5, 1, 1.5] }
+#     n_iter_search = 20 if X_train_scaled.shape[0] > 50 else max(1, int(X_train_scaled.shape[0] * 0.1))
+#     if X_train_scaled.shape[0] < 10: n_iter_search = max(1, X_train_scaled.shape[0] // 2)
+#     random_search = RandomizedSearchCV(estimator=xgb_model_for_search, param_distributions=xgb_param_grid, n_iter=n_iter_search, cv=cv_for_search, scoring='r2', random_state=42, n_jobs=-1, verbose=0)
+    
+#     logger_trainer.info(f"  Trainer: Starting RandomizedSearchCV for {position_group_to_train} on {X_train_scaled.shape[0]} training samples (n_iter={n_iter_search}).")
+#     best_xgb_model, best_params_for_config, hyperparam_search_done = None, None, False
+    
+#     try:
+#         search_groups_param = groups_train_for_search if isinstance(cv_for_search, GroupKFold) else None
+#         random_search.fit(X_train_scaled, y_train, groups=search_groups_param)
+#         best_params_from_search = random_search.best_params_
+#         logger_trainer.info(f"  Trainer: Best XGBoost Params for {position_group_to_train} from Search: {best_params_from_search}")
+#         best_xgb_model = XGBRegressor(**best_params_from_search, random_state=42, objective='reg:squarederror', n_jobs=-1)
+        
+#         # <<< MODIFICACIÓ: Early stopping amb el nostre conjunt de test específic
+#         if X_test_scaled.shape[0] > 0:
+#             best_xgb_model.set_params(early_stopping_rounds=10)
+#             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
+#         else:
+#             best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+        
+#         best_params_for_config, hyperparam_search_done = best_params_from_search, True
+#     except Exception as e_search:
+#         logger_trainer.error(f"  Trainer: Error during RandomizedSearchCV for {position_group_to_train}: {e_search}. Training with default params.")
+#         default_params = {'n_estimators': 100, 'max_depth': 4, 'learning_rate': 0.05, 'random_state': 42, 'objective': 'reg:squarederror', 'n_jobs': -1}
+#         best_xgb_model = XGBRegressor(**default_params)
+#         if X_test_scaled.shape[0] > 0:
+#             best_xgb_model.set_params(early_stopping_rounds=10)
+#             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
+#         else:
+#             best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+#         best_params_for_config, hyperparam_search_done = best_xgb_model.get_params(), False
+    
+#     joblib.dump(best_xgb_model, pos_trained_model_path)
+    
+#     # <<< MODIFICACIÓ: L'avaluació es fa sempre sobre el conjunt de test (2015/2016), si existeix.
+#     evaluation_metrics_dict = None
+#     if X_test_scaled.shape[0] > 0 and y_test.shape[0] > 0:
+#         y_pred_test = np.clip(best_xgb_model.predict(X_test_scaled), 0, 200)
+#         mae = mean_absolute_error(y_test, y_pred_test)
+#         mse = mean_squared_error(y_test, y_pred_test)
+#         rmse = np.sqrt(mse)
+#         r2 = r2_score(y_test, y_pred_test)
+#         evaluation_metrics_dict = {'MAE': round(mae, 3), 'MSE': round(mse, 3), 'RMSE': round(rmse, 3), 'R2': round(r2, 3)}
+        
+#         # <<< MODIFICACIÓ: El log ara especifica clarament sobre què s'avalua.
+#         logger_trainer.info(f"  Trainer: Evaluation for {position_group_to_train} (ID: {custom_model_id}) on test set (SEASON {EVALUATION_SEASON}, {X_test_scaled.shape[0]} samples):")
+#         logger_trainer.info(f"    MAE: {mae:.3f}, MSE: {mse:.3f}, RMSE: {rmse:.3f}, R^2: {r2:.3f}")
+        
+#         if hasattr(best_xgb_model, 'feature_importances_'):
+#             importances = best_xgb_model.feature_importances_
+#             if len(final_ml_feature_cols_for_model) == len(importances):
+#                 feat_imp_df = pd.DataFrame({'feature': final_ml_feature_cols_for_model, 'importance': importances}).sort_values('importance', ascending=False).head(20)
+#                 logger_trainer.info(f"  Trainer: Top Feature Importances for {position_group_to_train} (ID: {custom_model_id}):\n{feat_imp_df.to_string(index=False)}")
+
+#     trainer_save_model_run_config(
+#         pos_model_config_path, model_name=f"XGBRegressor_Custom_{custom_model_id}", feature_cols=final_ml_feature_cols_for_model, 
+#         model_params=best_xgb_model.get_params(), user_kpi_definitions_for_weights=user_kpi_definitions_for_weight_derivation,
+#         user_composite_impact_kpis=user_composite_impact_kpis, derived_kpi_weights_actually_used=derived_kpi_weights_all_groups,
+#         position_group_trained=position_group_to_train, best_params_from_search=best_params_for_config if hyperparam_search_done else None,
+#         evaluation_metrics=evaluation_metrics_dict
+#     )
+    
+#     logger_trainer.info(f"Custom Model for {position_group_to_train} (ID: {custom_model_id}) trained and artifacts saved to {pos_model_output_dir}")
+#     return True, f"Model for {position_group_to_train} (ID: {custom_model_id}) built successfully."
+
 def build_and_train_model_from_script_logic(
+    s3_client,
+    r2_bucket_name,
     custom_model_id: str,
     position_group_to_train: str,
     user_kpi_definitions_for_weight_derivation: dict,
     user_composite_impact_kpis: dict,
-    base_output_dir_for_custom_model: str,
+    base_output_dir_for_custom_model: str, # Ja no es fa servir per a rutes, però es manté per compatibilitat de la crida
     user_ml_feature_subset: list = None
 ):
-    # <<< MODIFICACIÓ: Definim la temporada que serà el nostre conjunt de test
     EVALUATION_SEASON = "2015_2016"
     
     logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train}")
-    # <<< MODIFICACIÓ: Actualitzem el log per reflectir la nova estratègia d'avaluació
     logger_trainer.info(f"  STRATEGY: Train on all U21 data EXCEPT {EVALUATION_SEASON}, Evaluate EXCLUSIVELY on {EVALUATION_SEASON}.")
 
-    # ... (La primera part de la funció, fins a la construcció de 'full_ml_features_df', es manté igual) ...
+    if not s3_client:
+        return False, "Trainer Error: S3 client is not available."
+
     try:
-        with open(PLAYER_INDEX_PATH, 'r', encoding='utf-8') as f: player_index = json.load(f)
-    except FileNotFoundError: 
-        msg = f"Trainer Error: Player index file not found at {PLAYER_INDEX_PATH}"
+        response = s3_client.get_object(Bucket=r2_bucket_name, Key="data/player_index.json")
+        content = response['Body'].read().decode('utf-8')
+        player_index = json.loads(content)
+    except Exception as e:
+        msg = f"Trainer Error: Player index file not found in R2. Error: {e}"
         logger_trainer.error(msg); return False, msg
+
     try:
-        minutes_df = pd.read_csv(PLAYER_MINUTES_PATH)
+        response_minutes = s3_client.get_object(Bucket=r2_bucket_name, Key="data/player_season_minutes_with_names.csv")
+        minutes_content = response_minutes['Body'].read().decode('utf-8')
+        minutes_df = pd.read_csv(StringIO(minutes_content))
         minutes_df['season_name_std'] = minutes_df['season_name'].str.replace('/', '_', regex=False)
-        minutes_df_dict = { (str(row['player_id']), row['season_name_std']): row['total_minutes_played']
-                            for _, row in minutes_df.iterrows() }
-    except FileNotFoundError: logger_trainer.warning(f"Trainer Warning: Player minutes file '{PLAYER_MINUTES_PATH}' not found."); minutes_df_dict = {}
-    except Exception as e: logger_trainer.error(f"Trainer Error loading minutes file: {e}."); minutes_df_dict = {}
+        minutes_df_dict = { (str(row['player_id']), row['season_name_std']): row['total_minutes_played'] for _, row in minutes_df.iterrows() }
+    except Exception as e:
+        logger_trainer.warning(f"Trainer Warning: Player minutes file not found in R2. Error: {e}");
+        minutes_df_dict = {}
 
     all_season_features = []
-    logger_trainer.info("Trainer Pass 1: Extracting base features for ALL player-seasons to define performance universe.")
+    logger_trainer.info("Trainer Pass 1: Extracting base features for ALL player-seasons from R2.")
     
-    player_items = []
-    if isinstance(player_index, dict): player_items = player_index.items()
-    elif isinstance(player_index, list): player_items = [(p.get("name", str(p.get("player_id"))), p) for p in player_index]
+    player_items = list(player_index.items()) if isinstance(player_index, dict) else [(p.get("name", str(p.get("player_id"))), p) for p in player_index]
 
     for i, (player_name_from_key, p_info) in enumerate(player_items):
         if (i + 1) % 200 == 0: logger_trainer.info(f"  Trainer Pass 1 - Processed {i+1}/{len(player_items)} players...")
@@ -640,13 +982,18 @@ def build_and_train_model_from_script_logic(
             
             season_numeric = int(season_str.split('_')[0])
             total_minutes = minutes_df_dict.get((player_id_str, season_str), 0.0); num_90s = safe_division(total_minutes, 90.0)
-            event_file_path = os.path.join(BASE_EVENT_DATA_PATH, season_str, "players", f"{player_id_str}_{season_str}.csv")
+            
+            event_file_key = f"data/{season_str}/players/{player_id_str}_{season_str}.csv"
             current_season_event_df = pd.DataFrame()
             try:
-                temp_df = pd.read_csv(event_file_path, dtype=object, low_memory=False)
-                current_season_event_df = temp_df
-            except: pass 
-            
+                response_event = s3_client.get_object(Bucket=r2_bucket_name, Key=event_file_key)
+                event_content = response_event['Body'].read().decode('utf-8')
+                current_season_event_df = pd.read_csv(StringIO(event_content), dtype=object, low_memory=False)
+            except s3_client.exceptions.NoSuchKey:
+                pass
+            except Exception as e:
+                 logger_trainer.warning(f"Could not load event file {event_file_key} from R2: {e}")
+
             base_features_series = extract_season_features(current_season_event_df, age_at_season, season_numeric, num_90s)
             base_features_series['player_id_identifier'] = player_id_str
             base_features_series['player_name_identifier'] = player_name_from_key
@@ -659,13 +1006,14 @@ def build_and_train_model_from_script_logic(
         logger_trainer.error(msg); return False, msg
     
     df_all_seasons_with_base_features = pd.DataFrame(all_season_features).fillna(0.0)
+    
+    # ... [LA RESTA DEL CODI DE LÒGICA D'ENTRENAMENT ES MANTÉ EXACTAMENT IGUAL FINS AL FINAL] ...
+    # ... Aquesta part no canvia perquè només opera sobre DataFrames en memòria ...
     logger_trainer.info(f"Trainer Pass 1 Complete. Extracted base features for {len(df_all_seasons_with_base_features)} player-seasons (all ages).")
-
     logger_trainer.info(f"\nTrainer: Deriving KPI weights using data from all players...")
     derived_kpi_weights_all_groups = {} 
     original_kpi_defs = KPI_DEFINITIONS_FOR_WEIGHT_DERIVATION
     original_impact_kpis = COMPOSITE_IMPACT_KPIS
-
     for pos_g_loop in ["Attacker", "Midfielder", "Defender"]:
         impact_kpis_to_use = user_composite_impact_kpis.get(pos_g_loop, original_impact_kpis.get(pos_g_loop, []))
         target_kpis_to_use = user_kpi_definitions_for_weight_derivation.get(pos_g_loop, original_kpi_defs.get(pos_g_loop, []))
@@ -675,55 +1023,40 @@ def build_and_train_model_from_script_logic(
         derived_kpi_weights_all_groups[pos_g_loop] = derive_kpi_weights_from_impact_correlation(
             df_all_seasons_with_base_features, pos_g_loop, impact_kpis_to_use, target_kpis_to_use
         )
-    
     df_with_heuristic_targets = generate_potential_target(df_all_seasons_with_base_features.copy(), derived_kpi_weights_all_groups)
     df_all_seasons_with_base_features = pd.merge(
         df_all_seasons_with_base_features,
         df_with_heuristic_targets[['player_id_identifier', 'target_season_identifier', 'potential_target', 'raw_composite_score']],
         on=['player_id_identifier', 'target_season_identifier'], how='left').fillna(0.0)
-
     logger_trainer.info("Trainer: Calculating PEAK career potential for each player.")
     peak_potentials = df_all_seasons_with_base_features.groupby('player_id_identifier')['potential_target'].max().reset_index()
     peak_potentials.rename(columns={'potential_target': 'peak_potential_target'}, inplace=True)
-    
     df_all_seasons_with_base_features = pd.merge(
-        df_all_seasons_with_base_features,
-        peak_potentials,
-        on='player_id_identifier',
-        how='left'
+        df_all_seasons_with_base_features, peak_potentials, on='player_id_identifier', how='left'
     )
-
     logger_trainer.info("Trainer: Filtering dataset to U21 seasons to create ML training instances.")
     df_u21_instances_for_ml = df_all_seasons_with_base_features[df_all_seasons_with_base_features['age'] <= 21].copy()
-    
     if df_u21_instances_for_ml.empty:
         msg = "Trainer: No U21 player seasons found to use as training instances. Cannot build model."
         logger_trainer.error(msg); return False, msg
-
     logger_trainer.info(f"\nTrainer Pass 2: Constructing full ML input features for {len(df_u21_instances_for_ml)} U21 instances...")
     all_player_ml_feature_vectors = []
     base_metric_names = get_feature_names_for_extraction()
-    
     df_all_seasons_with_base_features.sort_values(by=['player_id_identifier', 'season_numeric'], inplace=True)
-
     for idx, current_u21_season_row in df_u21_instances_for_ml.iterrows():
         if (idx + 1) % 100 == 0:
             logger_trainer.info(f"  Trainer Pass 2 - Processed ML features for {idx + 1}/{len(df_u21_instances_for_ml)} U21 instances...")
-
         player_id = current_u21_season_row['player_id_identifier']
         current_season_numeric = current_u21_season_row['season_numeric']
-
         historical_df_for_player = df_all_seasons_with_base_features[
             (df_all_seasons_with_base_features['player_id_identifier'] == player_id) &
             (df_all_seasons_with_base_features['season_numeric'] < current_season_numeric)
         ].copy()
-
         instance_ml_features = trainer_construct_ml_features_for_player_season(
             current_season_base_features_row=current_u21_season_row,
             historical_base_features_df=historical_df_for_player,
             all_base_metric_names=base_metric_names
         )
-
         instance_ml_features['player_id_identifier'] = player_id
         instance_ml_features['player_name_identifier'] = current_u21_season_row['player_name_identifier']
         instance_ml_features['target_season_identifier'] = current_u21_season_row['target_season_identifier']
@@ -731,22 +1064,17 @@ def build_and_train_model_from_script_logic(
         instance_ml_features['peak_potential_target'] = current_u21_season_row['peak_potential_target']
         instance_ml_features['raw_composite_score_heuristic_value'] = current_u21_season_row.get('raw_composite_score', 0.0)
         all_player_ml_feature_vectors.append(instance_ml_features)
-
     if not all_player_ml_feature_vectors:
         msg = "Trainer: No ML feature vectors constructed in Pass 2. Cannot train."
         logger_trainer.error(msg); return False, msg
     full_ml_features_df = pd.DataFrame(all_player_ml_feature_vectors).fillna(0.0)
     logger_trainer.info(f"Trainer Pass 2 Complete. Full ML features constructed for {len(full_ml_features_df)} U21 instances.")
-
     pos_df_for_training_all_features = full_ml_features_df[full_ml_features_df['general_position_identifier'] == position_group_to_train].copy()
     if pos_df_for_training_all_features.empty or len(pos_df_for_training_all_features) < 10:
         msg = f"Trainer: Not enough data for {position_group_to_train} ({len(pos_df_for_training_all_features)}) after ML feature construction. Cannot train model."
         logger_trainer.error(msg); return False, msg
-
-    id_cols_ml = ['player_id_identifier', 'player_name_identifier', 'target_season_identifier',
-                  'general_position_identifier', 'peak_potential_target', 'raw_composite_score_heuristic_value']
+    id_cols_ml = ['player_id_identifier', 'player_name_identifier', 'target_season_identifier', 'general_position_identifier', 'peak_potential_target', 'raw_composite_score_heuristic_value']
     all_available_ml_features_for_pos = [c for c in pos_df_for_training_all_features.columns if c not in id_cols_ml]
-    
     final_ml_feature_cols_for_model = []
     if user_ml_feature_subset and isinstance(user_ml_feature_subset, list) and len(user_ml_feature_subset) > 0:
         logger_trainer.info(f"  Trainer: Using user-defined subset of {len(user_ml_feature_subset)} ML features for training.")
@@ -775,110 +1103,60 @@ def build_and_train_model_from_script_logic(
             if not final_ml_feature_cols_for_model:
                  logger_trainer.warning(f"  Trainer: No ML features derived from selected base KPIs for {position_group_to_train}. Using all generated features as fallback.")
                  final_ml_feature_cols_for_model = all_available_ml_features_for_pos
-    
     if not final_ml_feature_cols_for_model:
         msg = f"Trainer: No ML feature columns identified for {position_group_to_train}. Cannot train."
         logger_trainer.error(msg); return False, msg
     logger_trainer.info(f"  Trainer: Final ML features for {position_group_to_train} model ({len(final_ml_feature_cols_for_model)}): {final_ml_feature_cols_for_model[:5]}...")
-
     X = pos_df_for_training_all_features[final_ml_feature_cols_for_model].copy()
     y = pos_df_for_training_all_features['peak_potential_target'].copy()
-    
     for col in X.columns: X[col] = pd.to_numeric(X[col], errors='coerce')
     X.fillna(0, inplace=True)
-    
-    # <<< MODIFICACIÓ: SEPARACIÓ MANUAL DE TRAIN/TEST PER TEMPORADA >>>
     logger_trainer.info(f"  Trainer: Manually splitting data. Test set = season {EVALUATION_SEASON}.")
-    
-    # Identifiquem els índexs per a cada conjunt
-    test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
-    # train_indices = pos_df_for_training_all_features['target_season_identifier'] != EVALUATION_SEASON
-    EVALUATION_SEASON_START_YEAR = int(EVALUATION_SEASON.split('_')[0])
-
-    # Afegim la columna 'season_numeric' a 'pos_df_for_training_all_features' si no existeix
-    # (Normalment es crea a 'all_player_ml_feature_vectors', però assegurem-nos que hi és)
     if 'season_numeric' not in pos_df_for_training_all_features.columns:
-        # Aquesta línia potser no és necessària si el DataFrame ja la conté, però és una bona pràctica de seguretat
         pos_df_for_training_all_features['season_numeric'] = pos_df_for_training_all_features['target_season_identifier'].apply(lambda x: int(x.split('_')[0]))
-
-    # La divisió correcta: entrenar NOMÉS amb temporades ANTERIORS a la d'avaluació
+    EVALUATION_SEASON_START_YEAR = int(EVALUATION_SEASON.split('_')[0])
     test_indices = pos_df_for_training_all_features['target_season_identifier'] == EVALUATION_SEASON
     train_indices = pos_df_for_training_all_features['season_numeric'] < EVALUATION_SEASON_START_YEAR
-
-    X_train_df = X[train_indices]
-    y_train = y[train_indices]
-    X_test_df = X[test_indices]
-    y_test = y[test_indices]
-
-    # <<< MODIFICACIÓ: Informem de la mida dels conjunts
+    X_train_df, y_train = X[train_indices], y[train_indices]
+    X_test_df, y_test = X[test_indices], y[test_indices]
     logger_trainer.info(f"  Trainer: Training set size: {len(X_train_df)} instances.")
     logger_trainer.info(f"  Trainer: Test set (season {EVALUATION_SEASON}) size: {len(X_test_df)} instances.")
-    
     if X_train_df.empty:
         msg = f"Trainer: Training set is empty after removing {EVALUATION_SEASON}. Cannot train."
         logger_trainer.error(msg); return False, msg
     if X_test_df.empty:
         logger_trainer.warning(f"  Trainer: Test set for season {EVALUATION_SEASON} is empty. No evaluation will be possible.")
-    
-    # <<< MODIFICACIÓ: Entrenem l'escalador NOMÉS amb les dades d'entrenament
-    pos_model_output_dir = os.path.join(base_output_dir_for_custom_model, custom_model_id, position_group_to_train.lower())
-    os.makedirs(pos_model_output_dir, exist_ok=True)
-    
     scaler_pos = StandardScaler()
     X_train_scaled = scaler_pos.fit_transform(X_train_df)
-    
-    # Si hi ha dades de test, les transformem amb l'escalador ja entrenat
     X_test_scaled = np.array([])
-    if not X_test_df.empty:
-        X_test_scaled = scaler_pos.transform(X_test_df)
-    
-    # <<< MODIFICACIÓ: Guardem l'escalador i els altres artefactes
-    pos_trained_model_path = os.path.join(pos_model_output_dir, f'potential_model_{position_group_to_train.lower()}_{custom_model_id}.joblib')
-    pos_model_config_path = os.path.join(pos_model_output_dir, f'model_config_{position_group_to_train.lower()}_{custom_model_id}.json')
-    pos_scaler_path = os.path.join(pos_model_output_dir, f'feature_scaler_{position_group_to_train.lower()}_{custom_model_id}.joblib')
-    joblib.dump(scaler_pos, pos_scaler_path)
-    
-    # <<< MODIFICACIÓ: La secció de GroupKFold i train_test_split ja no és necessària.
-    # El RandomizedSearchCV es farà ara només sobre el conjunt d'entrenament.
-    
-    # Per a la cerca d'hiperparàmetres, podem seguir utilitzant GroupKFold dins del conjunt d'entrenament
+    if not X_test_df.empty: X_test_scaled = scaler_pos.transform(X_test_df)
     groups_train_for_search = pos_df_for_training_all_features[train_indices]['player_id_identifier']
     unique_groups_train = groups_train_for_search.nunique()
-    
-    cv_for_search = 3 # CV simple per defecte
+    cv_for_search = 3
     if unique_groups_train >= 2:
         n_cv_splits_inner = min(3, unique_groups_train)
         if X_train_scaled.shape[0] >= n_cv_splits_inner * 2:
             cv_for_search = GroupKFold(n_splits=n_cv_splits_inner)
             logger_trainer.info(f"  Trainer: Using inner GroupKFold ({n_cv_splits_inner} splits) on the training set for RandomizedSearch.")
-        else:
-            groups_train_for_search = None # No es pot fer GroupKFold
-    else:
-        groups_train_for_search = None # No es pot fer GroupKFold
-        
+        else: groups_train_for_search = None
+    else: groups_train_for_search = None
     xgb_model_for_search = XGBRegressor(random_state=42, objective='reg:squarederror', n_jobs=-1)
     xgb_param_grid = { 'n_estimators': [100, 200, 300, 500], 'learning_rate': [0.01, 0.03, 0.05, 0.1], 'max_depth': [3, 4, 5, 6, 7], 'subsample': [0.6, 0.7, 0.8, 0.9, 1.0], 'colsample_bytree': [0.6, 0.7, 0.8, 0.9], 'gamma': [0, 0.1, 0.2], 'reg_alpha': [0, 0.005, 0.01, 0.05], 'reg_lambda': [0.1, 0.5, 1, 1.5] }
     n_iter_search = 20 if X_train_scaled.shape[0] > 50 else max(1, int(X_train_scaled.shape[0] * 0.1))
     if X_train_scaled.shape[0] < 10: n_iter_search = max(1, X_train_scaled.shape[0] // 2)
     random_search = RandomizedSearchCV(estimator=xgb_model_for_search, param_distributions=xgb_param_grid, n_iter=n_iter_search, cv=cv_for_search, scoring='r2', random_state=42, n_jobs=-1, verbose=0)
-    
     logger_trainer.info(f"  Trainer: Starting RandomizedSearchCV for {position_group_to_train} on {X_train_scaled.shape[0]} training samples (n_iter={n_iter_search}).")
     best_xgb_model, best_params_for_config, hyperparam_search_done = None, None, False
-    
     try:
         search_groups_param = groups_train_for_search if isinstance(cv_for_search, GroupKFold) else None
         random_search.fit(X_train_scaled, y_train, groups=search_groups_param)
         best_params_from_search = random_search.best_params_
         logger_trainer.info(f"  Trainer: Best XGBoost Params for {position_group_to_train} from Search: {best_params_from_search}")
         best_xgb_model = XGBRegressor(**best_params_from_search, random_state=42, objective='reg:squarederror', n_jobs=-1)
-        
-        # <<< MODIFICACIÓ: Early stopping amb el nostre conjunt de test específic
         if X_test_scaled.shape[0] > 0:
             best_xgb_model.set_params(early_stopping_rounds=10)
             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
-        else:
-            best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
-        
+        else: best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
         best_params_for_config, hyperparam_search_done = best_params_from_search, True
     except Exception as e_search:
         logger_trainer.error(f"  Trainer: Error during RandomizedSearchCV for {position_group_to_train}: {e_search}. Training with default params.")
@@ -887,42 +1165,83 @@ def build_and_train_model_from_script_logic(
         if X_test_scaled.shape[0] > 0:
             best_xgb_model.set_params(early_stopping_rounds=10)
             best_xgb_model.fit(X_train_scaled, y_train, eval_set=[(X_test_scaled, y_test)], verbose=False)
-        else:
-            best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
+        else: best_xgb_model.fit(X_train_scaled, y_train, verbose=False)
         best_params_for_config, hyperparam_search_done = best_xgb_model.get_params(), False
-    
-    joblib.dump(best_xgb_model, pos_trained_model_path)
-    
-    # <<< MODIFICACIÓ: L'avaluació es fa sempre sobre el conjunt de test (2015/2016), si existeix.
     evaluation_metrics_dict = None
     if X_test_scaled.shape[0] > 0 and y_test.shape[0] > 0:
         y_pred_test = np.clip(best_xgb_model.predict(X_test_scaled), 0, 200)
-        mae = mean_absolute_error(y_test, y_pred_test)
-        mse = mean_squared_error(y_test, y_pred_test)
-        rmse = np.sqrt(mse)
-        r2 = r2_score(y_test, y_pred_test)
+        mae = mean_absolute_error(y_test, y_pred_test); mse = mean_squared_error(y_test, y_pred_test)
+        rmse = np.sqrt(mse); r2 = r2_score(y_test, y_pred_test)
         evaluation_metrics_dict = {'MAE': round(mae, 3), 'MSE': round(mse, 3), 'RMSE': round(rmse, 3), 'R2': round(r2, 3)}
-        
-        # <<< MODIFICACIÓ: El log ara especifica clarament sobre què s'avalua.
         logger_trainer.info(f"  Trainer: Evaluation for {position_group_to_train} (ID: {custom_model_id}) on test set (SEASON {EVALUATION_SEASON}, {X_test_scaled.shape[0]} samples):")
         logger_trainer.info(f"    MAE: {mae:.3f}, MSE: {mse:.3f}, RMSE: {rmse:.3f}, R^2: {r2:.3f}")
-        
-        if hasattr(best_xgb_model, 'feature_importances_'):
-            importances = best_xgb_model.feature_importances_
-            if len(final_ml_feature_cols_for_model) == len(importances):
-                feat_imp_df = pd.DataFrame({'feature': final_ml_feature_cols_for_model, 'importance': importances}).sort_values('importance', ascending=False).head(20)
-                logger_trainer.info(f"  Trainer: Top Feature Importances for {position_group_to_train} (ID: {custom_model_id}):\n{feat_imp_df.to_string(index=False)}")
 
-    trainer_save_model_run_config(
-        pos_model_config_path, model_name=f"XGBRegressor_Custom_{custom_model_id}", feature_cols=final_ml_feature_cols_for_model, 
-        model_params=best_xgb_model.get_params(), user_kpi_definitions_for_weights=user_kpi_definitions_for_weight_derivation,
-        user_composite_impact_kpis=user_composite_impact_kpis, derived_kpi_weights_actually_used=derived_kpi_weights_all_groups,
-        position_group_trained=position_group_to_train, best_params_from_search=best_params_for_config if hyperparam_search_done else None,
-        evaluation_metrics=evaluation_metrics_dict
-    )
+    # --- INICI DEL BLOC PER GUARDAR A R2 ---
     
-    logger_trainer.info(f"Custom Model for {position_group_to_train} (ID: {custom_model_id}) trained and artifacts saved to {pos_model_output_dir}")
-    return True, f"Model for {position_group_to_train} (ID: {custom_model_id}) built successfully."
+    # 1. Guardar l'escalador a R2
+    try:
+        with BytesIO() as f_scaler:
+            joblib.dump(scaler_pos, f_scaler)
+            f_scaler.seek(0)
+            scaler_key = f"ml_models/custom_models/{custom_model_id}/{position_group_to_train.lower()}/feature_scaler_{position_group_to_train.lower()}_{custom_model_id}.joblib"
+            s3_client.upload_fileobj(f_scaler, r2_bucket_name, scaler_key)
+            logger_trainer.info(f"Scaler for {custom_model_id} uploaded to R2: {scaler_key}")
+    except Exception as e:
+        msg = f"Failed to upload scaler to R2 for {custom_model_id}: {e}"
+        logger_trainer.error(msg); return False, msg
+
+    # 2. Guardar el model a R2
+    try:
+        with BytesIO() as f_model:
+            joblib.dump(best_xgb_model, f_model)
+            f_model.seek(0)
+            model_key = f"ml_models/custom_models/{custom_model_id}/{position_group_to_train.lower()}/potential_model_{position_group_to_train.lower()}_{custom_model_id}.joblib"
+            s3_client.upload_fileobj(f_model, r2_bucket_name, model_key)
+            logger_trainer.info(f"Model for {custom_model_id} uploaded to R2: {model_key}")
+    except Exception as e:
+        msg = f"Failed to upload model to R2 for {custom_model_id}: {e}"
+        logger_trainer.error(msg); return False, msg
+        
+    # 3. Construir i guardar la configuració a R2
+    safe_model_params = {}
+    actual_params_to_save = best_params_for_config if hyperparam_search_done else best_xgb_model.get_params()
+    for k, v in actual_params_to_save.items():
+        if isinstance(v, np.generic): safe_model_params[k] = v.item()
+        else: safe_model_params[k] = v
+    
+    config = {
+        "model_type": f"XGBRegressor_Custom_{custom_model_id}_for_{position_group_to_train}",
+        "description": f"Custom Model: Position-Specific ({position_group_to_train}) XGBoost. Predicts PEAK CAREER POTENTIAL based on U21 data. Trained on all player data.",
+        "features_used_for_ml_model": final_ml_feature_cols_for_model,
+        "ml_model_parameters": safe_model_params,
+        "target_variable_generation": {
+            "method": "Target is player's PEAK career potential score. Derived from max seasonal score across entire career. Seasonal score from user KPIs, correlation-derived weights, and position-group MinMax normalization. Scaled 0-200.",
+            "user_selected_kpi_definitions_for_target_weights": user_kpi_definitions_for_weight_derivation.get(position_group_to_train, []),
+            "user_selected_composite_impact_kpis": user_composite_impact_kpis.get(position_group_to_train, []),
+            "derived_kpi_weights_for_target": derived_kpi_weights_all_groups.get(position_group_to_train, {}),
+            "base_features_list_source": "get_trainer_feature_names_for_extraction()",
+            "min_90s_for_p90_kpi_reliability": MIN_90S_PLAYED_FOR_P90_STATS
+        },
+        "hyperparameter_search_used": hyperparam_search_done,
+        "position_group_trained_for": position_group_to_train
+    }
+    if evaluation_metrics_dict:
+        config["evaluation_metrics_on_test_set"] = evaluation_metrics_dict
+
+    try:
+        config_json_string = json.dumps(config, indent=4)
+        config_key = f"ml_models/custom_models/{custom_model_id}/{position_group_to_train.lower()}/model_config_{position_group_to_train.lower()}_{custom_model_id}.json"
+        s3_client.put_object(Bucket=r2_bucket_name, Key=config_key, Body=config_json_string.encode('utf-8'))
+        logger_trainer.info(f"Config for {custom_model_id} uploaded to R2: {config_key}")
+    except Exception as e:
+        msg = f"Failed to upload config to R2 for {custom_model_id}: {e}"
+        logger_trainer.error(msg); return False, msg
+
+    # --- FINAL DEL BLOC PER GUARDAR A R2 ---
+    
+    logger_trainer.info(f"Custom Model for {position_group_to_train} (ID: {custom_model_id}) trained and artifacts saved to R2.")
+    return True, f"Model for {position_group_to_train} (ID: {custom_model_id}) built successfully and saved to cloud storage."
+
 
 # --- Functions to expose constants and logic to main.py (no changes needed) ---
 def get_trainer_kpi_definitions_for_weight_derivation():
