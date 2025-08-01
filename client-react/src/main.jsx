@@ -45,6 +45,7 @@ import {
   Chart,
   CategoryScale,
   LinearScale,
+  BarController,
   BarElement,
   ArcElement,
   PointElement,
