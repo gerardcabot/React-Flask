@@ -31,7 +31,6 @@ from model_trainer.trainer_v2_15_16 import (
     safe_division as trainer_safe_division, 
     get_trainer_all_possible_ml_feature_names 
 )
-from ast import literal_eval
 
 
 # --- CONFIGURACIÓN DE CONEXIÓN A R2 (CORRECTO) ---
@@ -897,32 +896,77 @@ def handle_build_custom_model():
         return jsonify({"error": error_message}), 500
 
 
+# @app.route("/api/custom_model/list")
+# def list_custom_models():
+#     custom_models_list = []
+#     if not os.path.exists(CUSTOM_MODELS_DIR):
+#         return jsonify({"custom_models": []})
+#     for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
+#         model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
+#         if os.path.isdir(model_folder_path):
+#             for pos_group_folder_name in os.listdir(model_folder_path): 
+#                 pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
+#                 if os.path.isdir(pos_group_folder_path):
+#                     config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
+#                     config_path = os.path.join(pos_group_folder_path, config_file_name)
+#                     if os.path.exists(config_path):
+#                         try:
+#                             with open(config_path, 'r') as f_cfg: cfg = json.load(f_cfg)
+#                             custom_models_list.append({
+#                                 "id": model_id_folder,
+#                                 "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
+#                                 "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
+#                                 "description": cfg.get("description", "Custom Potential Model")
+#                             })
+#                         except Exception as e:
+#                             logger.error(f"Error reading config {config_path}: {e}")
+#                             custom_models_list.append({"id": model_id_folder, "name": f"{model_id_folder} ({pos_group_folder_name.capitalize()}) - Config Error", "position_group": pos_group_folder_name.capitalize(), "description": "Config Error"})
+#     return jsonify({"custom_models": custom_models_list})
+
 @app.route("/api/custom_model/list")
 def list_custom_models():
+    if not s3_client:
+        return jsonify({"error": "Server is not configured for cloud storage access."}), 500
+
     custom_models_list = []
-    if not os.path.exists(CUSTOM_MODELS_DIR):
-        return jsonify({"custom_models": []})
-    for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
-        model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
-        if os.path.isdir(model_folder_path):
-            for pos_group_folder_name in os.listdir(model_folder_path): 
-                pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
-                if os.path.isdir(pos_group_folder_path):
-                    config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
-                    config_path = os.path.join(pos_group_folder_path, config_file_name)
-                    if os.path.exists(config_path):
+    prefix = "ml_models/custom_models/"
+    
+    try:
+        # Llistar "directoris" a nivell de model_id
+        paginator = s3_client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=R2_BUCKET_NAME, Prefix=prefix, Delimiter='/')
+        
+        model_id_folders = []
+        for page in pages:
+            for common_prefix in page.get('CommonPrefixes', []):
+                model_id_folders.append(common_prefix.get('Prefix'))
+
+        for model_folder_prefix in model_id_folders:
+            model_id = model_folder_prefix.split('/')[-2]
+            
+            # Per a cada model_id, busquem els seus fitxers de configuració
+            model_files_pages = paginator.paginate(Bucket=R2_BUCKET_NAME, Prefix=model_folder_prefix)
+            for page in model_files_pages:
+                for obj in page.get('Contents', []):
+                    key = obj.get('Key')
+                    if key and key.endswith('.json') and 'model_config' in key:
                         try:
-                            with open(config_path, 'r') as f_cfg: cfg = json.load(f_cfg)
+                            response = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=key)
+                            cfg = json.loads(response['Body'].read().decode('utf-8'))
                             custom_models_list.append({
-                                "id": model_id_folder,
-                                "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
-                                "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
+                                "id": model_id,
+                                "name": cfg.get("model_type", f"{model_id}"),
+                                "position_group": cfg.get("position_group_trained_for", "Unknown"),
                                 "description": cfg.get("description", "Custom Potential Model")
                             })
                         except Exception as e:
-                            logger.error(f"Error reading config {config_path}: {e}")
-                            custom_models_list.append({"id": model_id_folder, "name": f"{model_id_folder} ({pos_group_folder_name.capitalize()}) - Config Error", "position_group": pos_group_folder_name.capitalize(), "description": "Config Error"})
-    return jsonify({"custom_models": custom_models_list})
+                            logger.error(f"Error reading config file {key} from R2: {e}")
+                            
+    except Exception as e:
+        logger.error(f"Failed to list custom models from R2: {e}", exc_info=True)
+        return jsonify({"error": "Failed to retrieve custom models from cloud storage."}), 500
+
+    return jsonify({"custom_models": sorted(custom_models_list, key=lambda x: x['name'])})
 
 
 # @app.route("/scouting_predict")
