@@ -60,6 +60,7 @@ import {
 Chart.register(
   CategoryScale,
   LinearScale,
+  BarController,
   BarElement,       // <-- El controlador per als gràfics de barres
   ArcElement,       // Per a gràfics circulars
   PointElement,     // Per als punts en gràfics de línia
