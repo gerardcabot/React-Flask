@@ -123,7 +123,8 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-if (selectedPlayer && selectedSeason) {
+  if (selectedPlayer && selectedSeason && selectedSeason !== "all") {
+// if (selectedPlayer && selectedSeason) {
   setLoadingEvents(true);
   setAvailableEventTypes([]);
 
