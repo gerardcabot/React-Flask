@@ -14,13 +14,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.11' # Assegura't que coincideix amb la versió del teu entorn de Render
 
       - name: Install dependencies
         run: pip install -r server-flask/requirements.txt
 
       - name: Run Training Script
         env:
+          # Les teves secrets i variables d'entorn es mantenen igual
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -30,43 +31,81 @@ jobs:
           IMPACT_KPIS: ${{ toJson(github.event.client_payload.impact_kpis) }}
           TARGET_KPIS: ${{ toJson(github.event.client_payload.target_kpis) }}
           ML_FEATURES: ${{ toJson(github.event.client_payload.ml_features) }}
-          PYTHONPATH: "${{ github.workspace }}/server-flask" # <-- AFEGIM AIXÒ
         
-        # --- INICI DELS CANVIS ---
-        shell: python # <-- AFEGIM AIXÒ per dir-li que executi el bloc amb Python
-        run: | # <-- Ara el codi de sota és Python pur, no un string
-          import os
-          import json
-          # Importem des del directori correcte
-          from server-flask.model_trainer.trainer_v2_15_16 import build_and_train_model_from_script_logic
+        # Canvi clau: Executem l'script directament com un mòdul
+        # Això assumeix que la teva arrel del projecte conté el directori 'server-flask'
+        run: |
+          python -m server-flask.model_trainer.trainer_v2_15_16
 
-          print('Starting training from GitHub Action...')
+# name: Train Custom ML Model
 
-          # Carregar paràmetres des de les variables d'entorn
-          custom_model_id = os.environ['MODEL_ID']
-          position_group = os.environ['POSITION_GROUP']
-          impact_kpis_list = json.loads(os.environ['IMPACT_KPIS'])
-          target_kpis_list = json.loads(os.environ['TARGET_KPIS'])
-          ml_features_str = os.environ.get('ML_FEATURES', 'null')
-          ml_features_list = json.loads(ml_features_str) if ml_features_str != 'null' else None
+# on:
+#   repository_dispatch:
+#     types: [train-model-event]
 
-          # Preparar la configuració per a la funció
-          impact_kpis_config = {position_group: impact_kpis_list}
-          target_kpis_config = {position_group: target_kpis_list}
+# jobs:
+#   train:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
 
-          # Executar l'entrenament
-          build_and_train_model_from_script_logic(
-              r2_bucket_name=os.environ['R2_BUCKET_NAME'],
-              r2_endpoint_url=os.environ['R2_ENDPOINT_URL'],
-              r2_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
-              r2_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],
-              custom_model_id=custom_model_id,
-              position_group_to_train=position_group,
-              user_composite_impact_kpis=impact_kpis_config,
-              user_kpi_definitions_for_weight_derivation=target_kpis_config,
-              user_ml_feature_subset=ml_features_list,
-              base_output_dir_for_custom_model=''
-          )
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.11'
 
-          print('Training finished.')
-        # --- FINAL DELS CANVIS ---
+#       - name: Install dependencies
+#         run: pip install -r server-flask/requirements.txt
+
+#       - name: Run Training Script
+#         env:
+#           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+#           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+#           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+#           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+#           MODEL_ID: ${{ github.event.client_payload.model_id }}
+#           POSITION_GROUP: ${{ github.event.client_payload.position_group }}
+#           IMPACT_KPIS: ${{ toJson(github.event.client_payload.impact_kpis) }}
+#           TARGET_KPIS: ${{ toJson(github.event.client_payload.target_kpis) }}
+#           ML_FEATURES: ${{ toJson(github.event.client_payload.ml_features) }}
+#           PYTHONPATH: "${{ github.workspace }}/server-flask" # <-- AFEGIM AIXÒ
+        
+#         # --- INICI DELS CANVIS ---
+#         shell: python # <-- AFEGIM AIXÒ per dir-li que executi el bloc amb Python
+#         run: | # <-- Ara el codi de sota és Python pur, no un string
+#           import os
+#           import json
+#           # Importem des del directori correcte
+#           from server-flask.model_trainer.trainer_v2_15_16 import build_and_train_model_from_script_logic
+
+#           print('Starting training from GitHub Action...')
+
+#           # Carregar paràmetres des de les variables d'entorn
+#           custom_model_id = os.environ['MODEL_ID']
+#           position_group = os.environ['POSITION_GROUP']
+#           impact_kpis_list = json.loads(os.environ['IMPACT_KPIS'])
+#           target_kpis_list = json.loads(os.environ['TARGET_KPIS'])
+#           ml_features_str = os.environ.get('ML_FEATURES', 'null')
+#           ml_features_list = json.loads(ml_features_str) if ml_features_str != 'null' else None
+
+#           # Preparar la configuració per a la funció
+#           impact_kpis_config = {position_group: impact_kpis_list}
+#           target_kpis_config = {position_group: target_kpis_list}
+
+#           # Executar l'entrenament
+#           build_and_train_model_from_script_logic(
+#               r2_bucket_name=os.environ['R2_BUCKET_NAME'],
+#               r2_endpoint_url=os.environ['R2_ENDPOINT_URL'],
+#               r2_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
+#               r2_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],
+#               custom_model_id=custom_model_id,
+#               position_group_to_train=position_group,
+#               user_composite_impact_kpis=impact_kpis_config,
+#               user_kpi_definitions_for_weight_derivation=target_kpis_config,
+#               user_ml_feature_subset=ml_features_list,
+#               base_output_dir_for_custom_model=''
+#           )
+
+#           print('Training finished.')
+#         # --- FINAL DELS CANVIS ---

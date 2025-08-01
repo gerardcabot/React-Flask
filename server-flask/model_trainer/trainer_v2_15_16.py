@@ -1404,20 +1404,91 @@ def get_trainer_all_possible_ml_feature_names():
     return sorted(list(possible_ml_features))
 
 
+# if __name__ == "__main__":
+#     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#     logger_trainer.info("Running trainer.py directly to generate default models with peak performance logic...")
+#     v14_output_dir_main = os.path.join(_PROJECT_ROOT, 'ml_models', 'ml_model_files_peak_potential')
+#     for pos_group in ["Attacker", "Midfielder", "Defender"]:
+#         logger_trainer.info(f"\n--- Generating peak potential model for: {pos_group} ---")
+#         success, message = build_and_train_model_from_script_logic(
+#             custom_model_id="peak_potential_v2_15_16",
+#             position_group_to_train=pos_group,
+#             user_kpi_definitions_for_weight_derivation=KPI_DEFINITIONS_FOR_WEIGHT_DERIVATION,
+#             user_composite_impact_kpis=COMPOSITE_IMPACT_KPIS,
+#             user_ml_feature_subset=None,
+#             base_output_dir_for_custom_model=v14_output_dir_main
+#         )
+#         if success: logger_trainer.info(message)
+#         else: logger_trainer.error(f"Failed to build model for {pos_group}: {message}")
+#     logger_trainer.info("\nDefault peak potential model generation process complete.")
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger_trainer.info("Running trainer.py directly to generate default models with peak performance logic...")
-    v14_output_dir_main = os.path.join(_PROJECT_ROOT, 'ml_models', 'ml_model_files_peak_potential')
-    for pos_group in ["Attacker", "Midfielder", "Defender"]:
-        logger_trainer.info(f"\n--- Generating peak potential model for: {pos_group} ---")
-        success, message = build_and_train_model_from_script_logic(
-            custom_model_id="peak_potential_v2_15_16",
-            position_group_to_train=pos_group,
-            user_kpi_definitions_for_weight_derivation=KPI_DEFINITIONS_FOR_WEIGHT_DERIVATION,
-            user_composite_impact_kpis=COMPOSITE_IMPACT_KPIS,
-            user_ml_feature_subset=None,
-            base_output_dir_for_custom_model=v14_output_dir_main
-        )
-        if success: logger_trainer.info(message)
-        else: logger_trainer.error(f"Failed to build model for {pos_group}: {message}")
-    logger_trainer.info("\nDefault peak potential model generation process complete.")
+    import os
+    import json
+    import boto3
+    import sys
+
+    # Configura el logging per a la sortida de GitHub Actions
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        stream=sys.stdout
+    )
+    logger_trainer.info("--- Starting Model Training via GitHub Action ---")
+
+    # Llegeix les variables d'entorn
+    try:
+        r2_bucket_name = os.environ['R2_BUCKET_NAME']
+        r2_endpoint_url = os.environ['R2_ENDPOINT_URL']
+        r2_access_key_id = os.environ['R2_ACCESS_KEY_ID']
+        r2_secret_access_key = os.environ['R2_SECRET_ACCESS_KEY']
+        
+        custom_model_id = os.environ['MODEL_ID']
+        position_group = os.environ['POSITION_GROUP']
+        
+        impact_kpis_list = json.loads(os.environ['IMPACT_KPIS'])
+        target_kpis_list = json.loads(os.environ['TARGET_KPIS'])
+        ml_features_str = os.environ.get('ML_FEATURES', 'null')
+        ml_features_list = json.loads(ml_features_str) if ml_features_str not in ['null', ''] else None
+
+        logger_trainer.info(f"Model ID: {custom_model_id}")
+        logger_trainer.info(f"Position Group: {position_group}")
+        logger_trainer.info(f"Num Impact KPIs: {len(impact_kpis_list)}")
+        logger_trainer.info(f"Num Target KPIs: {len(target_kpis_list)}")
+        logger_trainer.info(f"Num ML Features: {'Default' if ml_features_list is None else len(ml_features_list)}")
+
+    except (KeyError, json.JSONDecodeError) as e:
+        logger_trainer.error(f"CRITICAL: Failed to read or parse environment variables: {e}")
+        sys.exit(1)
+
+    # Prepara la configuració per a la funció d'entrenament
+    impact_kpis_config = {position_group: impact_kpis_list}
+    target_kpis_config = {position_group: target_kpis_list}
+
+    # Inicialitza el client S3 dins de l'acció
+    s3_client_action = boto3.client(
+        's3',
+        endpoint_url=r2_endpoint_url,
+        aws_access_key_id=r2_access_key_id,
+        aws_secret_access_key=r2_secret_access_key,
+        region_name='auto'
+    )
+
+    # Executa l'entrenament
+    success, message = build_and_train_model_from_script_logic(
+        s3_client=s3_client_action,
+        r2_bucket_name=r2_bucket_name,
+        custom_model_id=custom_model_id,
+        position_group_to_train=position_group,
+        user_composite_impact_kpis=impact_kpis_config,
+        user_kpi_definitions_for_weight_derivation=target_kpis_config,
+        user_ml_feature_subset=ml_features_list,
+        base_output_dir_for_custom_model='' # Aquest argument ja no és rellevant
+    )
+
+    if success:
+        logger_trainer.info(f"--- Training successful for model {custom_model_id}: {message} ---")
+        sys.exit(0)
+    else:
+        logger_trainer.error(f"--- Training failed for model {custom_model_id}: {message} ---")
+        sys.exit(1)
