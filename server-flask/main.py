@@ -847,67 +847,45 @@ def scouting_predict():
 
         model_to_load = None; scaler_to_load = None; expected_ml_feature_names_for_model = []
         effective_model_id_for_path = model_identifier
-        model_base_path_to_use = "" 
-        is_custom_model = True 
-
+        
+        is_custom_model = True
+        base_path_in_bucket = "ml_models/custom_models" 
+        
         if model_identifier == "default_v14":
             effective_model_id_for_path = "peak_potential_v2_15_16"
             is_custom_model = False 
-            model_pos_dir = os.path.join(V14_MODEL_BASE_DIR, position_group_for_prediction.lower())
-            model_base_path_to_use = V14_MODEL_BASE_DIR 
-        else:
-            model_base_path_to_use = CUSTOM_MODELS_DIR
-            model_pos_dir = os.path.join(model_base_path_to_use, effective_model_id_for_path, position_group_for_prediction.lower())
-        
-        logger.info(f"Loading model. Requested: {model_identifier}, Effective ID for filename: {effective_model_id_for_path}, Final Model Dir: {model_pos_dir}, Position: {position_group_for_prediction}")
-        
-        if not os.path.isdir(model_pos_dir):
-            logger.error(f"Model directory not found: {model_pos_dir}")
-            return jsonify({"error": f"Model directory not found for ID {effective_model_id_for_path}, Pos {position_group_for_prediction}"}), 404
+            base_path_in_bucket = "ml_models/ml_model_files_peak_potential"
+
+        # --- INICI DEL BLOC MODIFICAT PER LLEGIR DES DE R2 ---
+
+        if not s3_client:
+            return jsonify({"error": "S3 client not initialized. Check server configuration."}), 500
+            
+        logger.info(f"Loading model from R2. Bucket: {R2_BUCKET_NAME}, Model ID: {effective_model_id_for_path}, Position: {position_group_for_prediction}")
 
         model_file_name_suffix = f"_{effective_model_id_for_path}"
         
-        model_file = os.path.join(model_pos_dir, f"potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib")
-        scaler_file = os.path.join(model_pos_dir, f"feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib")
-        config_file = os.path.join(model_pos_dir, f"model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json")
-
-        # if not all(os.path.exists(p) for p in [model_file, scaler_file, config_file]):
-        #     logger.error(f"Missing files for model {effective_model_id_for_path}, Pos {position_group_for_prediction}.")
-        #     logger.error(f"  Checked model: {model_file}")
-        #     logger.error(f"  Checked scaler: {scaler_file}")
-        #     logger.error(f"  Checked config: {config_file}")
-        #     return jsonify({"error": f"Missing files for model ID {effective_model_id_for_path}, Pos {position_group_for_prediction}"}), 404
-        
-        # model_to_load = joblib.load(model_file); scaler_to_load = joblib.load(scaler_file)
-        # with open(config_file, 'r') as f_cfg: model_cfg = json.load(f_cfg)
-        # expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
-        # if not expected_ml_feature_names_for_model: return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
-
-        # NUEVO BLOQUE PARA PEGAR EN SU LUGAR
-
-        model_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
-        scaler_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
-        config_key = f"ml_models/ml_model_files_peak_potential/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
+        # Construïm les rutes (keys) dels fitxers dins del bucket de R2
+        model_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
+        scaler_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
+        config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
 
         try:
-            if not s3_client:
-                return jsonify({"error": "S3 client not initialized. Check server configuration."}), 500
-                
-            # Cargar modelo
+            # Carregar el model des de R2
             logger.info(f"Loading model from R2: {model_key}")
             with BytesIO() as f_model:
                 s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
                 f_model.seek(0)
                 model_to_load = joblib.load(f_model)
 
-            # Cargar scaler
+            # Carregar l'escalador des de R2
             logger.info(f"Loading scaler from R2: {scaler_key}")
             with BytesIO() as f_scaler:
                 s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
                 f_scaler.seek(0)
                 scaler_to_load = joblib.load(f_scaler)
 
-            # Cargar config
+            # Carregar la configuració des de R2
             logger.info(f"Loading config from R2: {config_key}")
             response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
             config_content = response_cfg['Body'].read().decode('utf-8')
@@ -917,35 +895,37 @@ def scouting_predict():
             if not expected_ml_feature_names_for_model:
                 return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
 
+        except s3_client.exceptions.NoSuchKey as e:
+             error_message = f"Model file not found in cloud storage. Searched for key: {e.response.get('Error', {}).get('Key', 'Unknown')}"
+             logger.error(error_message)
+             return jsonify({"error": error_message}), 404
         except Exception as e:
             logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: {model_key}, {scaler_key}, {config_key}. Error: {e}", exc_info=True)
             return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}."}), 500
 
-        # FIN DEL NUEVO BLOQUE
+        # --- FINAL DEL BLOC MODIFICAT ---
 
         player_seasons_all = player_metadata.get("seasons", [])
         if not player_seasons_all: return jsonify({"error": "No seasons for player"}), 404
         
-        df_all_base_features_for_player_list_pred = []
-        try:
-            # minutes_df_global = pd.read_csv(PLAYER_MINUTES_PATH)
-            minutes_df_global = pd.DataFrame()
-            if s3_client:
-                try:
-                    response_minutes = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key="data/player_season_minutes_with_names.csv")
-                    minutes_content = response_minutes['Body'].read().decode('utf-8')
-                    minutes_df_global = pd.read_csv(StringIO(minutes_content))
-                except Exception as e:
-                    logger.error(f"Error loading player_season_minutes_with_names.csv from R2: {e}")
-                    return jsonify({"error": "Could not load essential minutes data from cloud storage."}), 500
-            minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
-        except FileNotFoundError:
-            logger.error(f"Player minutes file '{PLAYER_MINUTES_PATH}' not found for prediction.")
-            return jsonify({"error": f"Player minutes file not found."}), 500
+        # Carregar minuts des de R2 (ja hauria d'estar correcte de la passa anterior)
+        minutes_df_global = pd.DataFrame()
+        if s3_client:
+            try:
+                response_minutes = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key="data/player_season_minutes_with_names.csv")
+                minutes_content = response_minutes['Body'].read().decode('utf-8')
+                minutes_df_global = pd.read_csv(StringIO(minutes_content))
+                minutes_df_global['season_name_std'] = minutes_df_global['season_name'].str.replace('/', '_', regex=False)
+            except Exception as e:
+                logger.error(f"Error loading player_season_minutes_with_names.csv from R2: {e}")
+                return jsonify({"error": "Could not load essential minutes data from cloud storage."}), 500
+        else:
+             return jsonify({"error": "Server not configured for cloud data access."}), 500
 
         target_s_numeric_pred = int(season_to_predict_for.split('_')[0])
         all_base_metric_names_from_trainer = trainer_get_feature_names()
 
+        df_all_base_features_for_player_list_pred = []
         for s_hist_or_current_pred in sorted(player_seasons_all):
             s_numeric_hist_pred = int(s_hist_or_current_pred.split('_')[0])
             if s_numeric_hist_pred > target_s_numeric_pred: continue 
@@ -1029,7 +1009,6 @@ def scouting_predict():
             "debug_num_ml_features_expected_by_model": len(expected_ml_feature_names_for_model)
         })
 
-    except FileNotFoundError as e: return jsonify({"error": f"File not found for prediction: {e.filename}"}), 500
     except Exception as e:
         logger.error(f"Error in /scouting_predict (model: {model_identifier}): {e}", exc_info=True)
         return jsonify({"error": f"Unexpected error during prediction: {str(e)}"}), 500
