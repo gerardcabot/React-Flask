@@ -17,15 +17,8 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r server-flask/requirements.txt
+        run: pip install -r server-flask/requirements.txt
 
-      # Aquest pas es manté per si algun script depèn de l'existència d'aquestes rutes
-      - name: Create Dummy Data Directories for Script Paths
-        run: |
-          mkdir -p server-flask/data
-          
       - name: Run Training Script
         env:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
@@ -37,6 +30,7 @@ jobs:
           IMPACT_KPIS: ${{ toJson(github.event.client_payload.impact_kpis) }}
           TARGET_KPIS: ${{ toJson(github.event.client_payload.target_kpis) }}
           ML_FEATURES: ${{ toJson(github.event.client_payload.ml_features) }}
+          PYTHONPATH: "${{ github.workspace }}/server-flask" # <-- AFEGIM AIXÒ
         
         # --- INICI DELS CANVIS ---
         shell: python # <-- AFEGIM AIXÒ per dir-li que executi el bloc amb Python

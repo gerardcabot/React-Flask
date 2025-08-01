@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_file, redirect, redirect
+from flask import Flask, jsonify, request, send_file, redirect
 import os
 import pandas as pd
 from flask_cors import CORS
@@ -18,14 +18,13 @@ import boto3
 from io import BytesIO, StringIO
 import gc
 import math
- 
+import requests
 
-from model_trainer.trainer_v2 import (
+# --- CANVI D'IMPORTACIÓ ---
+from model_trainer.trainer import (
     build_and_train_model_from_script_logic,
     get_trainer_kpi_definitions_for_weight_derivation,
-    # get_trainer_composite_impact_kpis_definitions,
     get_general_position as trainer_get_general_position, 
-    # parse_location as trainer_parse_location,
     get_feature_names_for_extraction as trainer_get_feature_names,
     extract_season_features as trainer_extract_base_features,
     trainer_construct_ml_features_for_player_season, 
