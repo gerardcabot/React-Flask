@@ -791,6 +791,52 @@ def available_kpis_for_custom_model():
 #         logger.error(f"Error building custom model '{custom_model_id}': {e}", exc_info=True)
 #         return jsonify({"error": f"Internal server error during custom model build: {str(e)}"}), 500
 
+# @app.route("/api/custom_model/build", methods=['POST'])
+# def handle_build_custom_model():
+#     data = request.get_json()
+#     if not data: return jsonify({"error": "Missing JSON payload"}), 400
+
+#     position_group = data.get("position_group")
+#     user_impact_kpis_list = data.get("impact_kpis")
+#     user_target_kpis_list = data.get("target_kpis")
+#     custom_model_name_prefix = data.get("model_name", f"custom_{position_group.lower() if position_group else 'model'}")
+    
+#     user_ml_feature_selection = data.get("ml_features", None)
+
+#     if not all([position_group, user_impact_kpis_list, user_target_kpis_list]):
+#         return jsonify({"error": "Missing required fields: position_group, impact_kpis (for correlation), target_kpis (for weighting)"}), 400
+#     if position_group not in ["Attacker", "Midfielder", "Defender"]:
+#         return jsonify({"error": f"Invalid position_group: {position_group}"}), 400
+    
+#     if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
+#         return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
+
+#     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+
+#     user_impact_kpis_config = {position_group: user_impact_kpis_list}
+#     user_target_kpis_for_weight_derivation_config = {position_group: user_target_kpis_list}
+
+#     try:
+#         # --- CANVI CLAU: Passem el client S3 i el nom del bucket al trainer ---
+#         success, message = build_and_train_model_from_script_logic(
+#             s3_client=s3_client,
+#             r2_bucket_name=R2_BUCKET_NAME,
+#             custom_model_id=custom_model_id,
+#             position_group_to_train=position_group,
+#             user_composite_impact_kpis=user_impact_kpis_config,
+#             user_kpi_definitions_for_weight_derivation=user_target_kpis_for_weight_derivation_config,
+#             user_ml_feature_subset=user_ml_feature_selection,
+#             base_output_dir_for_custom_model=CUSTOM_MODELS_DIR # Aquest paràmetre ja no s'utilitzarà per a rutes locals
+#         )
+#         if success:
+#             return jsonify({"message": message, "custom_model_id": custom_model_id}), 201
+#         else:
+#             return jsonify({"error": message}), 500
+#     except Exception as e:
+#         logger.error(f"Error building custom model '{custom_model_id}': {e}", exc_info=True)
+#         return jsonify({"error": f"Internal server error during custom model build: {str(e)}"}), 500
+
+
 @app.route("/api/custom_model/build", methods=['POST'])
 def handle_build_custom_model():
     data = request.get_json()
@@ -800,41 +846,55 @@ def handle_build_custom_model():
     user_impact_kpis_list = data.get("impact_kpis")
     user_target_kpis_list = data.get("target_kpis")
     custom_model_name_prefix = data.get("model_name", f"custom_{position_group.lower() if position_group else 'model'}")
-    
     user_ml_feature_selection = data.get("ml_features", None)
 
     if not all([position_group, user_impact_kpis_list, user_target_kpis_list]):
-        return jsonify({"error": "Missing required fields: position_group, impact_kpis (for correlation), target_kpis (for weighting)"}), 400
+        return jsonify({"error": "Missing required fields"}), 400
     if position_group not in ["Attacker", "Midfielder", "Defender"]:
         return jsonify({"error": f"Invalid position_group: {position_group}"}), 400
     
-    if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
-        return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
-
     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
 
-    user_impact_kpis_config = {position_group: user_impact_kpis_list}
-    user_target_kpis_for_weight_derivation_config = {position_group: user_target_kpis_list}
+    # --- LÒGICA PER ACTIVAR GITHUB ACTIONS ---
+    github_user = os.environ.get('GITHUB_USER')
+    github_repo = os.environ.get('GITHUB_REPO')
+    github_token = os.environ.get('GITHUB_TOKEN')
+
+    if not all([github_user, github_repo, github_token]):
+        return jsonify({"error": "Server is not configured to trigger background jobs."}), 500
+
+    url = f"https://api.github.com/repos/{github_user}/{github_repo}/dispatches"
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {github_token}"
+    }
+    payload = {
+        "event_type": "train-model-event",
+        "client_payload": {
+            "model_id": custom_model_id,
+            "position_group": position_group,
+            "impact_kpis": user_impact_kpis_list,
+            "target_kpis": user_target_kpis_list,
+            "ml_features": user_ml_feature_selection
+        }
+    }
 
     try:
-        # --- CANVI CLAU: Passem el client S3 i el nom del bucket al trainer ---
-        success, message = build_and_train_model_from_script_logic(
-            s3_client=s3_client,
-            r2_bucket_name=R2_BUCKET_NAME,
-            custom_model_id=custom_model_id,
-            position_group_to_train=position_group,
-            user_composite_impact_kpis=user_impact_kpis_config,
-            user_kpi_definitions_for_weight_derivation=user_target_kpis_for_weight_derivation_config,
-            user_ml_feature_subset=user_ml_feature_selection,
-            base_output_dir_for_custom_model=CUSTOM_MODELS_DIR # Aquest paràmetre ja no s'utilitzarà per a rutes locals
-        )
-        if success:
-            return jsonify({"message": message, "custom_model_id": custom_model_id}), 201
-        else:
-            return jsonify({"error": message}), 500
-    except Exception as e:
-        logger.error(f"Error building custom model '{custom_model_id}': {e}", exc_info=True)
-        return jsonify({"error": f"Internal server error during custom model build: {str(e)}"}), 500
+        response = requests.post(url, headers=headers, json=payload, timeout=15)
+        response.raise_for_status()
+
+        logger.info(f"Successfully dispatched GitHub Action for model {custom_model_id}")
+        return jsonify({
+            "message": f"Model build for {position_group} (ID: {custom_model_id}) has been started. It will be available shortly.",
+            "custom_model_id": custom_model_id
+        }), 202
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error dispatching GitHub Action for model '{custom_model_id}': {e}")
+        error_message = "Failed to start the background model training job."
+        if e.response is not None:
+            error_message += f" GitHub API responded with: {e.response.text}"
+        return jsonify({"error": error_message}), 500
 
 
 @app.route("/api/custom_model/list")

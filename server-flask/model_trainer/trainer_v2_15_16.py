@@ -926,23 +926,106 @@ def trainer_save_model_run_config(filepath, model_name, feature_cols, model_para
 #     logger_trainer.info(f"Custom Model for {position_group_to_train} (ID: {custom_model_id}) trained and artifacts saved to {pos_model_output_dir}")
 #     return True, f"Model for {position_group_to_train} (ID: {custom_model_id}) built successfully."
 
+# def build_and_train_model_from_script_logic(
+#     s3_client,
+#     r2_bucket_name,
+#     custom_model_id: str,
+#     position_group_to_train: str,
+#     user_kpi_definitions_for_weight_derivation: dict,
+#     user_composite_impact_kpis: dict,
+#     base_output_dir_for_custom_model: str, # Ja no es fa servir per a rutes, però es manté per compatibilitat de la crida
+#     user_ml_feature_subset: list = None
+# ):
+#     EVALUATION_SEASON = "2015_2016"
+    
+#     logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train}")
+#     logger_trainer.info(f"  STRATEGY: Train on all U21 data EXCEPT {EVALUATION_SEASON}, Evaluate EXCLUSIVELY on {EVALUATION_SEASON}.")
+
+#     if not s3_client:
+#         return False, "Trainer Error: S3 client is not available."
+
+#     try:
+#         response = s3_client.get_object(Bucket=r2_bucket_name, Key="data/player_index.json")
+#         content = response['Body'].read().decode('utf-8')
+#         player_index = json.loads(content)
+#     except Exception as e:
+#         msg = f"Trainer Error: Player index file not found in R2. Error: {e}"
+#         logger_trainer.error(msg); return False, msg
+
+#     try:
+#         response_minutes = s3_client.get_object(Bucket=r2_bucket_name, Key="data/player_season_minutes_with_names.csv")
+#         minutes_content = response_minutes['Body'].read().decode('utf-8')
+#         minutes_df = pd.read_csv(StringIO(minutes_content))
+#         minutes_df['season_name_std'] = minutes_df['season_name'].str.replace('/', '_', regex=False)
+#         minutes_df_dict = { (str(row['player_id']), row['season_name_std']): row['total_minutes_played'] for _, row in minutes_df.iterrows() }
+#     except Exception as e:
+#         logger_trainer.warning(f"Trainer Warning: Player minutes file not found in R2. Error: {e}");
+#         minutes_df_dict = {}
+
+#     all_season_features = []
+#     logger_trainer.info("Trainer Pass 1: Extracting base features for ALL player-seasons from R2.")
+    
+#     player_items = list(player_index.items()) if isinstance(player_index, dict) else [(p.get("name", str(p.get("player_id"))), p) for p in player_index]
+
+#     for i, (player_name_from_key, p_info) in enumerate(player_items):
+#         if (i + 1) % 200 == 0: logger_trainer.info(f"  Trainer Pass 1 - Processed {i+1}/{len(player_items)} players...")
+#         player_id_str, dob, specific_pos_idx = str(p_info.get("player_id")), p_info.get("dob"), p_info.get("position")
+#         if not all([player_id_str, dob, specific_pos_idx]): continue
+#         general_pos_idx = get_general_position(specific_pos_idx)
+#         if general_pos_idx in ["Goalkeeper", "Unknown"]: continue
+
+#         for season_str in p_info.get("seasons", []):
+#             if not (isinstance(season_str, str) and '_' in season_str): continue
+            
+#             age_at_season = get_age_at_fixed_point_in_season(dob, season_str)
+#             if age_at_season is None: continue 
+            
+#             season_numeric = int(season_str.split('_')[0])
+#             total_minutes = minutes_df_dict.get((player_id_str, season_str), 0.0); num_90s = safe_division(total_minutes, 90.0)
+            
+#             event_file_key = f"data/{season_str}/players/{player_id_str}_{season_str}.csv"
+#             current_season_event_df = pd.DataFrame()
+#             try:
+#                 response_event = s3_client.get_object(Bucket=r2_bucket_name, Key=event_file_key)
+#                 event_content = response_event['Body'].read().decode('utf-8')
+#                 current_season_event_df = pd.read_csv(StringIO(event_content), dtype=object, low_memory=False)
+#             except s3_client.exceptions.NoSuchKey:
+#                 pass
+#             except Exception as e:
+#                  logger_trainer.warning(f"Could not load event file {event_file_key} from R2: {e}")
+
+#             base_features_series = extract_season_features(current_season_event_df, age_at_season, season_numeric, num_90s)
+#             base_features_series['player_id_identifier'] = player_id_str
+#             base_features_series['player_name_identifier'] = player_name_from_key
+#             base_features_series['target_season_identifier'] = season_str
+#             base_features_series['general_position_identifier'] = general_pos_idx
+#             all_season_features.append(base_features_series)
+
+
 def build_and_train_model_from_script_logic(
-    s3_client,
     r2_bucket_name,
+    r2_endpoint_url,
+    r2_access_key_id,
+    r2_secret_access_key,
     custom_model_id: str,
     position_group_to_train: str,
     user_kpi_definitions_for_weight_derivation: dict,
     user_composite_impact_kpis: dict,
-    base_output_dir_for_custom_model: str, # Ja no es fa servir per a rutes, però es manté per compatibilitat de la crida
-    user_ml_feature_subset: list = None
+    user_ml_feature_subset: list = None,
+    base_output_dir_for_custom_model: str = "" # Argument fantasma per compatibilitat
 ):
     EVALUATION_SEASON = "2015_2016"
     
     logger_trainer.info(f"Starting Custom Model Build (ID: {custom_model_id}) for Position: {position_group_to_train}")
     logger_trainer.info(f"  STRATEGY: Train on all U21 data EXCEPT {EVALUATION_SEASON}, Evaluate EXCLUSIVELY on {EVALUATION_SEASON}.")
 
-    if not s3_client:
-        return False, "Trainer Error: S3 client is not available."
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=r2_endpoint_url,
+        aws_access_key_id=r2_access_key_id,
+        aws_secret_access_key=r2_secret_access_key,
+        region_name='auto'
+    )
 
     try:
         response = s3_client.get_object(Bucket=r2_bucket_name, Key="data/player_index.json")
