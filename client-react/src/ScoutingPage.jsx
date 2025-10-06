@@ -254,8 +254,8 @@ function ScoutingPage() {
     setIsBuildingCustomModel(true);
     setCustomModelBuildStatus(null);
     const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
-    // axios.post("http://localhost:5000/api/custom_model/build", {
-    axios.post(`${API_URL}/api/custom_model/build`, {
+    // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
+    axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
       position_group: backendPositionGroup,
       impact_kpis: selectedImpactKpisForCustom,
       target_kpis: selectedTargetKpisForCustom,
@@ -263,16 +263,33 @@ function ScoutingPage() {
       ml_features: mlFeaturesPayload
     })
       .then(res => {
-        setCustomModelBuildStatus({ success: true, message: res.data.message, id: res.data.custom_model_id });
+        const workflowUrl = res.data.workflow_url;
+        const estimatedTime = res.data.estimated_time;
+        const modelId = res.data.custom_model_id;
+        
+        setCustomModelBuildStatus({ 
+          success: true, 
+          message: `✅ ${res.data.message}`,
+          id: modelId,
+          workflowUrl: workflowUrl,
+          additionalInfo: `⏱️ Estimated time: ${estimatedTime}. You can monitor progress at GitHub Actions.`
+        });
         setIsBuildingCustomModel(false);
-        if (modelTypeForPrediction === 'custom') {
-          // axios.get("http://localhost:5000/api/custom_model/list")
-          axios.get(`${API_URL}/api/custom_model/list`)
-            .then(listRes => setAvailableCustomModels(listRes.data?.custom_models || []));
+        
+        // Show workflow link if available
+        if (workflowUrl) {
+          console.log(`Training started! Monitor at: ${workflowUrl}`);
         }
       })
       .catch(err => {
-        setCustomModelBuildStatus({ success: false, message: err.response?.data?.error || "No s'ha pogut crear el model personalitzat." });
+        const errorMsg = err.response?.data?.error || "No s'ha pogut iniciar l'entrenament del model.";
+        const manualUrl = err.response?.data?.manual_url;
+        
+        setCustomModelBuildStatus({ 
+          success: false, 
+          message: errorMsg,
+          manualUrl: manualUrl
+        });
         setIsBuildingCustomModel(false);
       });
   };
@@ -983,7 +1000,47 @@ function ScoutingPage() {
                 color: customModelBuildStatus.success ? '#385723' : '#dc2626'
               }}>
                 <strong>{customModelBuildStatus.success ? "Success!" : "Error:"}</strong> {customModelBuildStatus.message}
-                {customModelBuildStatus.id && <p>Model ID: <span style={{ fontFamily: "monospace" }}>{customModelBuildStatus.id}</span></p>}
+                {customModelBuildStatus.id && (
+                  <p style={{ marginTop: "8px", marginBottom: "4px" }}>
+                    Model ID: <span style={{ fontFamily: "monospace" }}>{customModelBuildStatus.id}</span>
+                  </p>
+                )}
+                {customModelBuildStatus.additionalInfo && (
+                  <p style={{ marginTop: "4px", fontSize: "0.9em" }}>
+                    {customModelBuildStatus.additionalInfo}
+                  </p>
+                )}
+                {customModelBuildStatus.workflowUrl && (
+                  <p style={{ marginTop: "8px" }}>
+                    <a 
+                      href={customModelBuildStatus.workflowUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        color: '#385723', 
+                        textDecoration: 'underline',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🔗 Monitor Progress on GitHub Actions
+                    </a>
+                  </p>
+                )}
+                {customModelBuildStatus.manualUrl && (
+                  <p style={{ marginTop: "8px" }}>
+                    <a 
+                      href={customModelBuildStatus.manualUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        color: '#dc2626', 
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Trigger manually on GitHub
+                    </a>
+                  </p>
+                )}
               </div>
             )}
           </div>

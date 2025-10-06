@@ -18,6 +18,7 @@ import boto3
 from io import BytesIO, StringIO
 import gc
 import math
+import requests
  
 
 from model_trainer.trainer_v2 import (
@@ -39,6 +40,11 @@ R2_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
 R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
+
+# --- CONFIGURACIÓN DE GITHUB ACTIONS ---
+GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
+GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
+GITHUB_REPO_NAME = os.environ.get('GITHUB_REPO_NAME', 'React-Flask')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -806,6 +812,93 @@ def handle_build_custom_model():
     except Exception as e:
         logger.error(f"Error building custom model '{custom_model_id}': {e}", exc_info=True)
         return jsonify({"error": f"Internal server error during custom model build: {str(e)}"}), 500
+
+
+@app.route("/api/custom_model/trigger_github_training", methods=['POST'])
+def trigger_github_training():
+    """
+    Triggers a GitHub Actions workflow to train a custom model.
+    This avoids timeout issues on Render free tier by running the training on GitHub Actions.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
+    position_group = data.get("position_group")
+    user_impact_kpis_list = data.get("impact_kpis")
+    user_target_kpis_list = data.get("target_kpis")
+    custom_model_name_prefix = data.get("model_name", f"custom_{position_group.lower() if position_group else 'model'}")
+    user_ml_feature_selection = data.get("ml_features", None)
+
+    # Validation
+    if not all([position_group, user_impact_kpis_list, user_target_kpis_list]):
+        return jsonify({"error": "Missing required fields: position_group, impact_kpis, target_kpis"}), 400
+    
+    if position_group not in ["Attacker", "Midfielder", "Defender"]:
+        return jsonify({"error": f"Invalid position_group: {position_group}"}), 400
+    
+    if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
+        return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
+
+    # Check if GitHub token is configured
+    if not GITHUB_TOKEN:
+        return jsonify({
+            "error": "GitHub Actions integration not configured. Please set GITHUB_TOKEN environment variable.",
+            "fallback": "You can manually trigger the workflow at: https://github.com/{}/{}/actions/workflows/train_model.yml".format(GITHUB_REPO_OWNER, GITHUB_REPO_NAME)
+        }), 503
+
+    # Generate unique model ID
+    custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+
+    # Prepare payload for GitHub Actions
+    github_api_url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/dispatches"
+    
+    payload = {
+        "event_type": "train-model-event",
+        "client_payload": {
+            "model_id": custom_model_id,
+            "position_group": position_group,
+            "impact_kpis": user_impact_kpis_list,
+            "target_kpis": user_target_kpis_list,
+            "ml_features": user_ml_feature_selection
+        }
+    }
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        logger.info(f"Triggering GitHub Actions workflow for model: {custom_model_id}")
+        response = requests.post(github_api_url, json=payload, headers=headers, timeout=10)
+        
+        if response.status_code == 204:
+            # Success - GitHub Actions triggered
+            workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
+            return jsonify({
+                "success": True,
+                "message": f"Model training started via GitHub Actions",
+                "custom_model_id": custom_model_id,
+                "workflow_url": workflow_url,
+                "estimated_time": "10-30 minutes",
+                "instructions": "You can monitor the progress at the workflow URL. The model will be available in the list once training completes."
+            }), 202
+        else:
+            logger.error(f"GitHub API error: {response.status_code} - {response.text}")
+            return jsonify({
+                "error": f"Failed to trigger GitHub Actions: {response.status_code}",
+                "details": response.text,
+                "manual_url": f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
+            }), 500
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error calling GitHub API: {e}", exc_info=True)
+        return jsonify({
+            "error": f"Failed to connect to GitHub API: {str(e)}",
+            "manual_url": f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
+        }), 500
 
 
 @app.route("/api/custom_model/list")

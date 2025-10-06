@@ -1465,25 +1465,18 @@ if __name__ == "__main__":
     impact_kpis_config = {position_group: impact_kpis_list}
     target_kpis_config = {position_group: target_kpis_list}
 
-    # Inicialitza el client S3 dins de l'acció
-    s3_client_action = boto3.client(
-        's3',
-        endpoint_url=r2_endpoint_url,
-        aws_access_key_id=r2_access_key_id,
-        aws_secret_access_key=r2_secret_access_key,
-        region_name='auto'
-    )
-
-    # Executa l'entrenament
+    # Executa l'entrenament (el client S3 es crea dins de la funció)
     success, message = build_and_train_model_from_script_logic(
-        s3_client=s3_client_action,
         r2_bucket_name=r2_bucket_name,
+        r2_endpoint_url=r2_endpoint_url,
+        r2_access_key_id=r2_access_key_id,
+        r2_secret_access_key=r2_secret_access_key,
         custom_model_id=custom_model_id,
         position_group_to_train=position_group,
         user_composite_impact_kpis=impact_kpis_config,
         user_kpi_definitions_for_weight_derivation=target_kpis_config,
         user_ml_feature_subset=ml_features_list,
-        base_output_dir_for_custom_model='' # Aquest argument ja no és rellevant
+        base_output_dir_for_custom_model='' # Argument fantasma per compatibilitat
     )
 
     if success:
