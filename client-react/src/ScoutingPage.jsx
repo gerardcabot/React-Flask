@@ -4,6 +4,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import React from "react";
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ''; // Optional: for viewing GitHub workflow URLs
 
 
 function calculatePlayerAge(dob, season) {
@@ -254,6 +255,13 @@ function ScoutingPage() {
     setIsBuildingCustomModel(true);
     setCustomModelBuildStatus(null);
     const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
+    
+    // Prepare headers (add admin secret if available for workflow URL access)
+    const headers = {};
+    if (ADMIN_SECRET) {
+      headers['X-Admin-Secret'] = ADMIN_SECRET;
+    }
+    
     // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
     axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
       position_group: backendPositionGroup,
@@ -261,18 +269,27 @@ function ScoutingPage() {
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
       ml_features: mlFeaturesPayload
-    })
+    }, { headers })
       .then(res => {
         const workflowUrl = res.data.workflow_url;
         const estimatedTime = res.data.estimated_time;
         const modelId = res.data.custom_model_id;
+        const instructions = res.data.instructions;
+        
+        // Prepare additional info based on whether workflow URL is available
+        let additionalInfo = `⏱️ Estimated time: ${estimatedTime}.`;
+        if (workflowUrl) {
+          additionalInfo += ` You can monitor progress at GitHub Actions.`;
+        } else {
+          additionalInfo += ` The model will appear in the list automatically when ready.`;
+        }
         
         setCustomModelBuildStatus({ 
           success: true, 
           message: `✅ ${res.data.message}`,
           id: modelId,
-          workflowUrl: workflowUrl,
-          additionalInfo: `⏱️ Estimated time: ${estimatedTime}. You can monitor progress at GitHub Actions.`
+          workflowUrl: workflowUrl, // Only present if user is admin
+          additionalInfo: additionalInfo
         });
         setIsBuildingCustomModel(false);
         

@@ -46,6 +46,9 @@ GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
 GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
 GITHUB_REPO_NAME = os.environ.get('GITHUB_REPO_NAME', 'React-Flask')
 
+# Admin secret for viewing GitHub Actions workflow URLs (security for public repos)
+ADMIN_SECRET = os.environ.get('ADMIN_SECRET', 'change-this-secret-in-production')
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -876,15 +879,24 @@ def trigger_github_training():
         
         if response.status_code == 204:
             # Success - GitHub Actions triggered
-            workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
-            return jsonify({
+            # Check if user is admin (for security in public repos)
+            is_admin = request.headers.get('X-Admin-Secret') == ADMIN_SECRET
+            
+            response_data = {
                 "success": True,
-                "message": f"Model training started via GitHub Actions",
+                "message": f"Model training started successfully",
                 "custom_model_id": custom_model_id,
-                "workflow_url": workflow_url,
                 "estimated_time": "10-30 minutes",
-                "instructions": "You can monitor the progress at the workflow URL. The model will be available in the list once training completes."
-            }), 202
+                "instructions": "The model will be available in the list once training completes (10-30 minutes)."
+            }
+            
+            # Only include workflow URL for admin users (to protect logs in public repos)
+            if is_admin:
+                workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
+                response_data["workflow_url"] = workflow_url
+                response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes."
+            
+            return jsonify(response_data), 202
         else:
             logger.error(f"GitHub API error: {response.status_code} - {response.text}")
             return jsonify({
@@ -904,28 +916,78 @@ def trigger_github_training():
 @app.route("/api/custom_model/list")
 def list_custom_models():
     custom_models_list = []
-    if not os.path.exists(CUSTOM_MODELS_DIR):
-        return jsonify({"custom_models": []})
-    for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
-        model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
-        if os.path.isdir(model_folder_path):
-            for pos_group_folder_name in os.listdir(model_folder_path): 
-                pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
-                if os.path.isdir(pos_group_folder_path):
-                    config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
-                    config_path = os.path.join(pos_group_folder_path, config_file_name)
-                    if os.path.exists(config_path):
+    
+    # Load models from R2 (where GitHub Actions saves them)
+    if s3_client and R2_BUCKET_NAME:
+        try:
+            logger.info("Listing custom models from R2...")
+            # List all objects in the custom_models/ prefix
+            response = s3_client.list_objects_v2(
+                Bucket=R2_BUCKET_NAME,
+                Prefix='custom_models/',
+                Delimiter='/'
+            )
+            
+            # Get all model folders (common prefixes)
+            if 'CommonPrefixes' in response:
+                for prefix in response['CommonPrefixes']:
+                    # prefix['Prefix'] looks like: 'custom_models/model_id/'
+                    model_folder = prefix['Prefix']
+                    model_id = model_folder.strip('/').split('/')[-1]
+                    
+                    # Try to find config files for each position group
+                    for position_group in ['Attacker', 'Midfielder', 'Defender']:
+                        config_key = f"{model_folder}{position_group}/model_config_{position_group.lower()}_{model_id}.json"
                         try:
-                            with open(config_path, 'r') as f_cfg: cfg = json.load(f_cfg)
+                            config_obj = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
+                            config_content = config_obj['Body'].read().decode('utf-8')
+                            cfg = json.loads(config_content)
+                            
                             custom_models_list.append({
-                                "id": model_id_folder,
-                                "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
-                                "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
+                                "id": model_id,
+                                "name": cfg.get("model_type", f"{model_id} ({position_group})"),
+                                "position_group": cfg.get("position_group_trained_for", position_group),
                                 "description": cfg.get("description", "Custom Potential Model")
                             })
+                            logger.info(f"Found custom model: {model_id} for {position_group}")
                         except Exception as e:
-                            logger.error(f"Error reading config {config_path}: {e}")
-                            custom_models_list.append({"id": model_id_folder, "name": f"{model_id_folder} ({pos_group_folder_name.capitalize()}) - Config Error", "position_group": pos_group_folder_name.capitalize(), "description": "Config Error"})
+                            # Skip if config doesn't exist for this position group
+                            if 'NoSuchKey' in str(e) or '404' in str(e):
+                                pass
+                            else:
+                                logger.error(f"Error reading config for {model_id}/{position_group}: {e}")
+            
+            logger.info(f"Found {len(custom_models_list)} custom models in R2")
+        except Exception as e:
+            logger.error(f"Error listing custom models from R2: {e}", exc_info=True)
+            # Fall through to check local models if R2 fails
+    
+    # Fallback: Also check local models (for backwards compatibility)
+    if os.path.exists(CUSTOM_MODELS_DIR):
+        for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
+            model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
+            if os.path.isdir(model_folder_path):
+                for pos_group_folder_name in os.listdir(model_folder_path): 
+                    pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
+                    if os.path.isdir(pos_group_folder_path):
+                        config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
+                        config_path = os.path.join(pos_group_folder_path, config_file_name)
+                        if os.path.exists(config_path):
+                            try:
+                                with open(config_path, 'r') as f_cfg: 
+                                    cfg = json.load(f_cfg)
+                                # Check if not already in list from R2
+                                if not any(m['id'] == model_id_folder for m in custom_models_list):
+                                    custom_models_list.append({
+                                        "id": model_id_folder,
+                                        "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
+                                        "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
+                                        "description": cfg.get("description", "Custom Potential Model (Local)")
+                                    })
+                                    logger.info(f"Found local custom model: {model_id_folder}")
+                            except Exception as e:
+                                logger.error(f"Error reading local config {config_path}: {e}")
+    
     return jsonify({"custom_models": custom_models_list})
 
 
