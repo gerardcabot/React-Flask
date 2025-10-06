@@ -788,6 +788,10 @@ def handle_build_custom_model():
 
     try:
         success, message = build_and_train_model_from_script_logic(
+            r2_bucket_name=R2_BUCKET_NAME,
+            r2_endpoint_url=R2_ENDPOINT_URL,
+            r2_access_key_id=R2_ACCESS_KEY_ID,
+            r2_secret_access_key=R2_SECRET_ACCESS_KEY,
             custom_model_id=custom_model_id,
             position_group_to_train=position_group,
             user_composite_impact_kpis=user_impact_kpis_config,
