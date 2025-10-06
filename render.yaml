@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: football-api
+    env: python
+    region: frankfurt  # Canvia a la teva regió preferida: oregon, frankfurt, singapore
+    plan: free
+    
+    # Build configuration
+    buildCommand: "pip install -r server-flask/requirements.txt"
+    
+    # Start command optimitzat per Render
+    # - gunicorn amb timeout de 120s per handles cold starts
+    # - 1 worker amb 2 threads per eficiència en free tier
+    # - preload per accelerar l'arrencada
+    startCommand: "cd server-flask && gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2 --worker-class gthread --preload"
+    
+    # Health check configuration - Render farà pings automàtics
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      
+      # Secrets de Cloudflare R2 - Has de configurar-los manualment a Render Dashboard
+      - key: R2_ENDPOINT_URL
+        sync: false
+      
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      
+      - key: R2_BUCKET_NAME
+        sync: false
+      
+      # Variables opcionals per optimitzar Gunicorn
+      - key: WEB_CONCURRENCY
+        value: "1"
+      
+      - key: GUNICORN_CMD_ARGS
+        value: "--log-level info --access-logfile - --error-logfile -"

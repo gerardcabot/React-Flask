@@ -1,0 +1,54 @@
+name: Keep Render API Alive
+
+on:
+  schedule:
+    # Executa cada 14 minuts (Render s'atura després de 15 min d'inactivitat)
+    - cron: '*/14 * * * *'
+  workflow_dispatch:  # Permet execució manual des de GitHub
+
+jobs:
+  ping-api:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          echo "🏓 Pinging API at $(date)"
+          
+          response=$(curl -s -w "\n%{http_code}" \
+            --max-time 60 \
+            https://football-api-r0f2.onrender.com/health)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "Response Code: $http_code"
+          echo "Response Body: $body"
+          
+          if [ $http_code -eq 200 ]; then
+            echo "✅ API is healthy!"
+          else
+            echo "⚠️ API returned status code $http_code"
+            exit 1
+          fi
+      
+      - name: Verify Response Content
+        run: |
+          response=$(curl -s https://football-api-r0f2.onrender.com/health --max-time 60)
+          
+          if echo "$response" | grep -q "healthy"; then
+            echo "✅ Response contains 'healthy' keyword"
+          else
+            echo "⚠️ Response doesn't contain expected content"
+            echo "Response: $response"
+            exit 1
+          fi
+      
+      - name: Log Success
+        if: success()
+        run: |
+          echo "================================================"
+          echo "✅ Keep-alive ping completed successfully"
+          echo "⏰ Next ping will occur in ~14 minutes"
+          echo "📊 This keeps your Render API from spinning down"
+          echo "================================================"
