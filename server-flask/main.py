@@ -1051,36 +1051,53 @@ def scouting_predict():
 
         try:
             # Carregar el model des de R2
-            logger.info(f"Loading model from R2: {model_key}")
-            with BytesIO() as f_model:
-                s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
-                f_model.seek(0)
-                model_to_load = joblib.load(f_model)
+            logger.info(f"Attempting to load model from R2: {model_key}")
+            try:
+                with BytesIO() as f_model:
+                    s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
+                    f_model.seek(0)
+                    model_to_load = joblib.load(f_model)
+                logger.info(f"Model loaded successfully from: {model_key}")
+            except Exception as e:
+                logger.error(f"Failed to load model from {model_key}: {str(e)}")
+                raise
 
             # Carregar l'escalador des de R2
-            logger.info(f"Loading scaler from R2: {scaler_key}")
-            with BytesIO() as f_scaler:
-                s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
-                f_scaler.seek(0)
-                scaler_to_load = joblib.load(f_scaler)
+            logger.info(f"Attempting to load scaler from R2: {scaler_key}")
+            try:
+                with BytesIO() as f_scaler:
+                    s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
+                    f_scaler.seek(0)
+                    scaler_to_load = joblib.load(f_scaler)
+                logger.info(f"Scaler loaded successfully from: {scaler_key}")
+            except Exception as e:
+                logger.error(f"Failed to load scaler from {scaler_key}: {str(e)}")
+                raise
 
             # Carregar la configuració des de R2
-            logger.info(f"Loading config from R2: {config_key}")
-            response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
-            config_content = response_cfg['Body'].read().decode('utf-8')
-            model_cfg = json.loads(config_content)
+            logger.info(f"Attempting to load config from R2: {config_key}")
+            try:
+                response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
+                config_content = response_cfg['Body'].read().decode('utf-8')
+                model_cfg = json.loads(config_content)
+                logger.info(f"Config loaded successfully from: {config_key}")
+            except Exception as e:
+                logger.error(f"Failed to load config from {config_key}: {str(e)}")
+                raise
             
             expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
             if not expected_ml_feature_names_for_model:
                 return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
 
-        except s3_client.exceptions.NoSuchKey as e:
-             error_message = f"Model file not found in cloud storage. Searched for key: {e.response.get('Error', {}).get('Key', 'Unknown')}"
-             logger.error(error_message)
-             return jsonify({"error": error_message}), 404
         except Exception as e:
-            logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: {model_key}, {scaler_key}, {config_key}. Error: {e}", exc_info=True)
-            return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}."}), 500
+            error_str = str(e)
+            if '404' in error_str or 'NoSuchKey' in error_str or 'Not Found' in error_str:
+                error_message = f"Model files not found in R2. Model ID: {model_identifier}, Position: {position_group_for_prediction}. Keys tried: model={model_key}, scaler={scaler_key}, config={config_key}"
+                logger.error(error_message)
+                return jsonify({"error": error_message}), 404
+            else:
+                logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: model={model_key}, scaler={scaler_key}, config={config_key}. Error: {error_str}", exc_info=True)
+                return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}. Error: {error_str}"}), 500
 
         # --- FINAL DEL BLOC MODIFICAT ---
 
