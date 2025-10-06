@@ -11,44 +11,70 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Ping Health Endpoint
+      - name: Ping Health Endpoint with Retry Logic
         run: |
           echo "🏓 Pinging API at $(date)"
+          echo "================================================"
           
-          response=$(curl -s -w "\n%{http_code}" \
-            --max-time 60 \
-            https://football-api-r0f2.onrender.com/health)
+          MAX_RETRIES=5
+          RETRY_DELAY=30
+          TIMEOUT=120
+          SUCCESS=0
           
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo ""
+            echo "🔄 Attempt $i of $MAX_RETRIES..."
+            
+            # Perform the request
+            response=$(curl -s -w "\n%{http_code}" \
+              --max-time $TIMEOUT \
+              --connect-timeout 30 \
+              https://football-api-r0f2.onrender.com/health 2>&1)
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "Response Code: $http_code"
+            
+            # Check if we got a 200 response
+            if [ "$http_code" = "200" ]; then
+              echo "Response Body: $body"
+              
+              # Verify the response contains "healthy"
+              if echo "$body" | grep -q "healthy"; then
+                echo "✅ API is healthy!"
+                echo "✅ Response contains 'healthy' keyword"
+                SUCCESS=1
+                break
+              else
+                echo "⚠️ Response doesn't contain 'healthy' keyword"
+                echo "Body received: $body"
+              fi
+            else
+              echo "⚠️ API returned status code: $http_code"
+              
+              # If it's a cold start, Render might return 503 or timeout
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "💤 API might be in cold start..."
+                echo "⏳ Waiting ${RETRY_DELAY}s before retry..."
+                sleep $RETRY_DELAY
+              fi
+            fi
+          done
           
-          echo "Response Code: $http_code"
-          echo "Response Body: $body"
+          echo ""
+          echo "================================================"
           
-          if [ $http_code -eq 200 ]; then
-            echo "✅ API is healthy!"
+          if [ $SUCCESS -eq 1 ]; then
+            echo "✅ Keep-alive ping completed successfully"
+            echo "⏰ Next ping will occur in ~14 minutes"
+            echo "📊 This keeps your Render API from spinning down"
+            echo "================================================"
+            exit 0
           else
-            echo "⚠️ API returned status code $http_code"
+            echo "❌ Failed to ping API after $MAX_RETRIES attempts"
+            echo "🔍 This might indicate a real problem with your API"
+            echo "📝 Check Render logs for more details"
+            echo "================================================"
             exit 1
           fi
-      
-      - name: Verify Response Content
-        run: |
-          response=$(curl -s https://football-api-r0f2.onrender.com/health --max-time 60)
-          
-          if echo "$response" | grep -q "healthy"; then
-            echo "✅ Response contains 'healthy' keyword"
-          else
-            echo "⚠️ Response doesn't contain expected content"
-            echo "Response: $response"
-            exit 1
-          fi
-      
-      - name: Log Success
-        if: success()
-        run: |
-          echo "================================================"
-          echo "✅ Keep-alive ping completed successfully"
-          echo "⏰ Next ping will occur in ~14 minutes"
-          echo "📊 This keeps your Render API from spinning down"
-          echo "================================================"
