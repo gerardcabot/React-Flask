@@ -244,9 +244,15 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
         return try_load_one_from_r2(player_id, season)
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'), static_url_path='/static')
-# CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
-# CORS(app, resources={r"/*": {"origins": "*"}})
-CORS(app, resources={r"/*": {"origins": "https://react-flask-psi.vercel.app"}})
+# CORS configuration - allow Vercel domain and localhost for development
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://react-flask-psi.vercel.app", "http://localhost:5173", "http://localhost:5174"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Admin-Secret"],
+        "supports_credentials": True
+    }
+})
 
 
 
@@ -921,35 +927,37 @@ def list_custom_models():
     if s3_client and R2_BUCKET_NAME:
         try:
             logger.info("Listing custom models from R2...")
-            # List all objects in the custom_models/ prefix
+            # List all objects in the ml_models/custom_models/ prefix (where trainer saves them)
             response = s3_client.list_objects_v2(
                 Bucket=R2_BUCKET_NAME,
-                Prefix='custom_models/',
+                Prefix='ml_models/custom_models/',
                 Delimiter='/'
             )
             
             # Get all model folders (common prefixes)
             if 'CommonPrefixes' in response:
                 for prefix in response['CommonPrefixes']:
-                    # prefix['Prefix'] looks like: 'custom_models/model_id/'
+                    # prefix['Prefix'] looks like: 'ml_models/custom_models/model_id/'
                     model_folder = prefix['Prefix']
                     model_id = model_folder.strip('/').split('/')[-1]
                     
                     # Try to find config files for each position group
-                    for position_group in ['Attacker', 'Midfielder', 'Defender']:
-                        config_key = f"{model_folder}{position_group}/model_config_{position_group.lower()}_{model_id}.json"
+                    for position_group in ['attacker', 'midfielder', 'defender']:
+                        config_key = f"{model_folder}{position_group}/model_config_{position_group}_{model_id}.json"
                         try:
                             config_obj = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
                             config_content = config_obj['Body'].read().decode('utf-8')
                             cfg = json.loads(config_content)
                             
+                            # Capitalize position group for display
+                            position_display = position_group.capitalize()
                             custom_models_list.append({
                                 "id": model_id,
-                                "name": cfg.get("model_type", f"{model_id} ({position_group})"),
-                                "position_group": cfg.get("position_group_trained_for", position_group),
+                                "name": cfg.get("model_type", f"{model_id} ({position_display})"),
+                                "position_group": cfg.get("position_group_trained_for", position_display),
                                 "description": cfg.get("description", "Custom Potential Model")
                             })
-                            logger.info(f"Found custom model: {model_id} for {position_group}")
+                            logger.info(f"Found custom model: {model_id} for {position_display}")
                         except Exception as e:
                             # Skip if config doesn't exist for this position group
                             if 'NoSuchKey' in str(e) or '404' in str(e):
