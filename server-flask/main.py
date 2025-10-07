@@ -1083,8 +1083,8 @@ def scouting_predict():
             error_str = str(e)
             if '404' in error_str or 'NoSuchKey' in error_str or 'Not Found' in error_str:
                 error_message = f"Model files not found in R2. Model ID: {model_identifier}, Position: {position_group_for_prediction}. Keys tried: model={model_key}, scaler={scaler_key}, config={config_key}"
-             logger.error(error_message)
-             return jsonify({"error": error_message}), 404
+                logger.error(error_message)
+                return jsonify({"error": error_message}), 404
             else:
                 logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: model={model_key}, scaler={scaler_key}, config={config_key}. Error: {error_str}", exc_info=True)
                 return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}. Error: {error_str}"}), 500
