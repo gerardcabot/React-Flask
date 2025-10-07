@@ -42,6 +42,10 @@ R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
 R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
 
+# Configure logging FIRST (before using logger)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # --- CONFIGURACIÓN DE GITHUB ACTIONS ---
 GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
 GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
@@ -54,10 +58,6 @@ if not ADMIN_SECRET:
     logger.warning("⚠️  ADMIN_SECRET not set! Admin features (GitHub workflow links) will be disabled.")
     logger.warning("   To enable admin features, set ADMIN_SECRET environment variable.")
     ADMIN_SECRET = None  # Explicitly set to None for clarity
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 s3_client = None
 if R2_ENDPOINT_URL and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME:
