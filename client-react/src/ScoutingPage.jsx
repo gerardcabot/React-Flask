@@ -149,7 +149,7 @@ function ScoutingPage() {
     // axios.get("http://localhost:5000/players")
     axios.get(`${API_URL}/players`)
       .then(res => setAllPlayers(res.data || []))
-      .catch(() => { setAllPlayers([]); setPredictionError("No s'ha pogut carregar la llista de jugadors."); });
+      .catch(() => { setAllPlayers([]); setPredictionError(t('scouting.errors.playersLoadFailed')); });
 
     // axios.get("http://localhost:5000/api/custom_model/available_kpis")
     axios.get(`${API_URL}/api/custom_model/available_kpis`)
@@ -248,28 +248,28 @@ function ScoutingPage() {
     setPredictionError("");
     
     toast.promise(
-      axios.get(`${API_URL}/scouting_predict`, {
-        params: {
-          player_id: selectedPlayer.player_id,
-          season: selectedSeason,
-          model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
-        }
+    axios.get(`${API_URL}/scouting_predict`, {
+      params: {
+        player_id: selectedPlayer.player_id,
+        season: selectedSeason,
+        model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
+      }
       }),
       {
         loading: t('scouting.predicting'),
         success: (res) => {
-          setPredictionResult(res.data);
+        setPredictionResult(res.data);
           return `${t('scouting.result.score')}: ${res.data.predicted_potential_score}/200`;
         },
         error: (err) => {
           const errorMsg = err.response?.data?.error || t('scouting.errors.predictionFailed');
-          setPredictionError(errorMsg);
+        setPredictionError(errorMsg);
           return errorMsg;
         },
       }
     ).finally(() => {
-      setIsLoadingPrediction(false);
-    });
+        setIsLoadingPrediction(false);
+      });
   };
 
   const handleKpiToggle = (kpi_id, type) => {
@@ -292,7 +292,7 @@ function ScoutingPage() {
     if (!selectedPositionGroupForCustom ||
         !selectedImpactKpisForCustom.length ||
         !selectedTargetKpisForCustom.length) {
-      toast.error("Seleccioneu un grup de posicions i com a mínim un KPI d'impacte i un KPI d'objectiu.");
+      toast.error(t('scouting.customModelBuilder.errorValidation'));
       return;
     }
     let mlFeaturesPayload = null;
@@ -316,14 +316,14 @@ function ScoutingPage() {
     // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
     toast.promise(
       axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
-        position_group: backendPositionGroup,
-        impact_kpis: selectedImpactKpisForCustom,
-        target_kpis: selectedTargetKpisForCustom,
-        model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
-        ml_features: mlFeaturesPayload
+      position_group: backendPositionGroup,
+      impact_kpis: selectedImpactKpisForCustom,
+      target_kpis: selectedTargetKpisForCustom,
+      model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
+      ml_features: mlFeaturesPayload
       }, { headers }),
       {
-        loading: 'Iniciant entrenament del model...',
+        loading: t('scouting.customModelBuilder.starting'),
         success: (res) => {
           const workflowUrl = res.data.workflow_url;
           const estimatedTime = res.data.estimated_time;
@@ -333,11 +333,11 @@ function ScoutingPage() {
           addMyModel(modelId);
           
           // Prepare additional info for display
-          let additionalInfo = `Temps estimat: ${estimatedTime}.`;
+          let additionalInfo = `${t('scouting.customModelBuilder.estimatedTimeMessage', { time: estimatedTime })}`;
           if (workflowUrl) {
-            additionalInfo += ` Pots monitoritzar el progrés a GitHub Actions.`;
+            additionalInfo += ` ${t('scouting.customModelBuilder.monitorGitHub')}`;
           } else {
-            additionalInfo += ` El model apareixerà a la llista automàticament quan estigui llest.`;
+            additionalInfo += ` ${t('scouting.customModelBuilder.willAppear')}`;
           }
           
           setCustomModelBuildStatus({ 
@@ -348,10 +348,10 @@ function ScoutingPage() {
             additionalInfo: additionalInfo
           });
           
-          return `Model ${modelId} en entrenament! ${additionalInfo}`;
+          return `${t('scouting.customModelBuilder.successTitle')} ${additionalInfo}`;
         },
         error: (err) => {
-          const errorMsg = err.response?.data?.error || "No s'ha pogut iniciar l'entrenament del model.";
+          const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
           const manualUrl = err.response?.data?.manual_url;
           
           setCustomModelBuildStatus({ 
@@ -364,8 +364,8 @@ function ScoutingPage() {
         },
       }
     ).finally(() => {
-      setIsBuildingCustomModel(false);
-    });
+        setIsBuildingCustomModel(false);
+      });
   };
 
   const formatMlFeatureName = (featureName) => {
@@ -405,18 +405,18 @@ function ScoutingPage() {
         let formattedLabel = formatMlFeatureName(feature);
 
         if (feature.startsWith('current_inter_') || feature.startsWith('current_poly_')) {
-          groupNameKey = 'Temporada actual: Interaccions i polinomis';
+          groupNameKey = t('scouting.mlFeatureGroups.currentInteractions');
         } else if (feature.startsWith('current_')) {
-          groupNameKey = 'Temporada actual: Mètriques';
+          groupNameKey = t('scouting.mlFeatureGroups.currentMetrics');
         } else if (feature.startsWith('hist_avg_') || feature.startsWith('hist_sum_') || feature.startsWith('hist_max_')) {
-          groupNameKey = 'Rendiment històric: Agregats';
+          groupNameKey = t('scouting.mlFeatureGroups.historicalAggregates');
         } else if (feature.startsWith('hist_trend_')) {
-          groupNameKey = 'Rendiment històric: Tendències';
+          groupNameKey = t('scouting.mlFeatureGroups.historicalTrends');
         } else if (feature.startsWith('growth_')) {
-          groupNameKey = 'Temporada rere temporada: creixement i ràtios';
+          groupNameKey = t('scouting.mlFeatureGroups.growthRatios');
         } else if (feature === 'num_hist_seasons') {
-          groupNameKey = 'Context històric';
-          formattedLabel = "Nombre de temporades històriques";
+          groupNameKey = t('scouting.mlFeatureGroups.historicalContext');
+          formattedLabel = t('scouting.mlFeatureGroups.numHistSeasons');
         }
 
         if (!acc[groupNameKey]) acc[groupNameKey] = [];
@@ -584,7 +584,7 @@ function ScoutingPage() {
                 <option value="">-- {t('scouting.selectSeason')} --</option>
                 {u21SeasonsForSelectedPlayer.map(s => (
                   <option key={s} value={s}>
-                    {s} (Edat: {calculatePlayerAge(selectedPlayer.dob, s)})
+                    {s} ({t('scouting.age')}: {calculatePlayerAge(selectedPlayer.dob, s)})
                   </option>
                 ))}
               </select>
@@ -633,7 +633,7 @@ function ScoutingPage() {
                     e.target.style.background = 'white';
                     e.target.style.color = '#dc2626';
                   }}
-                  title="Veure configuració del model V14"
+                  title={t('scouting.modelConfigButton')}
                 >
                   i
                 </button>
@@ -804,7 +804,7 @@ function ScoutingPage() {
         }}>
           <div style={{ flex: '2', minWidth: 'clamp(350px, 60%, 700px)' }}>
             {structuredKpiOptions.length === 0 ? (
-              <p style={{ color: "#4b5563" }}>S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...</p>
+              <p style={{ color: "#4b5563" }}>{t('scouting.customModelBuilder.loadingKpis')}</p>
             ) : (
               <form onSubmit={handleBuildCustomModelSubmit}>
                 <div style={{ marginBottom: '20px' }}>
@@ -877,10 +877,8 @@ function ScoutingPage() {
                   <div style={kpiSectionStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                       <h4 style={{ ...kpiSectionTitleStyle, marginBottom: '0' }}>
-                        Pas 1: Definir l'impacte del jugador
-                        <InfoTooltip text="Seleccioneu els KPI que creieu que representen un impacte positiu general del jugador per a la posició escollida. 
-                        Aquests formaran una puntuació composta. Els KPI de definició d'objectius 
-                        (Pas 2) es ponderaran en funció de la seva correlació amb aquesta puntuació d'impacte composta." />
+                        {t('scouting.customModelBuilder.step1Title')}
+                        <InfoTooltip text={t('scouting.customModelBuilder.step1Tooltip')} />
                       </h4>
                       <input
                         type="text"
@@ -898,7 +896,7 @@ function ScoutingPage() {
                       />
                     </div>
                     <p style={kpiSectionDescriptionStyle}>
-                      Trieu les mètriques que reflecteixin millor el rendiment impactant.
+                      {t('scouting.customModelBuilder.step1Description')}
                     </p>
                     {filteredStructuredKpiOptions.map(metricGroup => (
                       <div key={`impact-group-${metricGroup.metric_base_id}`} style={{ marginBottom: '15px' }}>
@@ -922,19 +920,17 @@ function ScoutingPage() {
                         </div>
                       </div>
                     ))}
-                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No hi ha cap KPI d'impacte que coincideixi amb la teva cerca.</p>}
+                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>{t('scouting.customModelBuilder.noImpactKpis')}</p>}
                   </div>
                   <div style={kpiSectionStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                       <h4 style={{ ...kpiSectionTitleStyle, marginBottom: '0' }}>
-                        Pas 2: Definir l'heurística potencial
-                        <InfoTooltip text="Seleccioneu els KPI que formaran directament la puntuació potencial. 
-                        El model aprendrà a predir aquesta puntuació. 
-                        La importància de cada KPI aquí es determina automàticament per la seva correlació amb els KPI d'impacte que heu triat al pas 1. "/>
+                        {t('scouting.customModelBuilder.step2Title')}
+                        <InfoTooltip text={t('scouting.customModelBuilder.step2Tooltip')} />
                       </h4>
                     </div>
                     <p style={kpiSectionDescriptionStyle}>
-                      Aquestes mètriques defineixen què significa "potencial" per a aquest model personalitzat.
+                      {t('scouting.customModelBuilder.step2Description')}
                     </p>
                     {filteredStructuredKpiOptions.map(metricGroup => (
                       <div key={`target-group-${metricGroup.metric_base_id}`} style={{ marginBottom: '15px' }}>
@@ -958,19 +954,16 @@ function ScoutingPage() {
                         </div>
                       </div>
                     ))}
-                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>No hi ha cap KPI de definició d'objectiu que coincideixi amb la cerca.</p>}
+                    {filteredStructuredKpiOptions.length === 0 && kpiSearchTerm && <p style={{ color: '#4b5563' }}>{t('scouting.customModelBuilder.noTargetKpis')}</p>}
                   </div>
                 </div>
                 <div style={{ ...kpiSectionStyle, marginTop: '5px' }}>
                   <h4 style={{ ...kpiSectionTitleStyle, display: 'flex', alignItems: 'center' }}>
-                    Pas 3 (opcional): Avançat: selecció de funcions d'aprenentatge automàtic
-                    <InfoTooltip text="Seleccioneu manualment les característiques d'entrada específiques per al model XGBoost. 
-                    Això proporciona un control precís. Si l'opció 'Utilitza l'opció per defecte...' està marcada, 
-                    les característiques es seleccionaran automàticament en funció dels KPI de definició d'objectiu (Pas 2), 
-                    amb l'objectiu de ser rellevants. Per a la majoria d'usuaris, es recomana l'opció per defecte." />
+                    {t('scouting.customModelBuilder.step3Title')}
+                    <InfoTooltip text={t('scouting.customModelBuilder.step3Tooltip')} />
                   </h4>
                   <p style={kpiSectionDescriptionStyle}>
-                    El model utilitza aquestes característiques per aprendre.</p>
+                    {t('scouting.customModelBuilder.step3Description')}</p>
                   <div style={{ marginBottom: '15px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
                       <input
@@ -984,21 +977,21 @@ function ScoutingPage() {
                         }}
                         style={{ marginRight: '8px', transform: 'scale(1.1)' }}
                       />
-                      Utilitza la lògica de selecció de funcions d'aprenentatge automàtic predeterminada
+                      {t('scouting.customModelBuilder.useDefaultMlFeatures')}
                     </label>
                     <p style={{ fontSize: '0.8em', color: '#4b5563', margin: '5px 0 0 25px' }}>
-                      Les característiques rellevants es seleccionaran automàticament. Desmarqueu la casella per a la selecció manual.
+                      {t('scouting.customModelBuilder.defaultFeaturesNote')}
                     </p>
                   </div>
                   {!useDefaultMlFeatures && (
                     <div style={{ marginBottom: '15px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <strong style={{ display: "block", fontSize: '0.95rem', color: '#1f2937' }}>
-                          Seleccioneu les funcions d'aprenentatge automàtic personalitzades:
+                          {t('scouting.customModelBuilder.selectCustomFeatures')}
                         </strong>
                         <input
                           type="text"
-                          placeholder="Cerca característiques de ML..."
+                          placeholder={t('scouting.customModelBuilder.searchMlFeatures')}
                           value={mlFeatureSearchTerm}
                           onChange={e => setMlFeatureSearchTerm(e.target.value)}
                           style={{
@@ -1051,16 +1044,16 @@ function ScoutingPage() {
                                 ))}
                               </div>
                             </div>
-                          )) : <p style={{ color: '#4b5563', textAlign: 'center', padding: '10px 0' }}>No hi ha cap funció d'aprenentatge automàtic que coincideixi amb la teva cerca.</p>}
+                          )) : <p style={{ color: '#4b5563', textAlign: 'center', padding: '10px 0' }}>{t('scouting.customModelBuilder.noMlFeatures')}</p>}
                         </div>
                       ) : (
-                        <p style={{ color: '#4b5563' }}>S'estan carregant les funcions d'aprenentatge automàtic disponibles o no s'ha trobat cap des del backend...</p>
+                        <p style={{ color: '#4b5563' }}>{t('scouting.customModelBuilder.loadingMlFeatures')}</p>
                       )}
                       <p style={{ fontSize: '0.8em', color: '#4b5563', marginTop: '10px' }}>
-                        El model utilitzarà aquestes característiques seleccionades. Si no se'n tria cap (i l'opció "Utilitza per defecte" està desactivada), s'aplica la lògica per defecte.
+                        {t('scouting.customModelBuilder.mlFeaturesNote')}
                       </p>
                       <div style={{ marginTop: '15px', fontSize: '0.9em', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span>Característiques de ML seleccionades: <strong>{selectedCustomMlFeatures.length}</strong></span>
+                        <span>{t('scouting.customModelBuilder.selectedFeatures')} <strong>{selectedCustomMlFeatures.length}</strong></span>
                         {selectedCustomMlFeatures.length > 0 && (
                           <button
                             type="button"
@@ -1075,7 +1068,7 @@ function ScoutingPage() {
                               cursor: 'pointer'
                             }}
                           >
-                            Esborra la selecció
+                            {t('scouting.customModelBuilder.clearSelection')}
                           </button>
                         )}
                       </div>
@@ -1149,7 +1142,7 @@ function ScoutingPage() {
                         textDecoration: 'underline'
                       }}
                     >
-                      Trigger manually on GitHub
+                      {t('scouting.customModelBuilder.triggerManually')}
                     </a>
                   </p>
                 )}
@@ -1174,14 +1167,14 @@ function ScoutingPage() {
                 fontSize: '1.2rem',
                 marginBottom: '10px'
               }}>
-                Comprensió de les variants de KPI
-                <InfoTooltip text="La mateixa mètrica base (per exemple, els gols) es pot representar de maneres diferents, cadascuna de les quals proporciona una perspectiva única sobre el rendiment del jugador." /></h4>
+                {t('scouting.sidebar.kpiVariantsTitle')}
+                <InfoTooltip text={t('scouting.sidebar.kpiVariantsTooltip')} /></h4>
               <ul style={{ fontSize: '0.95em', listStyleType: 'disc', paddingLeft: '20px', color: '#4b5563' }}>
-                <li style={{ marginBottom: '10px' }}><strong>Total / Recompte:</strong> Suma o recompte brut al llarg de la temporada. Reflecteix el volum global.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Per 90 Min (P90):</strong> Mètrica normalitzada per 90 minuts. Crucial per a la comparació basada en els minuts jugats.</li>
-                <li style={{ marginBottom: '10px' }}><strong>P90 Sqrt (P90 √):</strong> Arrel quadrada del valor P90. Estabilitza la variància per a mètriques asimètriques i redueix l'impacte dels valors atípics.</li>
-                <li style={{ marginBottom: '10px' }}><strong>KPI directe:</strong> Taxes o percentatges precalculats.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Invertit (Inv):</strong> Per a mètriques on com més baix és millor (per exemple, pèrdues), les puntuacions invertides més altes signifiquen un millor rendiment.</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.totalCount')}</strong> {t('scouting.sidebar.totalCountDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.per90')}</strong> {t('scouting.sidebar.per90Desc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.p90Sqrt')}</strong> {t('scouting.sidebar.p90SqrtDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.kpiDirect')}</strong> {t('scouting.sidebar.kpiDirectDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.inverted')}</strong> {t('scouting.sidebar.invertedDesc')}</li>
               </ul>
             </div>
             <div>
@@ -1193,21 +1186,21 @@ function ScoutingPage() {
                 fontSize: '1.2rem',
                 marginBottom: '10px'
               }}>
-                Com afecta la selecció de funcions de ML al model
-                <InfoTooltip text="Les característiques d'aprenentatge automàtic són les entrades directes que utilitza el model. Les vostres eleccions aquí influeixen significativament en el que aprèn el model." />
+                {t('scouting.sidebar.mlImpactTitle')}
+                <InfoTooltip text={t('scouting.sidebar.mlImpactTooltip')} />
               </h4>
               <ul style={{ fontSize: '0.95em', listStyleType: 'disc', paddingLeft: '20px', color: '#4b5563' }}>
-                <li style={{ marginBottom: '10px' }}><strong>Relevance is Key:</strong> Seleccioneu característiques que siguin realment predictives del vostre potencial definit. Les característiques irrellevants afegeixen soroll.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Model Complexity:</strong> Més característiques poden crear models complexos que podrien sobreajustar-se (aprendre soroll, no patrons generals).</li>
-                <li style={{ marginBottom: '10px' }}><strong>Feature Types:</strong>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.relevanceKey')}</strong> {t('scouting.sidebar.relevanceKeyDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.modelComplexity')}</strong> {t('scouting.sidebar.modelComplexityDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.featureTypes')}</strong>
                   <ul style={{ paddingLeft: '20px', listStyleType: 'circle', marginTop: '5px' }}>
-                    <li><em>Temporada actual</em> les característiques mostren la forma recent.</li>
-                    <li><em>Agregats històrics</em> (Mitjana, Suma, Màx.) donen una línia de base de rendiment.</li>
-                    <li><em>Creixement i tendències</em> indiquen desenvolupament.</li>
+                    <li><em>{t('scouting.mlFeatureGroups.currentMetrics')}</em> {t('scouting.sidebar.currentSeasonDesc')}</li>
+                    <li><em>{t('scouting.mlFeatureGroups.historicalAggregates')}</em> {t('scouting.sidebar.historicalAggDesc')}</li>
+                    <li><em>{t('scouting.mlFeatureGroups.historicalTrends')}</em> {t('scouting.sidebar.growthTrendsDesc')}</li>
                   </ul>
                 </li>
-                <li style={{ marginBottom: '10px' }}><strong>Interaccions/Polinomis:</strong> Captura relacions no lineals.</li>
-                <li style={{ marginBottom: '10px' }}><strong>Lògica per defecte:</strong> Si l'opció "Utilitza l'opció per defecte..." està marcada, el sistema selecciona les característiques relacionades amb els KPI de definició d'objectiu.</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.interactions')}</strong> {t('scouting.sidebar.interactionsDesc')}</li>
+                <li style={{ marginBottom: '10px' }}><strong>{t('scouting.sidebar.defaultLogic')}</strong> {t('scouting.sidebar.defaultLogicDesc')}</li>
               </ul>
             </div>
           </div>
@@ -1286,7 +1279,7 @@ function ScoutingPage() {
                 }}
                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
                 onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                title="Tancar"
+                title={t('scouting.v14Modal.close')}
               >
                 ×
               </button>
@@ -1303,23 +1296,23 @@ function ScoutingPage() {
                 border: '1px solid #e5e7eb'
               }}>
                 <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  Característiques Tècniques
+                  {t('scouting.v14Modal.technicalTitle')}
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>Algoritme:</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.algorithm')}</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>Variable Objectiu:</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.targetVariable')}</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>Dades d'Entrenament:</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.trainingData')}</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>Temporada d'Avaluació:</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.evaluationSeason')}</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
                   </div>
                 </div>
@@ -1328,10 +1321,10 @@ function ScoutingPage() {
               {/* KPIs per posició */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  KPIs per Derivació de Pesos (Target KPIs)
+                  {t('scouting.v14Modal.targetKpisTitle')}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  Aquestes mètriques s'utilitzen per calcular els pesos dels KPIs mitjançant correlació amb l'impacte del jugador:
+                  {t('scouting.v14Modal.targetKpisDesc')}
                 </p>
                 {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1374,10 +1367,10 @@ function ScoutingPage() {
               {/* Composite Impact KPIs */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  KPIs d'Impacte Compostos (Impact KPIs)
+                  {t('scouting.v14Modal.impactKpisTitle')}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  Mètriques clau que defineixen l'impacte del jugador per a cada posició:
+                  {t('scouting.v14Modal.impactKpisDesc')}
                 </p>
                 {Object.entries(v14ModelConfig.composite_impact_kpis).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1426,7 +1419,7 @@ function ScoutingPage() {
                 border: '1px solid #fde68a'
               }}>
                 <h3 style={{ marginTop: 0, color: '#92400e', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  Enginyeria de Característiques
+                  {t('scouting.v14Modal.featureEngineeringTitle')}
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
                   {Object.entries(v14ModelConfig.feature_engineering).map(([key, value]) => (

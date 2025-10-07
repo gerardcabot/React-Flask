@@ -20,7 +20,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Chart } from 'chart.js'; // Només necessitem Chart per la referència, no per registrar.
 import { Line } from 'react-chartjs-2';
-import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa";
+import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
 import { useTranslation } from 'react-i18next'; 
 
 // Chart.register(CategoryScale, LinearScale, ArcElement, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
