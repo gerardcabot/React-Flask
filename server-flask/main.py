@@ -19,7 +19,6 @@ from io import BytesIO, StringIO
 import gc
 import math
 import requests
-from functools import lru_cache
  
 
 from model_trainer.trainer_v2 import (
@@ -947,11 +946,12 @@ def list_custom_models():
     return jsonify({"custom_models": custom_models_list})
 
 
-@lru_cache(maxsize=6)  # Cache fins a 6 models (2 per cada posició)
+# TODO: Implement proper model caching with Redis or in-memory dict
+# lru_cache doesn't work well with large ML models and boto3 clients
 def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
     """
-    Cached function to load model, scaler, and config from R2.
-    This reduces repeated downloads from cloud storage.
+    Load model, scaler, and config from R2.
+    Note: Caching temporarily disabled due to compatibility issues with lru_cache.
     
     Args:
         model_key: R2 object key for the model file
@@ -961,7 +961,7 @@ def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
     Returns:
         tuple: (model, scaler, config_dict)
     """
-    logger.info(f"[CACHE MISS] Loading model from R2: {model_key}")
+    logger.info(f"Loading model from R2: {model_key}")
     
     try:
         # Load model
@@ -981,7 +981,7 @@ def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
         config_content = response_cfg['Body'].read().decode('utf-8')
         config = json.loads(config_content)
         
-        logger.info(f"✅ Model loaded and cached: {model_key}")
+        logger.info(f"✅ Model loaded successfully: {model_key}")
         return model, scaler, config
     
     except Exception as e:
