@@ -939,28 +939,28 @@ def list_custom_models():
     
     # Fallback: Also check local models (for backwards compatibility)
     if os.path.exists(CUSTOM_MODELS_DIR):
-    for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
-        model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
-        if os.path.isdir(model_folder_path):
-            for pos_group_folder_name in os.listdir(model_folder_path): 
-                pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
-                if os.path.isdir(pos_group_folder_path):
-                    config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
-                    config_path = os.path.join(pos_group_folder_path, config_file_name)
-                    if os.path.exists(config_path):
-                        try:
+        for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
+            model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
+            if os.path.isdir(model_folder_path):
+                for pos_group_folder_name in os.listdir(model_folder_path): 
+                    pos_group_folder_path = os.path.join(model_folder_path, pos_group_folder_name)
+                    if os.path.isdir(pos_group_folder_path):
+                        config_file_name = f"model_config_{pos_group_folder_name.lower()}_{model_id_folder}.json"
+                        config_path = os.path.join(pos_group_folder_path, config_file_name)
+                        if os.path.exists(config_path):
+                            try:
                                 with open(config_path, 'r') as f_cfg: 
                                     cfg = json.load(f_cfg)
                                 # Check if not already in list from R2
                                 if not any(m['id'] == model_id_folder for m in custom_models_list):
-                            custom_models_list.append({
-                                "id": model_id_folder,
-                                "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
-                                "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
+                                    custom_models_list.append({
+                                        "id": model_id_folder,
+                                        "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
+                                        "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
                                         "description": cfg.get("description", "Custom Potential Model (Local)")
-                            })
+                                    })
                                     logger.info(f"Found local custom model: {model_id_folder}")
-                        except Exception as e:
+                            except Exception as e:
                                 logger.error(f"Error reading local config {config_path}: {e}")
     
     return jsonify({"custom_models": custom_models_list})
