@@ -131,7 +131,7 @@ def scouting_predict():
 
 ## 🎨 Millores d'UX/UI (Alta Prioritat)
 
-### 6. 📱 **Responsivitat Millorable**
+### 6. 📱 **Responsivitat Millorable** ✅ **IMPLEMENTAT**
 **Problema:** Algunes seccions (modals, taules) no són completament responsive en mòbils.
 
 **Solució:**
@@ -146,9 +146,16 @@ def scouting_predict():
 
 **Benefici:** Millor experiència en dispositius mòbils
 
+**Status:** ✅ Implementat amb CSS responsive global (responsive.css):
+- Media queries per mòbil (<768px), tablet (768-1024px)
+- Modals i cards adaptatius
+- Botons i inputs full-width en mòbil
+- Millor touch targets (min 44px)
+- Taules scrollables horitzontalment
+
 ---
 
-### 7. ⏳ **Loading States Inconsistents**
+### 7. ⏳ **Loading States Inconsistents** ✅ **IMPLEMENTAT**
 **Problema:** Algunes crides API no tenen loading indicators visuals.
 
 **Solució:**
@@ -163,6 +170,13 @@ def scouting_predict():
 ```
 
 **Benefici:** Millor feedback visual per l'usuari
+
+**Status:** ✅ Implementat amb CSS loading states (responsive.css):
+- Skeleton loaders (text, title, button, card, image)
+- Spinners (normal i petit)
+- Loading overlays amb fons semi-transparent
+- Animacions smooth de fade-in per contingut carregat
+- Accessible i reutilitzable a tots els components
 
 ---
 

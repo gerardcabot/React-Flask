@@ -38,6 +38,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import './responsive.css'; // Responsive and loading states
 import AppWithLocation from './App.jsx'; // Nota: Importem AppWithLocation per incloure el Router
 
 // Import i18n configuration (must be before App)
