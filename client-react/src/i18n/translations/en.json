@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "Future Stars",
+    "subtitle": "Discover the future cracks of football"
+  },
+  "nav": {
+    "home": "Home",
+    "visualization": "Visualization",
+    "scouting": "Scouting",
+    "analysis": "Analysis",
+    "language": "Language"
+  },
+  "home": {
+    "welcome": "Welcome to Future Stars",
+    "description": "Analyze players, visualize data and discover the future talents of football",
+    "features": {
+      "visualization": {
+        "title": "Data Visualization",
+        "description": "Heatmaps, shots, passes and more"
+      },
+      "scouting": {
+        "title": "Talent Scout",
+        "description": "ML predictions of player potential"
+      },
+      "analysis": {
+        "title": "Deep Analysis",
+        "description": "Advanced statistics and custom metrics"
+      }
+    }
+  },
+  "visualization": {
+    "title": "Player Visualization",
+    "selectPlayer": "Select a player",
+    "selectSeason": "Select a season",
+    "visualizations": {
+      "passCompletionHeatmap": "Pass Completion Heatmap",
+      "positionHeatmap": "Position Heatmap",
+      "pressureHeatmap": "Pressure Heatmap",
+      "passMapZonaStats": "Pass Statistics by Zone",
+      "shotMap": "Shot Map",
+      "passMap": "Pass Map",
+      "goalkeeper": "Goalkeeper Analysis"
+    },
+    "loading": "Loading visualization...",
+    "noData": "No data available for this combination",
+    "playerInfo": {
+      "position": "Position",
+      "age": "Age",
+      "dob": "Date of Birth"
+    }
+  },
+  "scouting": {
+    "title": "Talent Scout",
+    "subtitle": "Potential Prediction with Machine Learning",
+    "selectPlayer": "Select a player",
+    "selectSeason": "Select an U21 season",
+    "selectModel": "Model for prediction",
+    "defaultModel": "Default Model V14",
+    "predict": "Calculate Prediction",
+    "predicting": "Calculating prediction...",
+    "result": {
+      "title": "U21 Potential Prediction",
+      "score": "Predicted Score",
+      "outOf": "out of 200",
+      "playerInfo": {
+        "age": "Age at season",
+        "position": "Position group",
+        "minutes": "90s played"
+      },
+      "modelInfo": "Model used"
+    },
+    "customModel": {
+      "title": "Train Custom Model",
+      "description": "Create your own potential prediction model",
+      "selectPosition": "Select position",
+      "positions": {
+        "attacker": "Attacker",
+        "midfielder": "Midfielder",
+        "defender": "Defender"
+      },
+      "selectImpactKPIs": "Select impact KPIs",
+      "selectTargetKPIs": "Select target KPIs",
+      "selectMLFeatures": "Select ML features (optional)",
+      "modelName": "Model name (optional)",
+      "train": "Train Model",
+      "training": "Training...",
+      "success": "Model trained successfully",
+      "error": "Error training model",
+      "estimatedTime": "Estimated time: 45-90 minutes",
+      "instructions": "The model will be available in the list once training is complete.",
+      "monitorProgress": "You can monitor the progress at the workflow URL. The model will be available in the list once training completes (typically 45-90 minutes).",
+      "yourModel": "Your model",
+      "community": "Community"
+    },
+    "modelInfo": {
+      "title": "Default Model V14 Information",
+      "description": "XGBoost model trained to predict maximum career potential based on U21 data",
+      "algorithm": "Algorithm",
+      "targetVariable": "Target variable",
+      "trainingData": "Training data",
+      "evaluationSeason": "Evaluation season",
+      "kpiDefinitions": "KPI Definitions",
+      "compositeImpactKPIs": "Composite Impact KPIs",
+      "featureEngineering": "Feature engineering",
+      "close": "Close"
+    },
+    "errors": {
+      "selectPlayerSeason": "Select a player and an U21 season.",
+      "predictionFailed": "Could not get the prediction.",
+      "modelLoadFailed": "Error loading model."
+    }
+  },
+  "analysis": {
+    "title": "Player Analysis",
+    "selectPlayer": "Select a player",
+    "selectMetric": "Select a metric",
+    "loading": "Loading analysis...",
+    "noData": "No data available",
+    "trend": {
+      "title": "Season Evolution",
+      "season": "Season",
+      "value": "Value"
+    },
+    "singleSeason": {
+      "title": "Season Analysis",
+      "selectSeason": "Select a season"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "noDataAvailable": "No data available",
+    "tryAgain": "Try again"
+  }
+}

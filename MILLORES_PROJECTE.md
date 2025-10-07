@@ -242,7 +242,7 @@ def test_players_endpoint(client):
 
 ---
 
-### 11. 📝 **Validació d'Inputs**
+### 11. 📝 **Validació d'Inputs** ✅ **IMPLEMENTAT**
 **Problema:** Alguns endpoints no validen correctament els inputs.
 
 **Solució:**

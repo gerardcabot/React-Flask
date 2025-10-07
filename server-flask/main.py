@@ -36,6 +36,14 @@ from model_trainer.trainer_v2 import (
     get_trainer_all_possible_ml_feature_names 
 )
 
+from validation_schemas import (
+    CustomModelTrainingSchema,
+    PredictionRequestSchema,
+    PlayerQuerySchema,
+    MetricQuerySchema,
+    validate_request_data
+)
+
 
 # --- CONFIGURACIÓN DE CONEXIÓN A R2 (CORRECTO) ---
 R2_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
@@ -796,21 +804,17 @@ def trigger_github_training():
     if not data:
         return jsonify({"error": "Missing JSON payload"}), 400
 
-    position_group = data.get("position_group")
-    user_impact_kpis_list = data.get("impact_kpis")
-    user_target_kpis_list = data.get("target_kpis")
-    custom_model_name_prefix = data.get("model_name", f"custom_{position_group.lower() if position_group else 'model'}")
-    user_ml_feature_selection = data.get("ml_features", None)
-
-    # Validation
-    if not all([position_group, user_impact_kpis_list, user_target_kpis_list]):
-        return jsonify({"error": "Missing required fields: position_group, impact_kpis, target_kpis"}), 400
+    # Validate input data with Marshmallow
+    validated_data, error_response = validate_request_data(CustomModelTrainingSchema, data)
+    if error_response:
+        return error_response
     
-    if position_group not in ["Attacker", "Midfielder", "Defender"]:
-        return jsonify({"error": f"Invalid position_group: {position_group}"}), 400
-    
-    if user_ml_feature_selection is not None and not (isinstance(user_ml_feature_selection, list) and all(isinstance(item, str) for item in user_ml_feature_selection)):
-        return jsonify({"error": "Invalid format for ml_features. Must be a list of strings."}), 400
+    # Extract validated data
+    position_group = validated_data["position_group"]
+    user_impact_kpis_list = validated_data["impact_kpis"]
+    user_target_kpis_list = validated_data["target_kpis"]
+    custom_model_name_prefix = validated_data.get("model_name", f"custom_{position_group.lower()}")
+    user_ml_feature_selection = validated_data.get("ml_features")
 
     # Check if GitHub token is configured
     if not GITHUB_TOKEN:
@@ -1008,12 +1012,21 @@ def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
 @app.route("/scouting_predict")
 @limiter.limit("10 per minute")  # ML prediction is resource-intensive
 def scouting_predict():
-    player_id_str = request.args.get("player_id")
-    season_to_predict_for = request.args.get("season")
-    model_identifier = request.args.get("model_id", "default_v14") 
-
-    if not player_id_str or not season_to_predict_for:
-        return jsonify({"error": "Missing player_id or season"}), 400
+    # Validate query parameters
+    validated_data, error_response = validate_request_data(
+        PredictionRequestSchema,
+        {
+            "player_id": request.args.get("player_id"),
+            "season": request.args.get("season"),
+            "model_id": request.args.get("model_id", "default_v14")
+        }
+    )
+    if error_response:
+        return error_response
+    
+    player_id_str = validated_data["player_id"]
+    season_to_predict_for = validated_data["season"]
+    model_identifier = validated_data.get("model_id", "default_v14")
 
     try:
         player_metadata = next((p_data for p_name, p_data in player_index_main_data.items() if isinstance(p_data, dict) and str(p_data.get("player_id")) == player_id_str), None)

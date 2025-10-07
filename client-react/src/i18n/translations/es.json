@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "Estrellas del Futuro",
+    "subtitle": "Descubre los futuros cracks del fútbol"
+  },
+  "nav": {
+    "home": "Inicio",
+    "visualization": "Visualización",
+    "scouting": "Buscador de Talentos",
+    "analysis": "Análisis",
+    "language": "Idioma"
+  },
+  "home": {
+    "welcome": "Bienvenido a Estrellas del Futuro",
+    "description": "Analiza jugadores, visualiza datos y descubre los futuros talentos del fútbol",
+    "features": {
+      "visualization": {
+        "title": "Visualización de Datos",
+        "description": "Mapas de calor, tiros, pases y más"
+      },
+      "scouting": {
+        "title": "Buscador de Talentos",
+        "description": "Predicciones ML del potencial de jugadores"
+      },
+      "analysis": {
+        "title": "Análisis Profundo",
+        "description": "Estadísticas avanzadas y métricas personalizadas"
+      }
+    }
+  },
+  "visualization": {
+    "title": "Visualización de Jugador",
+    "selectPlayer": "Selecciona un jugador",
+    "selectSeason": "Selecciona una temporada",
+    "visualizations": {
+      "passCompletionHeatmap": "Mapa de Calor de Pases",
+      "positionHeatmap": "Mapa de Calor de Posicionamiento",
+      "pressureHeatmap": "Mapa de Calor de Presiones",
+      "passMapZonaStats": "Estadísticas de Pases por Zona",
+      "shotMap": "Mapa de Tiros",
+      "passMap": "Mapa de Pases",
+      "goalkeeper": "Análisis de Portero"
+    },
+    "loading": "Cargando visualización...",
+    "noData": "No hay datos disponibles para esta combinación",
+    "playerInfo": {
+      "position": "Posición",
+      "age": "Edad",
+      "dob": "Fecha de Nacimiento"
+    }
+  },
+  "scouting": {
+    "title": "Buscador de Talentos",
+    "subtitle": "Predicción de Potencial con Machine Learning",
+    "selectPlayer": "Selecciona un jugador",
+    "selectSeason": "Selecciona una temporada sub-21",
+    "selectModel": "Modelo para hacer la predicción",
+    "defaultModel": "Modelo por defecto V14",
+    "predict": "Calcular Predicción",
+    "predicting": "Calculando predicción...",
+    "result": {
+      "title": "Predicción de Potencial U21",
+      "score": "Puntuación Prevista",
+      "outOf": "de 200",
+      "playerInfo": {
+        "age": "Edad en la temporada",
+        "position": "Grupo de posición",
+        "minutes": "90s jugados"
+      },
+      "modelInfo": "Modelo utilizado"
+    },
+    "customModel": {
+      "title": "Entrenar Modelo Personalizado",
+      "description": "Crea tu propio modelo de predicción de potencial",
+      "selectPosition": "Selecciona posición",
+      "positions": {
+        "attacker": "Delantero",
+        "midfielder": "Centrocampista",
+        "defender": "Defensa"
+      },
+      "selectImpactKPIs": "Selecciona KPIs de impacto",
+      "selectTargetKPIs": "Selecciona KPIs objetivo",
+      "selectMLFeatures": "Selecciona características ML (opcional)",
+      "modelName": "Nombre del modelo (opcional)",
+      "train": "Entrenar Modelo",
+      "training": "Entrenando...",
+      "success": "Modelo entrenado correctamente",
+      "error": "Error en el entrenamiento del modelo",
+      "estimatedTime": "Tiempo estimado: 45-90 minutos",
+      "instructions": "El modelo estará disponible en la lista una vez completado el entrenamiento.",
+      "monitorProgress": "Puedes monitorizar el progreso en el workflow URL. El modelo estará disponible en la lista una vez completado el entrenamiento (normalmente 45-90 minutos).",
+      "yourModel": "Tu modelo",
+      "community": "Comunidad"
+    },
+    "modelInfo": {
+      "title": "Información del Modelo por Defecto V14",
+      "description": "Modelo de XGBoost entrenado para predecir el potencial máximo de carrera basado en datos U21",
+      "algorithm": "Algoritmo",
+      "targetVariable": "Variable objetivo",
+      "trainingData": "Datos de entrenamiento",
+      "evaluationSeason": "Temporada de evaluación",
+      "kpiDefinitions": "Definiciones de KPI",
+      "compositeImpactKPIs": "KPIs de Impacto Compuesto",
+      "featureEngineering": "Ingeniería de características",
+      "close": "Cerrar"
+    },
+    "errors": {
+      "selectPlayerSeason": "Selecciona un jugador y una temporada sub-21.",
+      "predictionFailed": "No se pudo obtener la predicción.",
+      "modelLoadFailed": "Error al cargar el modelo."
+    }
+  },
+  "analysis": {
+    "title": "Análisis de Jugador",
+    "selectPlayer": "Selecciona un jugador",
+    "selectMetric": "Selecciona una métrica",
+    "loading": "Cargando análisis...",
+    "noData": "No hay datos disponibles",
+    "trend": {
+      "title": "Evolución por Temporada",
+      "season": "Temporada",
+      "value": "Valor"
+    },
+    "singleSeason": {
+      "title": "Análisis de Temporada",
+      "selectSeason": "Selecciona una temporada"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "noDataAvailable": "No hay datos disponibles",
+    "tryAgain": "Inténtalo de nuevo"
+  }
+}

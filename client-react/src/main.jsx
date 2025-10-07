@@ -40,6 +40,9 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import AppWithLocation from './App.jsx'; // Nota: Importem AppWithLocation per incloure el Router
 
+// Import i18n configuration (must be before App)
+import './i18n/config';
+
 // Importa Chart.js i els components que necessites
 import {
   Chart,
