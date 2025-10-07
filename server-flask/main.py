@@ -892,15 +892,15 @@ def trigger_github_training():
                 "success": True,
                 "message": f"Model training started successfully",
                 "custom_model_id": custom_model_id,
-                "estimated_time": "10-30 minutes",
-                "instructions": "The model will be available in the list once training completes (10-30 minutes)."
+                "estimated_time": "45-90 minutes",
+                "instructions": "The model will be available in the list once training completes. This typically takes 45-90 minutes depending on data size and complexity."
             }
             
             # Only include workflow URL for admin users (to protect logs in public repos)
             if is_admin:
                 workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
                 response_data["workflow_url"] = workflow_url
-                response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes."
+                response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes (typically 45-90 minutes)."
             
             return jsonify(response_data), 202
         else:

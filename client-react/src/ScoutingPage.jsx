@@ -6,6 +6,35 @@ import React from "react";
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ''; // Optional: for viewing GitHub workflow URLs
 
+// Helper functions for tracking user's own models
+const MY_MODELS_KEY = 'my_custom_models';
+
+const getMyModels = () => {
+  try {
+    const stored = localStorage.getItem(MY_MODELS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const addMyModel = (modelId) => {
+  try {
+    const myModels = getMyModels();
+    if (!myModels.includes(modelId)) {
+      myModels.push(modelId);
+      localStorage.setItem(MY_MODELS_KEY, JSON.stringify(myModels));
+    }
+  } catch (error) {
+    console.error('Error saving model to localStorage:', error);
+  }
+};
+
+const isMyModel = (modelId) => {
+  const myModels = getMyModels();
+  return myModels.includes(modelId);
+};
+
 
 function calculatePlayerAge(dob, season) {
   if (!dob || !season) return null;
@@ -277,16 +306,19 @@ function ScoutingPage() {
         const instructions = res.data.instructions;
         
         // Prepare additional info based on whether workflow URL is available
-        let additionalInfo = `⏱️ Estimated time: ${estimatedTime}.`;
+        let additionalInfo = `Estimated time: ${estimatedTime}.`;
         if (workflowUrl) {
           additionalInfo += ` You can monitor progress at GitHub Actions.`;
         } else {
           additionalInfo += ` The model will appear in the list automatically when ready.`;
         }
         
+        // Save model ID to localStorage as "my model"
+        addMyModel(modelId);
+        
         setCustomModelBuildStatus({ 
           success: true, 
-          message: `✅ ${res.data.message}`,
+          message: res.data.message,
           id: modelId,
           workflowUrl: workflowUrl, // Only present if user is admin
           additionalInfo: additionalInfo
@@ -599,7 +631,7 @@ function ScoutingPage() {
                   </option>
                   {availableCustomModels.map(model => (
                     <option key={model.id} value={model.id}>
-                      {model.name} (Pos: {model.position_group})
+                      {model.name} (Pos: {model.position_group}) {isMyModel(model.id) ? '✓ Your model' : '○ Community'}
                     </option>
                   ))}
                 </select>
@@ -1039,7 +1071,7 @@ function ScoutingPage() {
                         fontWeight: 'bold'
                       }}
                     >
-                      🔗 Monitor Progress on GitHub Actions
+                      Monitor Progress on GitHub Actions
                     </a>
                   </p>
                 )}
