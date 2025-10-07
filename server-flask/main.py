@@ -19,6 +19,7 @@ from io import BytesIO, StringIO
 import gc
 import math
 import requests
+from functools import lru_cache
  
 
 from model_trainer.trainer_v2 import (
@@ -47,7 +48,12 @@ GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
 GITHUB_REPO_NAME = os.environ.get('GITHUB_REPO_NAME', 'React-Flask')
 
 # Admin secret for viewing GitHub Actions workflow URLs (security for public repos)
-ADMIN_SECRET = os.environ.get('ADMIN_SECRET', 'change-this-secret-in-production')
+# REQUIRED: Must be set in production environment
+ADMIN_SECRET = os.environ.get('ADMIN_SECRET')
+if not ADMIN_SECRET:
+    logger.warning("⚠️  ADMIN_SECRET not set! Admin features (GitHub workflow links) will be disabled.")
+    logger.warning("   To enable admin features, set ADMIN_SECRET environment variable.")
+    ADMIN_SECRET = None  # Explicitly set to None for clarity
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -105,86 +111,6 @@ def _format_value_counts(series, sort_index=False):
     if sort_index: counts = counts.sort_index()
     return [{"name": str(idx), "value": int(val)} for idx, val in counts.items()]
 
-# def load_player_data(player_id, season, data_dir):
-#     def try_load_one(player_id, season, data_dir):
-#         file_path_json = os.path.join(data_dir, str(season), f"{player_id}.json")
-#         if os.path.exists(file_path_json):
-#             try:
-#                 logger.debug(f"Loading JSON: {file_path_json}")
-#                 return pd.read_json(file_path_json, convert_dates=False)
-#             except Exception as e:
-#                 logger.error(f"Error loading JSON {file_path_json}: {e}")
-#                 pass
-
-#         file_path_csv = os.path.join(data_dir, str(season), "players", f"{player_id}_{season}.csv")
-#         if os.path.exists(file_path_csv):
-#             try:
-#                 logger.debug(f"Loading CSV: {file_path_csv}")
-#                 df = pd.read_csv(file_path_csv, low_memory=False)
-#                 loc_cols = [col for col in df.columns if 'location' in col or 'end_location' in col]
-#                 for col in loc_cols:
-#                     if col in df.columns: df[col] = df[col].apply(lambda x: safe_literal_eval(x) if pd.notna(x) else None)
-
-#                 bool_cols_to_check = [
-#                     'counterpress', 
-#                     'offensive', 
-#                     'recovery_failure',
-#                     'deflection',
-#                     'save_block',
-#                     'aerial_won',
-#                     'nutmeg',
-#                     'overrun',
-#                     'no_touch', 
-#                     'leads_to_shot',
-#                     'advantage', 
-#                     'penalty',   
-#                     'defensive',
-#                     'backheel',
-#                     'deflected', 
-#                     'miscommunication',
-#                     'cross',
-#                     'cut_back',
-#                     'switch',
-#                     'shot_assist',
-#                     'goal_assist',
-#                     'follows_dribble',
-#                     'first_time',
-#                     'open_goal',
-#                     'deflected',
-#                     'under_pressure',
-#                     'out'
-#                 ]
-#                 bool_cols_to_check = sorted(list(set(bool_cols_to_check)))
-
-
-#                 for col in bool_cols_to_check:
-#                     if col in df.columns:
-#                         if df[col].dtype == 'object':
-#                             df[col] = df[col].astype(str).str.lower().map(
-#                                 {'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}
-#                             ).astype('boolean') 
-#                         elif pd.api.types.is_numeric_dtype(df[col]):
-#                             df[col] = df[col].map({1.0: True, 1: True, 0.0: False, 0: False}).astype('boolean')
-                
-#                 numeric_cols_to_check = ['duration', 'pass_length', 'pass_angle', 'shot_statsbomb_xg', 'statsbomb_xg'] 
-#                 for col in numeric_cols_to_check:
-#                     if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
-#                 return df
-#             except Exception as e: logger.error(f"Error loading CSV {file_path_csv}: {e}"); pass
-#         logger.warning(f"No data file found for player {player_id} in season {season} (tried JSON: {file_path_json}, CSV: {file_path_csv})")
-#         return None
-
-#     if season == "all":
-#         dfs = []
-#         for season_folder_name in os.listdir(data_dir):
-#             season_folder_path = os.path.join(data_dir, season_folder_name)
-#             if os.path.isdir(season_folder_path) and '_' in season_folder_name:
-#                 df_season = try_load_one(player_id, season_folder_name, data_dir)
-#                 if df_season is not None and not df_season.empty: dfs.append(df_season)
-#         if dfs: return pd.concat(dfs, ignore_index=True)
-#         else: logger.info(f"No data found for player {player_id} across any seasons."); return pd.DataFrame()
-#     else:
-#         return try_load_one(player_id, season, data_dir)
 
 def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya no se usa, pero lo dejamos
     def try_load_one_from_r2(player_id, season):
@@ -508,13 +434,6 @@ def health_check():
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
     }), 200
 
-# player_index_path_main = os.path.join(DATA_DIR, "player_index.json")
-# player_index_main_data = {}
-# if os.path.exists(player_index_path_main):
-#     try:
-#         with open(player_index_path_main, "r", encoding="utf-8") as f: player_index_main_data = json.load(f)
-#     except Exception as e: logger.error(f"Error loading player_index.json for main: {e}")
-# else: logger.warning("main.py: player_index.json not found.")
 
 player_index_main_data = {}
 if s3_client:
@@ -915,7 +834,7 @@ def trigger_github_training():
         if response.status_code == 204:
             # Success - GitHub Actions triggered
             # Check if user is admin (for security in public repos)
-            is_admin = request.headers.get('X-Admin-Secret') == ADMIN_SECRET
+            is_admin = ADMIN_SECRET and request.headers.get('X-Admin-Secret') == ADMIN_SECRET
             
             response_data = {
                 "success": True,
@@ -1028,6 +947,48 @@ def list_custom_models():
     return jsonify({"custom_models": custom_models_list})
 
 
+@lru_cache(maxsize=6)  # Cache fins a 6 models (2 per cada posició)
+def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
+    """
+    Cached function to load model, scaler, and config from R2.
+    This reduces repeated downloads from cloud storage.
+    
+    Args:
+        model_key: R2 object key for the model file
+        scaler_key: R2 object key for the scaler file
+        config_key: R2 object key for the config file
+    
+    Returns:
+        tuple: (model, scaler, config_dict)
+    """
+    logger.info(f"[CACHE MISS] Loading model from R2: {model_key}")
+    
+    try:
+        # Load model
+        with BytesIO() as f_model:
+            s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
+            f_model.seek(0)
+            model = joblib.load(f_model)
+        
+        # Load scaler
+        with BytesIO() as f_scaler:
+            s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
+            f_scaler.seek(0)
+            scaler = joblib.load(f_scaler)
+        
+        # Load config
+        response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
+        config_content = response_cfg['Body'].read().decode('utf-8')
+        config = json.loads(config_content)
+        
+        logger.info(f"✅ Model loaded and cached: {model_key}")
+        return model, scaler, config
+    
+    except Exception as e:
+        logger.error(f"❌ Failed to load model from R2: {str(e)}")
+        raise
+
+
 @app.route("/scouting_predict")
 def scouting_predict():
     player_id_str = request.args.get("player_id")
@@ -1079,40 +1040,10 @@ def scouting_predict():
         config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
 
         try:
-            # Carregar el model des de R2
-            logger.info(f"Attempting to load model from R2: {model_key}")
-            try:
-                with BytesIO() as f_model:
-                    s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
-                    f_model.seek(0)
-                    model_to_load = joblib.load(f_model)
-                logger.info(f"Model loaded successfully from: {model_key}")
-            except Exception as e:
-                logger.error(f"Failed to load model from {model_key}: {str(e)}")
-                raise
-
-            # Carregar l'escalador des de R2
-            logger.info(f"Attempting to load scaler from R2: {scaler_key}")
-            try:
-                with BytesIO() as f_scaler:
-                    s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
-                    f_scaler.seek(0)
-                    scaler_to_load = joblib.load(f_scaler)
-                logger.info(f"Scaler loaded successfully from: {scaler_key}")
-            except Exception as e:
-                logger.error(f"Failed to load scaler from {scaler_key}: {str(e)}")
-                raise
-
-            # Carregar la configuració des de R2
-            logger.info(f"Attempting to load config from R2: {config_key}")
-            try:
-                response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
-                config_content = response_cfg['Body'].read().decode('utf-8')
-                model_cfg = json.loads(config_content)
-                logger.info(f"Config loaded successfully from: {config_key}")
-            except Exception as e:
-                logger.error(f"Failed to load config from {config_key}: {str(e)}")
-                raise
+            # Use cached loading function for better performance
+            model_to_load, scaler_to_load, model_cfg = load_model_from_r2_cached(
+                model_key, scaler_key, config_key
+            )
             
             expected_ml_feature_names_for_model = model_cfg.get("features_used_for_ml_model", [])
             if not expected_ml_feature_names_for_model:
@@ -1223,7 +1154,7 @@ def scouting_predict():
         num_90s_target_season_pred_row = minutes_df_global[(minutes_df_global['player_id'].astype(str) == player_id_str) & (minutes_df_global['season_name_std'] == season_to_predict_for)]
         num_90s_target_season_pred = trainer_safe_division(num_90s_target_season_pred_row['total_minutes_played'].iloc[0], 90.0) if not num_90s_target_season_pred_row.empty else 0.0
 
-        return jsonify({
+        result = jsonify({
             "player_id": player_id_str, "player_name": player_name_from_index,
             "season_predicted_from": season_to_predict_for,
             "age_at_season_start_of_year": age_at_season, "position_group": position_group_for_prediction,
@@ -1233,9 +1164,19 @@ def scouting_predict():
             "debug_num_ml_features_generated_for_pred": len(ml_features_series_pred) if ml_features_series_pred is not None else 0,
             "debug_num_ml_features_expected_by_model": len(expected_ml_feature_names_for_model)
         })
+        
+        # Clean up large DataFrames to free memory
+        del df_all_seasons_base_features, minutes_df_global
+        if 'aligned_features_df_pred' in locals():
+            del aligned_features_df_pred
+        gc.collect()
+        
+        return result
 
     except Exception as e:
         logger.error(f"Error in /scouting_predict (model: {model_identifier}): {e}", exc_info=True)
+        # Clean up memory even on error
+        gc.collect()
         return jsonify({"error": f"Unexpected error during prediction: {str(e)}"}), 500
 
 @app.route("/api/custom_model/available_ml_features")
@@ -1247,22 +1188,6 @@ def available_ml_features_for_custom_model():
         logger.error(f"Error fetching available ML features: {e}", exc_info=True)
         return jsonify({"error": str(e), "available_ml_features": []}), 500
 
-# @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
-# def goalkeeper_analysis_route(player_id, season):
-#     """Serves comprehensive GK analysis including stats and chart data."""
-#     if not player_id or not season:
-#         return jsonify({"error": "Missing player_id or season"}), 400
-#     try:
-#         df_player = load_player_data(player_id, season, DATA_DIR)
-#         analysis_results = _calculate_goalkeeper_metrics(df_player, player_id)
-
-#         if analysis_results.get("error"):
-#             logger.warning(f"GK Analysis for {player_id}/{season} resulted in error: {analysis_results.get('error')}")
-#             return jsonify(analysis_results), 404
-#         return jsonify(analysis_results)
-#     except Exception as e:
-#         logger.error(f"Exception in goalkeeper_analysis_route for {player_id}, {season}: {e}", exc_info=True)
-#         return jsonify({"error": f"Unexpected server error: {str(e)}"}), 500
 
 @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
 def goalkeeper_analysis_route(player_id, season):
@@ -1325,98 +1250,6 @@ def pass_map_plot_route():
     except Exception as e:
         logger.error(f"Error in /pass_map_plot for {player_id}/{season}: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-
-# @app.route("/position_heatmap")
-# def position_heatmap_route():
-#     player_id = request.args.get("player_id")
-#     season = request.args.get("season")
-#     if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-#     try:
-#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-#         os.makedirs(player_dir, exist_ok=True)
-#         image_filename = f"{str(player_id)}_{season}_pos_heatmap.png"
-#         image_path = os.path.join(player_dir, image_filename)
-#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
-
-#         df = load_player_data(player_id, season, DATA_DIR)
-#         if df is None or df.empty or "location" not in df.columns:
-#             logger.warning(f"No data or location column for position heatmap {player_id}/{season}")
-#             return jsonify({"error": "No data or location column missing for heatmap"}), 404
-
-#         df["location_eval"] = df["location"].apply(safe_literal_eval)
-#         df_valid_loc = df[df["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-#         if df_valid_loc.empty:
-#             logger.warning(f"No valid location data for position heatmap {player_id}/{season}")
-#             return jsonify({"error": "No valid location data for heatmap"}), 404
-
-#         df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-#         df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-
-#         pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-#         fig, ax = pitch.draw(figsize=(4.125, 6))
-#         fig.set_facecolor('#22312b')
-
-#         bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, statistic='count', positional='full', normalize=True)
-#         pitch.heatmap_positional(bin_statistic, ax=ax, cmap='coolwarm', edgecolors='#22312b')
-#         path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-#         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
-
-#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         plt.close(fig)
-#         return jsonify({"image_url": image_url})
-#     except Exception as e:
-#         logger.error(f"Error generating position heatmap for {player_id}/{season}: {e}", exc_info=True)
-#         return jsonify({"error": f"Failed to generate position heatmap: {str(e)}"}), 500
-
-# @app.route("/pressure_heatmap")
-# def pressure_heatmap_route():
-#     player_id = request.args.get("player_id")
-#     season = request.args.get("season")
-#     if not player_id or not season:
-#         return jsonify({"image_url": None, "message": "Missing player_id or season"})
-#     try:
-#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-#         os.makedirs(player_dir, exist_ok=True)
-#         image_filename = f"{str(player_id)}_{season}_pressure_heatmap.png"
-#         image_path = os.path.join(player_dir, image_filename)
-#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
-
-#         df_events = load_player_data(player_id, season, DATA_DIR)
-#         df_pressure = pd.DataFrame()
-
-#         if df_events is not None and not df_events.empty and 'type' in df_events.columns:
-#             df_pressure = df_events[df_events["type"] == "Pressure"].copy()
-
-#         df_valid_loc = pd.DataFrame({"x": [], "y": []}) 
-#         if not df_pressure.empty and "location" in df_pressure.columns:
-#             df_pressure["location_eval"] = df_pressure["location"].apply(safe_literal_eval)
-#             temp_df_valid_loc = df_pressure[df_pressure["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-#             if not temp_df_valid_loc.empty:
-#                 df_valid_loc["x"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-#                 df_valid_loc["y"] = temp_df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-
-#         pitch = Pitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#000000', line_color='#efefef')
-#         fig, ax = pitch.draw(figsize=(6.6, 4.125))
-#         fig.set_facecolor('#000000')
-
-#         if not df_valid_loc.empty and not df_valid_loc['x'].empty:
-#             bin_statistic = pitch.bin_statistic(df_valid_loc.x, df_valid_loc.y, statistic='count', bins=(25, 25))
-#             if 'statistic' in bin_statistic and np.any(bin_statistic['statistic']):
-#                 bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)
-#                 pcm = pitch.heatmap(bin_statistic, ax=ax, cmap='hot', edgecolors='#000000')
-#                 cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
-#                 cbar.outline.set_edgecolor('#efefef')
-#                 cbar.ax.yaxis.set_tick_params(color='#efefef')
-#                 plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#efefef')
-
-#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         plt.close(fig)
-#         return jsonify({"image_url": image_url})
-#     except Exception as e:
-#         logger.error(f"Error generating pressure heatmap for {player_id}/{season}: {e}", exc_info=True)
-#         return jsonify({"image_url": None, "error": f"Failed to generate pressure heatmap: {str(e)}"})
 
 
 @app.route("/available_aggregated_metrics")

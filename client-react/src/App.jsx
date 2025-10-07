@@ -3,6 +3,7 @@ import "./App.css";
 import VisualizationPage from "./VisualizationPage"; 
 import ScoutingPage from "./ScoutingPage"; 
 import React from "react";
+import { Toaster } from 'react-hot-toast';
 
 function HeaderBrand() {
   const location = useLocation();
@@ -36,6 +37,32 @@ function App() {
   const isScouting = location.pathname === "/scouting";
   return (
     <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#1f2937',
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <header
         style={{
           width: "100%",

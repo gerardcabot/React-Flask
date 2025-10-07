@@ -3,6 +3,8 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import React from "react";
+import toast from 'react-hot-toast';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ''; // Optional: for viewing GitHub workflow URLs
 
@@ -231,34 +233,40 @@ function ScoutingPage() {
 
   const handlePredict = () => {
     if (!selectedPlayer || !selectedSeason) {
-      setPredictionError("Selecciona un jugador i una temporada sub-21.");
+      toast.error("Selecciona un jugador i una temporada sub-21.");
       return;
     }
     if (modelTypeForPrediction === 'custom' && !selectedCustomModelId) {
-      setPredictionError("Seleccioneu un model personalitzat per utilitzar-lo per a la predicció o canvieu al model V14 per defecte.");
+      toast.error("Seleccioneu un model personalitzat per utilitzar-lo per a la predicció.");
       return;
     }
     setIsLoadingPrediction(true);
     setPredictionResult(null);
     setPredictionError("");
-    // axios.get("http://localhost:5000/scouting_predict", {
-    axios.get(`${API_URL}/scouting_predict`, {
-      params: {
-        player_id: selectedPlayer.player_id,
-        season: selectedSeason,
-        model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
+    
+    toast.promise(
+      axios.get(`${API_URL}/scouting_predict`, {
+        params: {
+          player_id: selectedPlayer.player_id,
+          season: selectedSeason,
+          model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
+        }
+      }),
+      {
+        loading: 'Calculant predicció...',
+        success: (res) => {
+          setPredictionResult(res.data);
+          return `Predicció completada: ${res.data.predicted_potential_score}/200`;
+        },
+        error: (err) => {
+          const errorMsg = err.response?.data?.error || "No s'ha pogut obtenir la predicció.";
+          setPredictionError(errorMsg);
+          return errorMsg;
+        },
       }
-    })
-      .then(res => {
-        setPredictionResult(res.data);
-        setIsLoadingPrediction(false);
-      })
-      .catch(err => {
-        const errorMsg = err.response?.data?.error || "No s'ha pogut obtenir la predicció.";
-        console.error("Prediction error:", err.response || err);
-        setPredictionError(errorMsg);
-        setIsLoadingPrediction(false);
-      });
+    ).finally(() => {
+      setIsLoadingPrediction(false);
+    });
   };
 
   const handleKpiToggle = (kpi_id, type) => {
@@ -281,7 +289,7 @@ function ScoutingPage() {
     if (!selectedPositionGroupForCustom ||
         !selectedImpactKpisForCustom.length ||
         !selectedTargetKpisForCustom.length) {
-      setCustomModelBuildStatus({ success: false, message: "Seleccioneu un grup de posicions i com a mínim un KPI d'impacte i un KPI d'objectiu." });
+      toast.error("Seleccioneu un grup de posicions i com a mínim un KPI d'impacte i un KPI d'objectiu.");
       return;
     }
     let mlFeaturesPayload = null;
@@ -303,55 +311,58 @@ function ScoutingPage() {
     }
     
     // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
-    axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
-      position_group: backendPositionGroup,
-      impact_kpis: selectedImpactKpisForCustom,
-      target_kpis: selectedTargetKpisForCustom,
-      model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
-      ml_features: mlFeaturesPayload
-    }, { headers })
-      .then(res => {
-        const workflowUrl = res.data.workflow_url;
-        const estimatedTime = res.data.estimated_time;
-        const modelId = res.data.custom_model_id;
-        const instructions = res.data.instructions;
-        
-        // Prepare additional info based on whether workflow URL is available
-        let additionalInfo = `Estimated time: ${estimatedTime}.`;
-        if (workflowUrl) {
-          additionalInfo += ` You can monitor progress at GitHub Actions.`;
-        } else {
-          additionalInfo += ` The model will appear in the list automatically when ready.`;
-        }
-        
-        // Save model ID to localStorage as "my model"
-        addMyModel(modelId);
-        
-        setCustomModelBuildStatus({ 
-          success: true, 
-          message: res.data.message,
-          id: modelId,
-          workflowUrl: workflowUrl, // Only present if user is admin
-          additionalInfo: additionalInfo
-        });
-        setIsBuildingCustomModel(false);
-        
-        // Show workflow link if available
-        if (workflowUrl) {
-          console.log(`Training started! Monitor at: ${workflowUrl}`);
-        }
-      })
-      .catch(err => {
-        const errorMsg = err.response?.data?.error || "No s'ha pogut iniciar l'entrenament del model.";
-        const manualUrl = err.response?.data?.manual_url;
-        
-        setCustomModelBuildStatus({ 
-          success: false, 
-          message: errorMsg,
-          manualUrl: manualUrl
-        });
-        setIsBuildingCustomModel(false);
-      });
+    toast.promise(
+      axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
+        position_group: backendPositionGroup,
+        impact_kpis: selectedImpactKpisForCustom,
+        target_kpis: selectedTargetKpisForCustom,
+        model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
+        ml_features: mlFeaturesPayload
+      }, { headers }),
+      {
+        loading: 'Iniciant entrenament del model...',
+        success: (res) => {
+          const workflowUrl = res.data.workflow_url;
+          const estimatedTime = res.data.estimated_time;
+          const modelId = res.data.custom_model_id;
+          
+          // Save model ID to localStorage as "my model"
+          addMyModel(modelId);
+          
+          // Prepare additional info for display
+          let additionalInfo = `Temps estimat: ${estimatedTime}.`;
+          if (workflowUrl) {
+            additionalInfo += ` Pots monitoritzar el progrés a GitHub Actions.`;
+          } else {
+            additionalInfo += ` El model apareixerà a la llista automàticament quan estigui llest.`;
+          }
+          
+          setCustomModelBuildStatus({ 
+            success: true, 
+            message: res.data.message,
+            id: modelId,
+            workflowUrl: workflowUrl,
+            additionalInfo: additionalInfo
+          });
+          
+          return `Model ${modelId} en entrenament! ${additionalInfo}`;
+        },
+        error: (err) => {
+          const errorMsg = err.response?.data?.error || "No s'ha pogut iniciar l'entrenament del model.";
+          const manualUrl = err.response?.data?.manual_url;
+          
+          setCustomModelBuildStatus({ 
+            success: false, 
+            message: errorMsg,
+            manualUrl: manualUrl
+          });
+          
+          return errorMsg;
+        },
+      }
+    ).finally(() => {
+      setIsBuildingCustomModel(false);
+    });
   };
 
   const formatMlFeatureName = (featureName) => {
