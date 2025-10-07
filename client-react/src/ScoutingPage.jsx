@@ -590,7 +590,7 @@ function ScoutingPage() {
               </select>
               {selectedPlayer.dob && (
                 <p style={{ fontSize: '0.9em', color: '#4b5563', marginTop: '5px' }}>
-                  Data de naixement del jugador: {dayjs(selectedPlayer.dob).format("DD MMM YYYY")}
+                  {t('scouting.playerDob')}: {dayjs(selectedPlayer.dob).format("DD MMM YYYY")}
                 </p>
               )}
             </div>
@@ -667,7 +667,7 @@ function ScoutingPage() {
                   color: "#1f2937",
                   fontSize: '0.95em'
                 }}>
-                  Selecciona un model personalitzat:
+                  {t('scouting.customModel.selectCustomModel')}:
                 </label>
                 <select
                   id="custom-model-select"
@@ -686,11 +686,11 @@ function ScoutingPage() {
                   disabled={availableCustomModels.length === 0}
                 >
                   <option value="">
-                    -- {availableCustomModels.length === 0 ? 'No hi ha models personalitzats disponibles' : 'Seleccioneu un model personalitzat'} --
+                    -- {availableCustomModels.length === 0 ? t('scouting.customModel.noModelsAvailable') : t('scouting.customModel.selectModelOption')} --
                   </option>
                   {availableCustomModels.map(model => (
                     <option key={model.id} value={model.id}>
-                      {model.name} (Pos: {model.position_group}) {isMyModel(model.id) ? '✓ Your model' : '○ Community'}
+                      {model.name} (Pos: {model.position_group}) {isMyModel(model.id) ? t('scouting.customModel.yourModel') : t('scouting.customModel.communityModel')}
                     </option>
                   ))}
                 </select>
@@ -729,7 +729,7 @@ function ScoutingPage() {
         </button>
         {isLoadingPrediction && (
           <p style={{ textAlign: 'center', marginTop: '15px', color: '#dc2626' }}>
-              S'està carregant el model i s'està fent predicció...
+              {t('scouting.loadingModel')}
           </p>
         )}
         {predictionError && (
@@ -760,20 +760,20 @@ function ScoutingPage() {
               fontWeight: 700,
               fontSize: "1.18rem"
             }}>
-              Resultat de la predicció ({predictionResult.model_used === 'default_v14' ? 'Default V14 Model' : `Custom Model: ${predictionResult.model_used}`}):
+              {t('scouting.result.title')} ({predictionResult.model_used === 'default_v14' ? t('scouting.defaultModel') : `${t('scouting.customModel.title')}: ${predictionResult.model_used}`}):
             </h3>
-            <p style={{ margin: "8px 0" }}><strong>Jugador:</strong> {predictionResult.player_name} (ID: {predictionResult.player_id})</p>
-            <p style={{ margin: "8px 0" }}><strong>Temporada avaluada:</strong> {predictionResult.season_predicted_from}</p>
-            <p style={{ margin: "8px 0" }}><strong>Edat avaluada:</strong> {predictionResult.age_at_season_start_of_year} </p>
-            <p style={{ margin: "8px 0" }}><strong>Posició:</strong> {predictionResult.position_group}</p>
-            <p style={{ margin: "8px 0" }}><strong>90s Jugats a la temporada:</strong> {predictionResult.num_90s_played_in_season}</p>
+            <p style={{ margin: "8px 0" }}><strong>{t('scouting.result.player')}:</strong> {predictionResult.player_name} (ID: {predictionResult.player_id})</p>
+            <p style={{ margin: "8px 0" }}><strong>{t('scouting.result.season')}:</strong> {predictionResult.season_predicted_from}</p>
+            <p style={{ margin: "8px 0" }}><strong>{t('scouting.result.age')}:</strong> {predictionResult.age_at_season_start_of_year} </p>
+            <p style={{ margin: "8px 0" }}><strong>{t('scouting.result.position')}:</strong> {predictionResult.position_group}</p>
+            <p style={{ margin: "8px 0" }}><strong>{t('scouting.result.nineties')}:</strong> {predictionResult.num_90s_played_in_season}</p>
             <p style={{
               fontSize: '1.2em',
               fontWeight: 'bold',
               color: '#b91c1c', 
               margin: "18px 0 0 0"
             }}>
-              Predicted U21 Potential Score: <span style={{ fontSize: '1.3em' }}>{predictionResult.predicted_potential_score} / 200</span>
+              {t('scouting.result.potentialScore')}: <span style={{ fontSize: '1.3em' }}>{predictionResult.predicted_potential_score} / 200</span>
             </p>
           </div>
         )}
@@ -804,7 +804,7 @@ function ScoutingPage() {
         }}>
           <div style={{ flex: '2', minWidth: 'clamp(350px, 60%, 700px)' }}>
             {structuredKpiOptions.length === 0 ? (
-              <p style={{ color: "#4b5563" }}>S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...</p>
+              <p style={{ color: "#4b5563" }}>{t('scouting.customModelBuilder.loadingKpis', 'S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...')}</p>
             ) : (
               <form onSubmit={handleBuildCustomModelSubmit}>
                 <div style={{ marginBottom: '20px' }}>
@@ -815,7 +815,7 @@ function ScoutingPage() {
                     color: "#1f2937",
                     fontSize: "1.1rem"
                   }}>
-                    Nom del model personalitzat:
+                    {t('scouting.customModelBuilder.modelName')}:
                   </label>
                   <input
                     type="text"
@@ -843,7 +843,7 @@ function ScoutingPage() {
                     color: "#1f2937",
                     fontSize: "1.1rem"
                   }}>
-                    Grup de posició per al model:
+                    {t('scouting.customModelBuilder.positionGroup')}:
                   </label>
                   <select
                     id="custom-model-pos-group"
@@ -865,7 +865,11 @@ function ScoutingPage() {
                     }}
                   >
                     {["Atacant", "Migcampista", "Defensor"].map(group => (
-                      <option key={group} value={group}>{group}</option>
+                      <option key={group} value={group}>
+                        {group === "Atacant" ? t('scouting.customModelBuilder.attacker') : 
+                         group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') : 
+                         t('scouting.customModelBuilder.defender')}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -880,7 +884,7 @@ function ScoutingPage() {
                       </h4>
                       <input
                         type="text"
-                        placeholder="Busca KPIs d'impacte..."
+                        placeholder={t('scouting.customModelBuilder.search')}
                         value={kpiSearchTerm}
                         onChange={e => setKpiSearchTerm(e.target.value)}
                         style={{
@@ -1094,7 +1098,7 @@ function ScoutingPage() {
                     marginTop: "20px"
                   }}
                 >
-                  {isBuildingCustomModel ? "Construint el model..." : "Crea un model personalitzat"}
+                  {isBuildingCustomModel ? t('scouting.customModelBuilder.building') : t('scouting.customModelBuilder.buildModel')}
                 </button>
               </form>
             )}
@@ -1107,10 +1111,10 @@ function ScoutingPage() {
                 background: customModelBuildStatus.success ? '#e2f0d9' : '#fef2f2',
                 color: customModelBuildStatus.success ? '#385723' : '#dc2626'
               }}>
-                <strong>{customModelBuildStatus.success ? "Success!" : "Error:"}</strong> {customModelBuildStatus.message}
+                <strong>{customModelBuildStatus.success ? t('scouting.customModelBuilder.successTitle') : "Error:"}</strong> {customModelBuildStatus.message}
                 {customModelBuildStatus.id && (
                   <p style={{ marginTop: "8px", marginBottom: "4px" }}>
-                    Model ID: <span style={{ fontFamily: "monospace" }}>{customModelBuildStatus.id}</span>
+                    {t('scouting.customModelBuilder.modelId')} <span style={{ fontFamily: "monospace" }}>{customModelBuildStatus.id}</span>
                   </p>
                 )}
                 {customModelBuildStatus.additionalInfo && (
@@ -1130,7 +1134,7 @@ function ScoutingPage() {
                         fontWeight: 'bold'
                       }}
                     >
-                      Monitor Progress on GitHub Actions
+                      {t('scouting.customModelBuilder.monitorProgress')}
                     </a>
                   </p>
                 )}

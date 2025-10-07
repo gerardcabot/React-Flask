@@ -1,144 +1,95 @@
 {
   "app": {
-    "title": "Estrelles del Futur",
-    "subtitle": "Descobreix els futurs cracks del futbol"
+    "title": "ESTRELLES DEL FUTUR"
   },
   "nav": {
-    "home": "Inici",
-    "visualization": "Visualització",
-    "scouting": "Buscador de Talents",
-    "analysis": "Anàlisi",
-    "language": "Idioma"
+    "visualization": "Anàlisi del jugador",
+    "scouting": "Buscador de talents"
   },
-  "home": {
-    "welcome": "Benvingut a Estrelles del Futur",
-    "description": "Analitza jugadors, visualitza dades i descobreix els futurs talents del futbol",
-    "features": {
-      "visualization": {
-        "title": "Visualització de Dades",
-        "description": "Mapes de calor, tirs, passades i més"
-      },
-      "scouting": {
-        "title": "Buscador de Talents",
-        "description": "Prediccions ML del potencial de jugadors"
-      },
-      "analysis": {
-        "title": "Anàlisi Profunda",
-        "description": "Estadístiques avançades i mètriques personalitzades"
-      }
-    }
-  },
-  "visualization": {
-    "title": "Visualització de Jugador",
-    "selectPlayer": "Selecciona un jugador",
-    "selectSeason": "Selecciona una temporada",
-    "visualizations": {
-      "passCompletionHeatmap": "Mapa de Calor de Passades",
-      "positionHeatmap": "Mapa de Calor de Posicionament",
-      "pressureHeatmap": "Mapa de Calor de Pressions",
-      "passMapZonaStats": "Estadístiques de Passades per Zona",
-      "shotMap": "Mapa de Tirs",
-      "passMap": "Mapa de Passades",
-      "goalkeeper": "Anàlisi de Porter"
-    },
-    "loading": "Carregant visualització...",
-    "noData": "No hi ha dades disponibles per a aquesta combinació",
-    "playerInfo": {
-      "position": "Posició",
-      "age": "Edat",
-      "dob": "Data de Naixement"
-    }
+  "language_selector": {
+    "label": "Idioma:"
   },
   "scouting": {
-    "title": "Buscador de Talents",
-    "subtitle": "Predicció de Potencial amb Machine Learning",
-    "selectPlayer": "Selecciona un jugador",
-    "selectSeason": "Selecciona una temporada sub-21",
+    "selectPlayer": "Jugador (menors de 21 anys)",
+    "selectSeason": "Temporada (rendiment sub-21)",
     "selectModel": "Model per fer la predicció",
     "defaultModel": "Model per defecte V14",
-    "predict": "Calcular Predicció",
-    "predicting": "Calculant predicció...",
-    "result": {
-      "title": "Predicció de Potencial U21",
-      "score": "Puntuació Prevista",
-      "outOf": "de 200",
-      "playerInfo": {
-        "age": "Edat a la temporada",
-        "position": "Grup de posició",
-        "minutes": "90s jugats"
-      },
-      "modelInfo": "Model utilitzat"
-    },
     "customModel": {
-      "title": "Entrenar Model Personalitzat",
-      "description": "Crea el teu propi model de predicció de potencial",
-      "selectPosition": "Selecciona posició",
-      "positions": {
-        "attacker": "Davanter",
-        "midfielder": "Migcampista",
-        "defender": "Defensa"
-      },
-      "selectImpactKPIs": "Selecciona KPIs d'impacte",
-      "selectTargetKPIs": "Selecciona KPIs objectiu",
-      "selectMLFeatures": "Selecciona característiques ML (opcional)",
-      "modelName": "Nom del model (opcional)",
-      "train": "Entrenar Model",
-      "training": "Entrenant...",
-      "success": "Model entrenat correctament",
-      "error": "Error en l'entrenament del model",
-      "estimatedTime": "Temps estimat: 45-90 minuts",
-      "instructions": "El model estarà disponible a la llista un cop completat l'entrenament.",
-      "monitorProgress": "Pots monitoritzar el progrés al workflow URL. El model estarà disponible a la llista un cop completat l'entrenament (normalment 45-90 minuts).",
-      "yourModel": "El teu model",
-      "community": "Comunitat"
+      "title": "Model personalitzat",
+      "build": "Construir model personalitzat",
+      "selectCustomModel": "Selecciona un model personalitzat",
+      "noModelsAvailable": "No hi ha models personalitzats disponibles",
+      "selectModelOption": "Seleccioneu un model personalitzat",
+      "yourModel": "✓ El teu model",
+      "communityModel": "○ Comunitat"
     },
-    "modelInfo": {
-      "title": "Informació del Model per Defecte V14",
-      "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21",
-      "algorithm": "Algoritme",
-      "targetVariable": "Variable objectiu",
-      "trainingData": "Dades d'entrenament",
-      "evaluationSeason": "Temporada d'avaluació",
-      "kpiDefinitions": "Definicions de KPI",
-      "compositeImpactKPIs": "KPIs d'Impacte Compost",
-      "featureEngineering": "Enginyeria de característiques",
-      "close": "Tancar"
+    "predict": "Predir puntuació de potencial",
+    "predicting": "Calculant...",
+    "loadingModel": "S'està carregant el model i s'està fent predicció...",
+    "result": {
+      "title": "Resultat de la predicció",
+      "score": "Predicció completada",
+      "player": "Jugador",
+      "season": "Temporada avaluada",
+      "age": "Edat avaluada",
+      "position": "Posició",
+      "nineties": "90s Jugats a la temporada",
+      "potentialScore": "Predicted U21 Potential Score"
     },
     "errors": {
       "selectPlayerSeason": "Selecciona un jugador i una temporada sub-21.",
+      "modelLoadFailed": "No s'ha pogut carregar el model.",
       "predictionFailed": "No s'ha pogut obtenir la predicció.",
-      "modelLoadFailed": "Error en carregar el model."
-    }
-  },
-  "analysis": {
-    "title": "Anàlisi de Jugador",
-    "selectPlayer": "Selecciona un jugador",
-    "selectMetric": "Selecciona una mètrica",
-    "loading": "Carregant anàlisi...",
-    "noData": "No hi ha dades disponibles",
-    "trend": {
-      "title": "Evolució per Temporada",
-      "season": "Temporada",
-      "value": "Valor"
+      "playersLoadFailed": "No s'ha pogut carregar la llista de jugadors."
     },
-    "singleSeason": {
-      "title": "Anàlisi de Temporada",
-      "selectSeason": "Selecciona una temporada"
+    "playerDob": "Data de naixement del jugador",
+    "age": "Edat",
+    "modelConfigButton": "Veure configuració del model V14",
+    "customModelBuilder": {
+      "title": "Construeix un model de potencial personalitzat",
+      "positionGroup": "Grup de Posició",
+      "attacker": "Atacant",
+      "midfielder": "Migcampista",
+      "defender": "Defensor",
+      "impactKpis": "KPIs d'Impacte",
+      "impactKpisDescription": "Selecciona els KPIs que tindran més pes per definir la rellevància de la temporada avaluada.",
+      "targetKpis": "KPIs Objectiu",
+      "targetKpisDescription": "Selecciona els KPIs que prediran el rendiment futur del jugador.",
+      "mlFeatures": "Característiques ML (Opcional)",
+      "mlFeaturesDescription": "Per defecte, s'utilitzen totes les característiques disponibles. Pots seleccionar-ne de personalitzades aquí.",
+      "useDefaultFeatures": "Utilitza totes les característiques per defecte",
+      "useCustomFeatures": "Selecciona característiques personalitzades",
+      "modelName": "Nom del model (opcional)",
+      "search": "Cerca...",
+      "buildModel": "Construir model personalitzat",
+      "building": "S'està construint el model...",
+      "successTitle": "Model en entrenament!",
+      "modelId": "ID del model:",
+      "estimatedTime": "Temps estimat:",
+      "minutes": "minuts",
+      "adminInstructions": "Pots monitoritzar el progrés a la URL del workflow. El model estarà disponible a la llista un cop finalitzi l'entrenament (normalment 45-90 minuts).",
+      "userInstructions": "El model estarà disponible a la llista un cop finalitzi l'entrenament. Això sol trigar 45-90 minuts depenent de la mida i complexitat de les dades.",
+      "monitorProgress": "Monitoritzar progrés a GitHub Actions",
+      "errorBuildFailed": "No s'ha pogut iniciar l'entrenament del model.",
+      "manualTrigger": "Si tens permisos, pots executar-lo manualment aquí:"
+    },
+    "v14Config": {
+      "title": "Configuració del Model per Defecte V14",
+      "description": "Descripció",
+      "algorithm": "Algorisme",
+      "targetVariable": "Variable objectiu",
+      "trainingData": "Dades d'entrenament",
+      "evaluationSeason": "Temporada d'avaluació",
+      "kpisForWeightDerivation": "KPIs per a la derivació de pesos",
+      "compositeImpactKpis": "KPIs d'impacte compostos",
+      "featureEngineering": "Enginyeria de característiques",
+      "currentSeason": "Temporada actual",
+      "historical": "Històric",
+      "ageBased": "Basat en l'edat",
+      "close": "Tancar"
     }
   },
-  "common": {
-    "loading": "Carregant...",
-    "error": "Error",
-    "success": "Èxit",
-    "cancel": "Cancel·lar",
-    "close": "Tancar",
-    "save": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "search": "Cercar",
-    "filter": "Filtrar",
-    "sort": "Ordenar",
-    "noDataAvailable": "No hi ha dades disponibles",
-    "tryAgain": "Torna-ho a provar"
+  "visualization": {
+    "title": "Anàlisi del jugador"
   }
 }
