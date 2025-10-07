@@ -90,6 +90,12 @@
     }
   },
   "visualization": {
-    "title": "Análisis del jugador"
+    "title": "Análisis del jugador",
+    "selectPlayer": "Selecciona jugador",
+    "selectSeason": "Selecciona temporada",
+    "selectPlayerFirst": "Selecciona primero un jugador",
+    "selectMetric": "Selecciona la métrica",
+    "welcome": "Bienvenido al análisis del jugador",
+    "welcomeDescription": "Por favor, seleccione un jugador del menú desplegable de arriba para comenzar a analizar su rendimiento."
   }
 }

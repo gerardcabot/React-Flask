@@ -20,7 +20,8 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Chart } from 'chart.js'; // Només necessitem Chart per la referència, no per registrar.
 import { Line } from 'react-chartjs-2';
-import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
+import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa";
+import { useTranslation } from 'react-i18next'; 
 
 // Chart.register(CategoryScale, LinearScale, ArcElement, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -98,6 +99,8 @@ onClick={e => e.stopPropagation()}
 }
 
 function VisualizationPage() {
+const { t } = useTranslation();
+
 const [players, setPlayers] = useState([]);
 const [selectedPlayer, setSelectedPlayer] = useState(null);
 const [selectedSeason, setSelectedSeason] = useState("");
@@ -481,7 +484,7 @@ return (
       <div style={{ flex: "1 1 300px" }}>
         <label htmlFor="player-select" style={labelStyle}>
           <FaUser style={{ marginRight: "0.5rem" }} />
-          Selecciona jugador:
+          {t('visualization.selectPlayer')}:
         </label>
         <select
           id="player-select"
@@ -497,7 +500,7 @@ return (
           }}
           style={selectStyle}
         >
-          <option value="">-- Selecciona jugador --</option>
+          <option value="">-- {t('visualization.selectPlayer')} --</option>
           {players.map((p) => (
             <option key={p.player_id} value={p.name} style={{ color: "#1f2937" }}>
               {p.name}
@@ -509,7 +512,7 @@ return (
       <div style={{ flex: "1 1 300px" }}>
         <label htmlFor="season-select" style={labelStyle}>
           <FaCalendarAlt style={{ marginRight: "0.5rem" }} />
-          Selecciona temporada:
+          {t('visualization.selectSeason')}:
         </label>
         <select
           id="season-select"
@@ -522,7 +525,7 @@ return (
           disabled={!selectedPlayer}
         >
           <option value="">
-            {selectedPlayer ? "-- Selecciona temporada --" : "-- Selecciona primer un jugador --"}
+            {selectedPlayer ? `-- ${t('visualization.selectSeason')} --` : `-- ${t('visualization.selectPlayerFirst')} --`}
           </option>
           {selectedPlayer && selectedPlayer.seasons && selectedPlayer.seasons.map((s) => (
             <option key={s} value={s} style={{ color: "#1f2937" }}>
@@ -557,10 +560,10 @@ return (
     {!loadingEvents && !selectedPlayer && (
       <div>
         <h2 style={{ fontSize: '1.6rem', color: '#1f2937', marginBottom: '20px', textAlign: 'center' }}>
-         Us donem la benvinguda a l'anàlisi del jugador
+         {t('visualization.welcome')}
         </h2>
         <p style={{ fontSize: '1.1rem', color: '#4b5563', textAlign: 'center', padding: '1.5rem 0' }}>
-          Si us plau, seleccioneu un jugador del desplegable de dalt per començar a analitzar el seu rendiment.
+          {t('visualization.welcomeDescription')}
         </p>
       </div>
     )}
@@ -579,7 +582,7 @@ return (
               </h2>
               <div style={{ marginBottom: '25px', maxWidth: '500px', margin: '0 auto 25px auto' }}>
                 <label htmlFor="aggregated-metric-select" style={{ ...labelStyle, marginBottom: '10px', fontSize: '1.1rem' }}>
-                  Selecciona la mètrica:
+                  {t('visualization.selectMetric')}:
                 </label>
                 <select
                   id="aggregated-metric-select"
@@ -588,7 +591,7 @@ return (
                   style={{ ...selectStyle, fontSize: '1rem' }}
                   disabled={!availableAggregatedMetrics || availableAggregatedMetrics.length === 0}
                 >
-                  <option value="">-- Tria una mètrica --</option>
+                  <option value="">-- {t('visualization.selectMetric')} --</option>
                   {availableAggregatedMetrics
                     .filter(metric => !/sqrt/i.test(metric.id)) 
                     .map((metric) => (

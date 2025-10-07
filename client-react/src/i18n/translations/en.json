@@ -90,6 +90,12 @@
     }
   },
   "visualization": {
-    "title": "Player Analysis"
+    "title": "Player Analysis",
+    "selectPlayer": "Select player",
+    "selectSeason": "Select season",
+    "selectPlayerFirst": "Select a player first",
+    "selectMetric": "Select metric",
+    "welcome": "Welcome to Player Analysis",
+    "welcomeDescription": "Please select a player from the dropdown above to start analyzing their performance."
   }
 }

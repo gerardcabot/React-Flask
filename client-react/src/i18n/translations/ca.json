@@ -90,6 +90,12 @@
     }
   },
   "visualization": {
-    "title": "Anàlisi del jugador"
+    "title": "Anàlisi del jugador",
+    "selectPlayer": "Selecciona jugador",
+    "selectSeason": "Selecciona temporada",
+    "selectPlayerFirst": "Selecciona primer un jugador",
+    "selectMetric": "Selecciona la mètrica",
+    "welcome": "Us donem la benvinguda a l'anàlisi del jugador",
+    "welcomeDescription": "Si us plau, seleccioneu un jugador del desplegable de dalt per començar a analitzar el seu rendiment."
   }
 }
