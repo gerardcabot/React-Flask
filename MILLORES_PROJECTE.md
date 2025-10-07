@@ -98,7 +98,7 @@ def load_player_data_with_fallback(player_id, season, data_dir):
 
 ---
 
-### 5. ⚡ **Endpoints Sense Rate Limiting**
+### 5. ⚡ **Endpoints Sense Rate Limiting** ✅ **IMPLEMENTAT**
 **Problema:** Els endpoints públics no tenen protecció contra abús.
 
 **Solució:** Implementar Flask-Limiter
@@ -119,6 +119,13 @@ def scouting_predict():
 ```
 
 **Benefici:** Protecció contra DoS + reducció de costos de cloud storage
+
+**Status:** ✅ Implementat amb límits específics per endpoint:
+- `/scouting_predict`: 10 per minut (ML prediction)
+- `/api/custom_model/trigger_github_training`: 2 per hora (training)
+- `/api/player/<player_id>/goalkeeper/analysis/<season>`: 20 per minut
+- Visualització endpoints (heatmaps, shot_map): 30 per minut
+- Límits globals: 300 per dia, 100 per hora
 
 ---
 

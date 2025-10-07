@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request, send_file, redirect, redirect
 import os
 import pandas as pd
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import matplotlib
 from matplotlib import pyplot as plt
 from mplsoccer import Pitch, VerticalPitch
@@ -178,6 +180,14 @@ CORS(app, resources={
         "supports_credentials": True
     }
 })
+
+# Rate limiting configuration to protect API from abuse and reduce R2 costs
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["300 per day", "100 per hour"],  # Global limits
+    storage_uri="memory://"  # Use in-memory storage (suitable for single-instance deployments)
+)
 
 
 
@@ -537,6 +547,7 @@ def player_events_route():
 #         logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
 #         return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
 @app.route("/pass_completion_heatmap")
+@limiter.limit("30 per minute")  # Visualization endpoints
 def pass_completion_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -555,6 +566,7 @@ def pass_completion_heatmap_route():
     return redirect(image_url)
 
 @app.route("/position_heatmap")
+@limiter.limit("30 per minute")  # Visualization endpoints
 def position_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -570,6 +582,7 @@ def position_heatmap_route():
     return redirect(image_url)
 
 @app.route("/pressure_heatmap")
+@limiter.limit("30 per minute")  # Visualization endpoints
 def pressure_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -586,6 +599,7 @@ def pressure_heatmap_route():
 
 
 @app.route("/pass_map_zona_stats")
+@limiter.limit("30 per minute")  # Data processing endpoint
 def pass_map_zona_stats_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -637,6 +651,7 @@ def pass_map_zona_stats_route():
 
 
 @app.route("/shot_map")
+@limiter.limit("30 per minute")  # Visualization endpoints
 def shot_map_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -771,6 +786,7 @@ def handle_build_custom_model():
 
 
 @app.route("/api/custom_model/trigger_github_training", methods=['POST'])
+@limiter.limit("2 per hour")  # Training is very expensive, strict limit
 def trigger_github_training():
     """
     Triggers a GitHub Actions workflow to train a custom model.
@@ -990,6 +1006,7 @@ def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
 
 
 @app.route("/scouting_predict")
+@limiter.limit("10 per minute")  # ML prediction is resource-intensive
 def scouting_predict():
     player_id_str = request.args.get("player_id")
     season_to_predict_for = request.args.get("season")
@@ -1193,6 +1210,7 @@ def available_ml_features_for_custom_model():
 
 
 @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
+@limiter.limit("20 per minute")  # Analysis involves heavy data processing
 def goalkeeper_analysis_route(player_id, season):
     """Serveix una anàlisi completa del porter incloent estadístiques i dades de gràfics."""
     if not player_id or not season:
