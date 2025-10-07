@@ -804,7 +804,7 @@ function ScoutingPage() {
         }}>
           <div style={{ flex: '2', minWidth: 'clamp(350px, 60%, 700px)' }}>
             {structuredKpiOptions.length === 0 ? (
-              <p style={{ color: "#4b5563" }}>{t('scouting.customModelBuilder.loadingKpis', 'S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...')}</p>
+              <p style={{ color: "#4b5563" }}>S'estan carregant les opcions d'indicador clau de rendiment (KPI) per a la creació de models personalitzats...</p>
             ) : (
               <form onSubmit={handleBuildCustomModelSubmit}>
                 <div style={{ marginBottom: '20px' }}>
