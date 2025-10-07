@@ -4,6 +4,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import React from "react";
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ''; // Optional: for viewing GitHub workflow URLs
@@ -118,6 +119,8 @@ const InfoTooltip = ({ text }) => {
 };
 
 function ScoutingPage() {
+  const { t } = useTranslation();
+  
   const [allPlayers, setAllPlayers] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("");
@@ -233,11 +236,11 @@ function ScoutingPage() {
 
   const handlePredict = () => {
     if (!selectedPlayer || !selectedSeason) {
-      toast.error("Selecciona un jugador i una temporada sub-21.");
+      toast.error(t('scouting.errors.selectPlayerSeason'));
       return;
     }
     if (modelTypeForPrediction === 'custom' && !selectedCustomModelId) {
-      toast.error("Seleccioneu un model personalitzat per utilitzar-lo per a la predicció.");
+      toast.error(t('scouting.errors.modelLoadFailed'));
       return;
     }
     setIsLoadingPrediction(true);
@@ -253,13 +256,13 @@ function ScoutingPage() {
         }
       }),
       {
-        loading: 'Calculant predicció...',
+        loading: t('scouting.predicting'),
         success: (res) => {
           setPredictionResult(res.data);
-          return `Predicció completada: ${res.data.predicted_potential_score}/200`;
+          return `${t('scouting.result.score')}: ${res.data.predicted_potential_score}/200`;
         },
         error: (err) => {
-          const errorMsg = err.response?.data?.error || "No s'ha pogut obtenir la predicció.";
+          const errorMsg = err.response?.data?.error || t('scouting.errors.predictionFailed');
           setPredictionError(errorMsg);
           return errorMsg;
         },
@@ -526,7 +529,7 @@ function ScoutingPage() {
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
-              Jugador (menors de 21 anys):
+              {t('scouting.selectPlayer')}
             </label>
             <select
               id="player-select"
@@ -543,7 +546,7 @@ function ScoutingPage() {
                 boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}
             >
-              <option value="">-- Selecciona jugador --</option>
+              <option value="">-- {t('scouting.selectPlayer')} --</option>
               {u21EligiblePlayers.map(p => (
                 <option key={p.player_id} value={p.name}>
                   {p.name} (ID: {p.player_id})
@@ -560,7 +563,7 @@ function ScoutingPage() {
                 color: "#1f2937",
                 fontSize: "1.1rem"
               }}>
-                Temporada (rendiment sub-21):
+                {t('scouting.selectSeason')}
               </label>
               <select
                 id="season-select"
@@ -578,7 +581,7 @@ function ScoutingPage() {
                 }}
                 disabled={!selectedPlayer || u21SeasonsForSelectedPlayer.length === 0}
               >
-                <option value="">-- Selecciona la temporada sub-21 --</option>
+                <option value="">-- {t('scouting.selectSeason')} --</option>
                 {u21SeasonsForSelectedPlayer.map(s => (
                   <option key={s} value={s}>
                     {s} (Edat: {calculatePlayerAge(selectedPlayer.dob, s)})
@@ -601,7 +604,7 @@ function ScoutingPage() {
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
-              Model per fer la predicció:
+              {t('scouting.selectModel')}
               {modelTypeForPrediction === 'default_v14' && v14ModelConfig && (
                 <button
                   onClick={() => setShowV14Info(true)}
@@ -652,8 +655,8 @@ function ScoutingPage() {
                 marginBottom: '10px'
               }}
             >
-              <option value="default_v14">Model per defecte V14</option>
-              <option value="custom">Model customitzat</option>
+              <option value="default_v14">{t('scouting.defaultModel')}</option>
+              <option value="custom">{t('scouting.customModel.title')}</option>
             </select>
             {modelTypeForPrediction === 'custom' && (
               <div>
@@ -722,7 +725,7 @@ function ScoutingPage() {
             }
           }}
         >
-          {isLoadingPrediction ? "Calculant..." : "Predir puntuació de potencial"}
+          {isLoadingPrediction ? t('scouting.predicting') : t('scouting.predict')}
         </button>
         {isLoadingPrediction && (
           <p style={{ textAlign: 'center', marginTop: '15px', color: '#dc2626' }}>
@@ -791,7 +794,7 @@ function ScoutingPage() {
           borderBottom: "2px solid #dc2626", 
           paddingBottom: "10px"
         }}>
-          Construeix un model de potencial personalitzat
+          {t('scouting.customModel.title')}
         </h2>
         <div style={{
           display: 'flex',
