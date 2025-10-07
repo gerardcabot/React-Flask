@@ -822,7 +822,7 @@ function ScoutingPage() {
                     id="custom-model-name"
                     value={customModelName}
                     onChange={e => setCustomModelName(e.target.value)}
-                    placeholder="p. ex., Atacant_Alt_xG"
+                    placeholder={t('scouting.customModelBuilder.modelNamePlaceholder')}
                     style={{
                       width: "100%",
                       padding: "10px",
