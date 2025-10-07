@@ -597,12 +597,12 @@ function ScoutingPage() {
                   style={{
                     marginLeft: '10px',
                     cursor: 'pointer',
-                    border: '1.5px solid #3b82f6',
+                    border: '1.5px solid #dc2626',
                     borderRadius: '50%',
                     width: '22px',
                     height: '22px',
                     background: 'white',
-                    color: '#3b82f6',
+                    color: '#dc2626',
                     fontSize: '13px',
                     fontWeight: 'bold',
                     display: 'inline-flex',
@@ -612,12 +612,12 @@ function ScoutingPage() {
                     padding: 0
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = '#3b82f6';
+                    e.target.style.background = '#dc2626';
                     e.target.style.color = 'white';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.background = 'white';
-                    e.target.style.color = '#3b82f6';
+                    e.target.style.color = '#dc2626';
                   }}
                   title="Veure configuració del model V14"
                 >
@@ -1231,7 +1231,7 @@ function ScoutingPage() {
             <div style={{
               position: 'sticky',
               top: 0,
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
               color: 'white',
               padding: '20px 30px',
               borderRadius: '12px 12px 0 0',
@@ -1289,19 +1289,19 @@ function ScoutingPage() {
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
                   <div>
-                    <strong style={{ color: '#3b82f6' }}>Algoritme:</strong>
+                    <strong style={{ color: '#dc2626' }}>Algoritme:</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#3b82f6' }}>Variable Objectiu:</strong>
+                    <strong style={{ color: '#dc2626' }}>Variable Objectiu:</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#3b82f6' }}>Dades d'Entrenament:</strong>
+                    <strong style={{ color: '#dc2626' }}>Dades d'Entrenament:</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#3b82f6' }}>Temporada d'Avaluació:</strong>
+                    <strong style={{ color: '#dc2626' }}>Temporada d'Avaluació:</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
                   </div>
                 </div>
@@ -1325,7 +1325,7 @@ function ScoutingPage() {
                   }}>
                     <h4 style={{
                       margin: '0 0 10px 0',
-                      color: '#3b82f6',
+                      color: '#dc2626',
                       fontSize: '1.1rem',
                       fontWeight: 600
                     }}>
@@ -1338,12 +1338,12 @@ function ScoutingPage() {
                     }}>
                       {kpis.map((kpi, idx) => (
                         <span key={idx} style={{
-                          background: '#eff6ff',
-                          color: '#1e40af',
+                          background: '#fee2e2',
+                          color: '#991b1b',
                           padding: '5px 12px',
                           borderRadius: '4px',
                           fontSize: '0.85rem',
-                          border: '1px solid #bfdbfe'
+                          border: '1px solid #fecaca'
                         }}>
                           {kpi}
                         </span>
@@ -1371,7 +1371,7 @@ function ScoutingPage() {
                   }}>
                     <h4 style={{
                       margin: '0 0 10px 0',
-                      color: '#10b981',
+                      color: '#059669',
                       fontSize: '1.1rem',
                       fontWeight: 600
                     }}>
