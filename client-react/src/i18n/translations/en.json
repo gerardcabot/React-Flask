@@ -221,6 +221,44 @@
     "specificActionTypeChart": "Goalkeeper event types",
     "noDataAvailable": "No data available for {{metric}}.",
     "analysisError": "Could not load analysis",
-    "na": "N/A"
+    "na": "N/A",
+    "passMap": {
+      "title": "PASSES",
+      "completed": "Completed passes",
+      "incomplete": "Incomplete passes",
+      "assists": "Assists",
+      "finalThird": "Passes to final third",
+      "finalThirdIfApplicable": "Passes to final third (if applicable)",
+      "completionRate": "Pass completion rate:",
+      "finalThirdRate": "Final third completion rate:",
+      "totalAssists": "Total assists:",
+      "zoneCompletion": "Pass completion rate by zone",
+      "heatmapAlt": "Pass completion heatmap",
+      "errorLoading": "Could not load completion heatmap.",
+      "loading": "Loading pass heatmap...",
+      "errorData": "No pass data returned",
+      "errorFetch": "Error fetching pass map data"
+    },
+    "shotMap": {
+      "shotNoGoal": "Shot (No goal)",
+      "shotGoal": "Shot (Goal)",
+      "totalGoals": "Total goals:",
+      "totalXg": "Total expected goals (xG):",
+      "xgDiff": "Difference between goals and xG (Goals - xG):",
+      "xgNote": "Note: Positive values in this difference indicate better than expected performance",
+      "xgLabel": "xG:",
+      "errorNoData": "No shot data returned",
+      "errorFetch": "Error fetching shot map:"
+    },
+    "positionHeatmap": {
+      "selectPlayerSeason": "Select a player and season.",
+      "altText": "Position heatmap for {{player}} in season {{season}}",
+      "errorLoading": "Could not load heatmap. It may not exist for this selection."
+    },
+    "pressureHeatmap": {
+      "selectPlayerSeason": "Select a player and season.",
+      "altText": "Pressure heatmap for {{player}} in season {{season}}",
+      "errorLoading": "Could not load heatmap. It may not exist for this selection."
+    }
   }
 }

@@ -221,6 +221,44 @@
     "specificActionTypeChart": "Tipus d'esdeveniments del porter",
     "noDataAvailable": "No hi ha dades disponibles per a {{metric}}.",
     "analysisError": "No s'ha pogut carregar l'anàlisi",
-    "na": "N/A"
+    "na": "N/A",
+    "passMap": {
+      "title": "PASSADES",
+      "completed": "Passades completades",
+      "incomplete": "Passades incompletes",
+      "assists": "Assistències",
+      "finalThird": "Passades a l'últim terç",
+      "finalThirdIfApplicable": "Passades a l'últim terç (si és aplicable)",
+      "completionRate": "Percentatge de passades encertades:",
+      "finalThirdRate": "Percentatge de passades a l'últim terç:",
+      "totalAssists": "Assistència total:",
+      "zoneCompletion": "Percentatge de passades completades per zona",
+      "heatmapAlt": "Mapa de calor de finalització de passades",
+      "errorLoading": "No s'ha pogut carregar el mapa de calor de finalització.",
+      "loading": "Carregant el mapa de calor de passades...",
+      "errorData": "No s'han retornat dades de passades",
+      "errorFetch": "Error en obtenir les dades del mapa de passades"
+    },
+    "shotMap": {
+      "shotNoGoal": "Xut (No gol)",
+      "shotGoal": "Xut (Gol)",
+      "totalGoals": "Gols totals:",
+      "totalXg": "Gols esperats (xG) totals:",
+      "xgDiff": "Diferència entre els gols i el xG (Gols - xG):",
+      "xgNote": "Nota: Els valors positius en aquesta diferència indiquen un millor rendiment de l'esperat",
+      "xgLabel": "xG:",
+      "errorNoData": "No s'han retornat dades de xuts",
+      "errorFetch": "Error en obtenir el mapa de xuts:"
+    },
+    "positionHeatmap": {
+      "selectPlayerSeason": "Selecciona un jugador i una temporada.",
+      "altText": "Mapa de calor de posició per a {{player}} en la temporada {{season}}",
+      "errorLoading": "No s'ha pogut carregar el mapa de calor. Potser no existeix per a aquesta selecció."
+    },
+    "pressureHeatmap": {
+      "selectPlayerSeason": "Selecciona un jugador i una temporada.",
+      "altText": "Mapa de calor de pressió per a {{player}} en la temporada {{season}}",
+      "errorLoading": "No s'ha pogut carregar el mapa de calor. Potser no existeix per a aquesta selecció."
+    }
   }
 }

@@ -221,6 +221,44 @@
     "specificActionTypeChart": "Tipos de eventos del portero",
     "noDataAvailable": "No hay datos disponibles para {{metric}}.",
     "analysisError": "No se pudo cargar el análisis",
-    "na": "N/A"
+    "na": "N/A",
+    "passMap": {
+      "title": "PASES",
+      "completed": "Pases completados",
+      "incomplete": "Pases incompletos",
+      "assists": "Asistencias",
+      "finalThird": "Pases al último tercio",
+      "finalThirdIfApplicable": "Pases al último tercio (si es aplicable)",
+      "completionRate": "Porcentaje de pases acertados:",
+      "finalThirdRate": "Porcentaje de pases al último tercio:",
+      "totalAssists": "Asistencias totales:",
+      "zoneCompletion": "Porcentaje de pases completados por zona",
+      "heatmapAlt": "Mapa de calor de finalización de pases",
+      "errorLoading": "No se pudo cargar el mapa de calor de finalización.",
+      "loading": "Cargando el mapa de calor de pases...",
+      "errorData": "No se han devuelto datos de pases",
+      "errorFetch": "Error al obtener los datos del mapa de pases"
+    },
+    "shotMap": {
+      "shotNoGoal": "Tiro (Sin gol)",
+      "shotGoal": "Tiro (Gol)",
+      "totalGoals": "Goles totales:",
+      "totalXg": "Goles esperados (xG) totales:",
+      "xgDiff": "Diferencia entre los goles y el xG (Goles - xG):",
+      "xgNote": "Nota: Los valores positivos en esta diferencia indican un mejor rendimiento del esperado",
+      "xgLabel": "xG:",
+      "errorNoData": "No se han devuelto datos de tiros",
+      "errorFetch": "Error al obtener el mapa de tiros:"
+    },
+    "positionHeatmap": {
+      "selectPlayerSeason": "Selecciona un jugador y una temporada.",
+      "altText": "Mapa de calor de posición para {{player}} en la temporada {{season}}",
+      "errorLoading": "No se pudo cargar el mapa de calor. Quizás no existe para esta selección."
+    },
+    "pressureHeatmap": {
+      "selectPlayerSeason": "Selecciona un jugador y una temporada.",
+      "altText": "Mapa de calor de presión para {{player}} en la temporada {{season}}",
+      "errorLoading": "No se pudo cargar el mapa de calor. Quizás no existe para esta selección."
+    }
   }
 }
