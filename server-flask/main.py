@@ -775,6 +775,35 @@ def available_kpis_for_custom_model():
         logger.error(f"Error fetching available KPIs for custom model: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/model/default_v14_config")
+def get_default_v14_config():
+    """
+    Returns the configuration (KPIs and features) used by the default V14 model
+    """
+    try:
+        kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
+        composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
+        
+        return jsonify({
+            "model_id": "peak_potential_v2_15_16",
+            "model_name": "Model per defecte V14",
+            "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21",
+            "algorithm": "XGBoost Regressor",
+            "target_variable": "Puntuació de potencial màxim de carrera (0-200)",
+            "training_data": "Totes les dades de jugadors històrics",
+            "evaluation_season": "2015/2016",
+            "kpi_definitions_for_weight_derivation": kpi_definitions,
+            "composite_impact_kpis": composite_impact_kpis,
+            "feature_engineering": {
+                "current_season": "Mètriques de la temporada actual",
+                "historical": "Mitjanes i tendències de temporades anteriors",
+                "age_based": "Característiques basades en l'edat del jugador"
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error fetching default V14 config: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/custom_model/build", methods=['POST'])
 def handle_build_custom_model():
     data = request.get_json()

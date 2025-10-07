@@ -137,6 +137,8 @@ function ScoutingPage() {
   const [selectedCustomModelId, setSelectedCustomModelId] = useState("");
   const [mlFeatureSearchTerm, setMlFeatureSearchTerm] = useState("");
   const [kpiSearchTerm, setKpiSearchTerm] = useState("");
+  const [v14ModelConfig, setV14ModelConfig] = useState(null);
+  const [showV14Info, setShowV14Info] = useState(false);
 
   useEffect(() => {
     // axios.get("http://localhost:5000/players")
@@ -163,6 +165,15 @@ function ScoutingPage() {
       .catch(() => {
         setAvailableMlFeaturesOptions([]);
         console.error("Failed to load available ML features.");
+      });
+
+    // Load V14 model configuration
+    axios.get(`${API_URL}/api/model/default_v14_config`)
+      .then(res => {
+        setV14ModelConfig(res.data);
+      })
+      .catch(() => {
+        console.error("Failed to load V14 model configuration.");
       });
   }, []);
 
@@ -572,13 +583,47 @@ function ScoutingPage() {
           )}
           <div style={{ flex: "1 1 300px" }}>
             <label htmlFor="model-type-select" style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
               marginBottom: "8px",
               fontWeight: 600,
               color: "#1f2937",
               fontSize: "1.1rem"
             }}>
               Model per fer la predicció:
+              {modelTypeForPrediction === 'default_v14' && v14ModelConfig && (
+                <button
+                  onClick={() => setShowV14Info(true)}
+                  style={{
+                    marginLeft: '10px',
+                    cursor: 'pointer',
+                    border: '1.5px solid #3b82f6',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    background: 'white',
+                    color: '#3b82f6',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    padding: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#3b82f6';
+                    e.target.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'white';
+                    e.target.style.color = '#3b82f6';
+                  }}
+                  title="Veure configuració del model V14"
+                >
+                  i
+                </button>
+              )}
             </label>
             <select
               id="model-type-select"
@@ -1150,6 +1195,233 @@ function ScoutingPage() {
           </div>
         </div>
       </section>
+
+      {/* Modal informatiu del Model V14 */}
+      {showV14Info && v14ModelConfig && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => setShowV14Info(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '85vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              position: 'sticky',
+              top: 0,
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              padding: '20px 30px',
+              borderRadius: '12px 12px 0 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 1
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 600 }}>
+                  {v14ModelConfig.model_name}
+                </h2>
+                <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
+                  {v14ModelConfig.description}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowV14Info(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s',
+                  padding: 0
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+                title="Tancar"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '30px' }}>
+              {/* Informació general */}
+              <div style={{
+                background: '#f9fafb',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '25px',
+                border: '1px solid #e5e7eb'
+              }}>
+                <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
+                  Característiques Tècniques
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
+                  <div>
+                    <strong style={{ color: '#3b82f6' }}>Algoritme:</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
+                  </div>
+                  <div>
+                    <strong style={{ color: '#3b82f6' }}>Variable Objectiu:</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
+                  </div>
+                  <div>
+                    <strong style={{ color: '#3b82f6' }}>Dades d'Entrenament:</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
+                  </div>
+                  <div>
+                    <strong style={{ color: '#3b82f6' }}>Temporada d'Avaluació:</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* KPIs per posició */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
+                  KPIs per Derivació de Pesos (Target KPIs)
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
+                  Aquestes mètriques s'utilitzen per calcular els pesos dels KPIs mitjançant correlació amb l'impacte del jugador:
+                </p>
+                {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation).map(([position, kpis]) => (
+                  <div key={position} style={{
+                    background: '#fff',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginBottom: '15px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <h4 style={{
+                      margin: '0 0 10px 0',
+                      color: '#3b82f6',
+                      fontSize: '1.1rem',
+                      fontWeight: 600
+                    }}>
+                      {position}
+                    </h4>
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px'
+                    }}>
+                      {kpis.map((kpi, idx) => (
+                        <span key={idx} style={{
+                          background: '#eff6ff',
+                          color: '#1e40af',
+                          padding: '5px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          border: '1px solid #bfdbfe'
+                        }}>
+                          {kpi}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Composite Impact KPIs */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
+                  KPIs d'Impacte Compostos (Impact KPIs)
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
+                  Mètriques clau que defineixen l'impacte del jugador per a cada posició:
+                </p>
+                {Object.entries(v14ModelConfig.composite_impact_kpis).map(([position, kpis]) => (
+                  <div key={position} style={{
+                    background: '#fff',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginBottom: '15px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <h4 style={{
+                      margin: '0 0 10px 0',
+                      color: '#10b981',
+                      fontSize: '1.1rem',
+                      fontWeight: 600
+                    }}>
+                      {position}
+                    </h4>
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px'
+                    }}>
+                      {kpis.map((kpi, idx) => (
+                        <span key={idx} style={{
+                          background: '#d1fae5',
+                          color: '#065f46',
+                          padding: '6px 14px',
+                          borderRadius: '4px',
+                          fontSize: '0.9rem',
+                          border: '1px solid #6ee7b7',
+                          fontWeight: 500
+                        }}>
+                          {kpi}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Feature Engineering */}
+              <div style={{
+                background: '#fef3c7',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '1px solid #fde68a'
+              }}>
+                <h3 style={{ marginTop: 0, color: '#92400e', fontSize: '1.2rem', marginBottom: '15px' }}>
+                  Enginyeria de Característiques
+                </h3>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
+                  {Object.entries(v14ModelConfig.feature_engineering).map(([key, value]) => (
+                    <li key={key} style={{ marginBottom: '8px' }}>
+                      <strong>{key.replace(/_/g, ' ')}:</strong> {value}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

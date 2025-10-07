@@ -1,6 +1,32 @@
 # Estrelles del Futur
 Eina d'anàlisi i scouting de futbolistes amb models de potencial personalitzables.
 
+## 🎓 Arquitectura i Transparència del Projecte
+
+Aquest projecte implementa un sistema de Machine Learning amb les següents característiques tècniques:
+
+### 🚀 GitHub Actions per Entrenament de Models
+- Els models customitzats s'entrenen automàticament amb **GitHub Actions**
+- El procés complet és transparent i visible públicament
+- Permet monitoritzar l'entrenament en temps real
+- Evita limitacions de temps en servidors gratuïts (Render)
+
+### 📦 Cloudflare R2 per Emmagatzematge
+- Models entrenats a **Cloudflare R2** (compatible amb S3)
+- Accés ràpid i global a models i dades
+- Integració nativa amb el sistema de prediccions
+
+### 🔍 Per Què És Públic?
+Aquest repositori és públic intencionalment per demostrar:
+- ✅ **Bones pràctiques de CI/CD** per Machine Learning
+- ✅ **Arquitectura escalable** amb cloud storage
+- ✅ **Codi net i ben documentat**
+- ✅ **Transparència** en processos d'entrenament
+
+**Nota de Seguretat:** No hi ha dades sensibles exposades. Els workflows públics mostren el procés d'entrenament, que és una característica del portfolio, no un risc de seguretat.
+
+---
+
 ## Guia d'Instal·lació i Configuració (Des de Zero)
 Aquesta guia està dissenyada per configurar el projecte en un ordinador Windows nou, anticipant els problemes més comuns.
 
