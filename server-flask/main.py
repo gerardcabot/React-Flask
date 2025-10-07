@@ -1166,7 +1166,10 @@ def scouting_predict():
         })
         
         # Clean up large DataFrames to free memory
-        del df_all_seasons_base_features, minutes_df_global
+        if 'df_all_seasons_base_features' in locals():
+            del df_all_seasons_base_features
+        if 'minutes_df_global' in locals():
+            del minutes_df_global
         if 'aligned_features_df_pred' in locals():
             del aligned_features_df_pred
         gc.collect()
