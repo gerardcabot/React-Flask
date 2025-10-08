@@ -222,7 +222,7 @@
     "noDataAvailable": "No hi ha dades disponibles per a {{metric}}.",
     "analysisError": "No s'ha pogut carregar l'anàlisi",
     "na": "N/A",
-    "passMap": {
+    "passMapDetails": {
       "title": "PASSADES",
       "completed": "Passades completades",
       "incomplete": "Passades incompletes",
@@ -239,7 +239,7 @@
       "errorData": "No s'han retornat dades de passades",
       "errorFetch": "Error en obtenir les dades del mapa de passades"
     },
-    "shotMap": {
+    "shotMapDetails": {
       "shotNoGoal": "Xut (No gol)",
       "shotGoal": "Xut (Gol)",
       "totalGoals": "Gols totals:",

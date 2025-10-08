@@ -222,7 +222,7 @@
     "noDataAvailable": "No hay datos disponibles para {{metric}}.",
     "analysisError": "No se pudo cargar el análisis",
     "na": "N/A",
-    "passMap": {
+    "passMapDetails": {
       "title": "PASES",
       "completed": "Pases completados",
       "incomplete": "Pases incompletos",
@@ -239,7 +239,7 @@
       "errorData": "No se han devuelto datos de pases",
       "errorFetch": "Error al obtener los datos del mapa de pases"
     },
-    "shotMap": {
+    "shotMapDetails": {
       "shotNoGoal": "Tiro (Sin gol)",
       "shotGoal": "Tiro (Gol)",
       "totalGoals": "Goles totales:",

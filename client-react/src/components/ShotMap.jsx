@@ -105,12 +105,12 @@ export default function ShotMap({ playerId, season }) {
             overallXgDiff: parseFloat(overallXgDiff),
           });
         } else {
-          setError(t('visualization.shotMap.errorNoData'));
+          setError(t('visualization.shotMapDetails.errorNoData'));
         }
       })
       .catch(err => {
         console.error("Axios error:", err.response ? err.response.data : err.message);
-        setError(t('visualization.shotMap.errorFetch') + " " + (err.response ? err.response.data.error : err.message));
+        setError(t('visualization.shotMapDetails.errorFetch') + " " + (err.response ? err.response.data.error : err.message));
       });
   }, [playerId, season]);
 
@@ -177,9 +177,9 @@ export default function ShotMap({ playerId, season }) {
           fill="black"
         />
         <Rect x={10} y={10} width={15} height={15} fill="#b94b75" />
-        <Text x={30} y={10} text={t('visualization.shotMap.shotNoGoal')} fontSize={12} />
+        <Text x={30} y={10} text={t('visualization.shotMapDetails.shotNoGoal')} fontSize={12} />
         <Rect x={10} y={30} width={15} height={15} fill="#00ff00" />
-        <Text x={30} y={30} text={t('visualization.shotMap.shotGoal')} fontSize={12} />
+        <Text x={30} y={30} text={t('visualization.shotMapDetails.shotGoal')} fontSize={12} />
       </>
     );
   };
@@ -228,10 +228,10 @@ export default function ShotMap({ playerId, season }) {
         </Layer>
       </Stage>
       <div style={{ marginTop: "10px" }}>
-        <p>{t('visualization.shotMap.totalGoals')} {stats.totalGoals}</p>
-        <p>{t('visualization.shotMap.totalXg')} {stats.totalXg.toFixed(2)}</p>
-        <p>{t('visualization.shotMap.xgDiff')} {stats.overallXgDiff.toFixed(2)} </p>
-        <p>{t('visualization.shotMap.xgNote')}</p>
+        <p>{t('visualization.shotMapDetails.totalGoals')} {stats.totalGoals}</p>
+        <p>{t('visualization.shotMapDetails.totalXg')} {stats.totalXg.toFixed(2)}</p>
+        <p>{t('visualization.shotMapDetails.xgDiff')} {stats.overallXgDiff.toFixed(2)} </p>
+        <p>{t('visualization.shotMapDetails.xgNote')}</p>
       </div>
       {tooltip.visible && (
         <div
@@ -248,7 +248,7 @@ export default function ShotMap({ playerId, season }) {
             zIndex: 1000,
           }}
         >
-          {t('visualization.shotMap.xgLabel')} {tooltip.xg.toFixed(2)}
+          {t('visualization.shotMapDetails.xgLabel')} {tooltip.xg.toFixed(2)}
         </div>
       )}
 
