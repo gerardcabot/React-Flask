@@ -2,8 +2,9 @@ name: Keep Render API Alive
 
 on:
   schedule:
-    # Executa cada 14 minuts (Render s'atura després de 15 min d'inactivitat)
-    - cron: '*/14 * * * *'
+    # Executa cada 3 hores (Aproximadament 240 pings/mes)
+    # Aquesta freqüència és necessària per mantenir-se sota el límit de 300 peticions/mes de Render.
+    - cron: '0 */3 * * *'
   workflow_dispatch:  # Permet execució manual des de GitHub
 
 jobs:
@@ -67,8 +68,9 @@ jobs:
           
           if [ $SUCCESS -eq 1 ]; then
             echo "✅ Keep-alive ping completed successfully"
-            echo "⏰ Next ping will occur in ~14 minutes"
-            echo "📊 This keeps your Render API from spinning down"
+            # Actualització del missatge
+            echo "⏰ Next ping will occur in ~3 hours"
+            echo "📊 This keeps your Render API from spinning down periodically"
             echo "================================================"
             exit 0
           else
