@@ -523,11 +523,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Stage, Layer, Rect, Line, Text } from "react-konva";
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
 
 export default function PassMap({ playerId, season }) {
+  const { t } = useTranslation();
   const [passes, setPasses] = useState([]);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -580,29 +582,29 @@ export default function PassMap({ playerId, season }) {
             totalAssists: assists,
           });
         } else {
-          setError("No s'han retornat dades de passades");
+          setError(t('visualization.passMapDetails.errorData'));
         }
       })
       .catch(err => {
-        setError("Error en obtenir les dades del mapa de passades");
+        setError(t('visualization.passMapDetails.errorFetch'));
         console.error(err);
       });
   }, [playerId, season]);
 
   // ... (tota la resta del teu component, com handleFilterChange, drawPitch, etc. es queda igual)
   const handleFilterChange = (filterKey) => { setFilters(prev => ({...prev, [filterKey]: !prev[filterKey]})); };
-  const drawPitch = () => { /* ... el teu codi de dibuixar camp ... */ return (<><Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="white" /><Line points={[0,0,canvasWidth,0,canvasWidth,canvasHeight,0,canvasHeight,0,0]} stroke="black" strokeWidth={2} closed /><Line points={[(120-16.5)*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2-33/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[(120-5.5)*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2-11/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[120*scaleX,(80/2-7.32/2)*scaleY,120*scaleX,(80/2+7.32/2)*scaleY]} stroke="black" strokeWidth={4} /><Rect x={10} y={10} width={15} height={15} fill="green"/><Text x={30} y={10} text="Passades completades" fontSize={12}/><Rect x={10} y={30} width={15} height={15} fill="red"/><Text x={30} y={30} text="Passades incompletes" fontSize={12}/><Rect x={10} y={50} width={15} height={15} fill="blue"/><Text x={30} y={50} text="Assistències" fontSize={12}/><Rect x={10} y={70} width={15} height={15} fill="purple"/><Text x={30} y={70} text="Passades a l'últim terç (si és aplicable)" fontSize={12}/></>);};
+  const drawPitch = () => { /* ... el teu codi de dibuixar camp ... */ return (<><Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="white" /><Line points={[0,0,canvasWidth,0,canvasWidth,canvasHeight,0,canvasHeight,0,0]} stroke="black" strokeWidth={2} closed /><Line points={[(120-16.5)*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2-33/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[(120-5.5)*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2-11/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[120*scaleX,(80/2-7.32/2)*scaleY,120*scaleX,(80/2+7.32/2)*scaleY]} stroke="black" strokeWidth={4} /><Rect x={10} y={10} width={15} height={15} fill="green"/><Text x={30} y={10} text={t('visualization.passMapDetails.completed')} fontSize={12}/><Rect x={10} y={30} width={15} height={15} fill="red"/><Text x={30} y={30} text={t('visualization.passMapDetails.incomplete')} fontSize={12}/><Rect x={10} y={50} width={15} height={15} fill="blue"/><Text x={30} y={50} text={t('visualization.passMapDetails.assists')} fontSize={12}/><Rect x={10} y={70} width={15} height={15} fill="purple"/><Text x={30} y={70} text={t('visualization.passMapDetails.finalThirdIfApplicable')} fontSize={12}/></>);};
   const filteredPasses = passes.filter(pass => { const matchesCompleted = filters.completed && pass.completed; const matchesIncomplete = filters.incomplete && !pass.completed; const matchesAssist = filters.assists && pass.assist; const matchesFinalThird = !filters.finalThird || (filters.finalThird && pass.final_third); return (matchesCompleted || matchesIncomplete || matchesAssist) && matchesFinalThird; });
 
   return (
     <div>
-      <h3>PASSADES</h3>
+      <h3>{t('visualization.passMapDetails.title')}</h3>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <div style={{ marginBottom: "10px" }}>
-        <label><input type="checkbox" checked={filters.completed} onChange={() => handleFilterChange("completed")} /> Passades completades</label>
-        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.incomplete} onChange={() => handleFilterChange("incomplete")} /> Passades incompletes</label>
-        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.assists} onChange={() => handleFilterChange("assists")} /> Assistències</label>
-        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.finalThird} onChange={() => handleFilterChange("finalThird")} /> Passades a l'últim terç</label>
+        <label><input type="checkbox" checked={filters.completed} onChange={() => handleFilterChange("completed")} /> {t('visualization.passMapDetails.completed')}</label>
+        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.incomplete} onChange={() => handleFilterChange("incomplete")} /> {t('visualization.passMapDetails.incomplete')}</label>
+        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.assists} onChange={() => handleFilterChange("assists")} /> {t('visualization.passMapDetails.assists')}</label>
+        <label style={{ marginLeft: "10px" }}><input type="checkbox" checked={filters.finalThird} onChange={() => handleFilterChange("finalThird")} /> {t('visualization.passMapDetails.finalThird')}</label>
       </div>
       <Stage width={canvasWidth} height={canvasHeight}>
         <Layer>
@@ -616,25 +618,25 @@ export default function PassMap({ playerId, season }) {
         </Layer>
       </Stage>
       <div style={{ marginTop: "10px" }}>
-        <p>Percentatge de passades encertades: {stats.completionRate}%</p>
-        <p>Percentatge de passades a l'últim terç: {stats.finalThirdCompletionRate}%</p>
-        <p>Assistència total: {stats.totalAssists}</p>
+        <p>{t('visualization.passMapDetails.completionRate')} {stats.completionRate}%</p>
+        <p>{t('visualization.passMapDetails.finalThirdRate')} {stats.finalThirdCompletionRate}%</p>
+        <p>{t('visualization.passMapDetails.totalAssists')} {stats.totalAssists}</p>
       </div>
       <div style={{ marginTop: "20px" }}>
-        <h4>Percentatge de passades completades per zona</h4>
+        <h4>{t('visualization.passMapDetails.zoneCompletion')}</h4>
         {heatmapUrl ? (
           <>
             <img
               key={heatmapUrl}
               src={heatmapUrl}
-              alt="Pass Completion Heatmap"
+              alt={t('visualization.passMapDetails.heatmapAlt')}
               style={{ maxWidth: "100%", border: "1px solid #ccc", display: 'block' }}
               onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'block'; }}
             />
-            <p style={{ display: 'none', color: 'red' }}>No s'ha pogut carregar el mapa de calor de finalització.</p>
+            <p style={{ display: 'none', color: 'red' }}>{t('visualization.passMapDetails.errorLoading')}</p>
           </>
         ) : (
-          <p>Carregant el mapa de calor de passades...</p>
+          <p>{t('visualization.passMapDetails.loading')}</p>
         )}
       </div>
     </div>

@@ -3,30 +3,44 @@ import "./App.css";
 import VisualizationPage from "./VisualizationPage"; 
 import ScoutingPage from "./ScoutingPage"; 
 import React from "react";
+import { Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './components/LanguageSelector';
 
 function HeaderBrand() {
   const location = useLocation();
   const isScouting = location.pathname === "/scouting";
+  const { t } = useTranslation();
+  
   return (
-    <span
-      style={{
-        background: isScouting ? "rgba(220,38,38,0.07)" : "rgba(29,78,216,0.07)",
-        borderRadius: "12px",
-        padding: "0.25em 1.2em",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        display: "inline-block",
-        fontSize: "1.1em",
-        letterSpacing: "0.09em",
-        fontWeight: 900,
-        border: `2px solid ${isScouting ? "#dc2626" : "#1d4ed8"}`,
-        textTransform: "uppercase",
-        lineHeight: 1.1,
-        marginBottom: "0.1em",
-        color: isScouting ? "#dc2626" : "#1d4ed8"
-      }}
-    >
-      ESTRELLES DEL FUTUR
-    </span>
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '1.5rem',
+      flexWrap: 'wrap'
+    }}>
+      <span
+        style={{
+          background: isScouting ? "rgba(220,38,38,0.07)" : "rgba(29,78,216,0.07)",
+          borderRadius: "12px",
+          padding: "0.25em 1.2em",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          display: "inline-block",
+          fontSize: "1.1em",
+          letterSpacing: "0.09em",
+          fontWeight: 900,
+          border: `2px solid ${isScouting ? "#dc2626" : "#1d4ed8"}`,
+          textTransform: "uppercase",
+          lineHeight: 1.1,
+          marginBottom: "0.1em",
+          color: isScouting ? "#dc2626" : "#1d4ed8"
+        }}
+      >
+        {t('app.title')}
+      </span>
+      <LanguageSelector isScouting={isScouting} />
+    </div>
   );
 }
 
@@ -34,8 +48,36 @@ function App() {
   const location = useLocation();
   const isVisualization = location.pathname === "/visualization";
   const isScouting = location.pathname === "/scouting";
+  const { t } = useTranslation();
+  
   return (
     <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#1f2937',
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <header
         style={{
           width: "100%",
@@ -86,7 +128,7 @@ function App() {
               transition: "color 0.2s, background 0.2s"
             }}
           >
-            Anàlisi del jugador
+            {t('nav.visualization')}
           </Link>
           <Link 
             to="/scouting" 
@@ -101,7 +143,7 @@ function App() {
               transition: "color 0.2s, background 0.2s"
             }}
           >
-            Buscador de talents
+            {t('nav.scouting')}
           </Link>
         </div>
       </nav>

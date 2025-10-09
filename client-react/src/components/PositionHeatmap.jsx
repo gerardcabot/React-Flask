@@ -130,13 +130,16 @@
 // }
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Obtenim la URL pública directament des de les variables d'entorn
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
 
 export default function PositionHeatmap({ playerId, season }) {
+  const { t } = useTranslation();
+  
   if (!playerId || !season || !R2_PUBLIC_URL) {
-    return <p>Selecciona un jugador i una temporada.</p>;
+    return <p>{t('visualization.positionHeatmap.selectPlayerSeason')}</p>;
   }
 
   // Construïm la URL final de la imatge a R2 directament
@@ -147,14 +150,14 @@ export default function PositionHeatmap({ playerId, season }) {
       <img
         key={imageUrl}
         src={imageUrl}
-        alt={`Mapa de calor de posició per a ${playerId} en la temporada ${season}`}
+        alt={t('visualization.positionHeatmap.altText', { player: playerId, season: season })}
         style={{ maxWidth: "100%", border: "1px solid #ccc", minHeight: '100px', display: 'block' }}
         onError={(e) => {
           e.target.style.display = 'none';
           if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
         }}
       />
-      <p style={{ display: 'none', color: 'red' }}>No s'ha pogut carregar el mapa de calor. Potser no existeix per a aquesta selecció.</p>
+      <p style={{ display: 'none', color: 'red' }}>{t('visualization.positionHeatmap.errorLoading')}</p>
     </div>
   );
 }

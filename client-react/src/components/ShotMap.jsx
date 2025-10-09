@@ -57,11 +57,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Stage, Layer, Rect, Line, RegularPolygon, Text } from "react-konva";
+import { useTranslation } from 'react-i18next';
 
 // 1. Definir la variable de la API al principio del archivo
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function ShotMap({ playerId, season }) {
+  const { t } = useTranslation();
   const [shots, setShots] = useState([]);
   const [error, setError] = useState(null);
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, xg: 0 });
@@ -103,12 +105,12 @@ export default function ShotMap({ playerId, season }) {
             overallXgDiff: parseFloat(overallXgDiff),
           });
         } else {
-          setError("No shot data returned");
+          setError(t('visualization.shotMapDetails.errorNoData'));
         }
       })
       .catch(err => {
         console.error("Axios error:", err.response ? err.response.data : err.message);
-        setError("Error fetching shot map: " + (err.response ? err.response.data.error : err.message));
+        setError(t('visualization.shotMapDetails.errorFetch') + " " + (err.response ? err.response.data.error : err.message));
       });
   }, [playerId, season]);
 
@@ -175,9 +177,9 @@ export default function ShotMap({ playerId, season }) {
           fill="black"
         />
         <Rect x={10} y={10} width={15} height={15} fill="#b94b75" />
-        <Text x={30} y={10} text="Shot (No gol)" fontSize={12} />
+        <Text x={30} y={10} text={t('visualization.shotMapDetails.shotNoGoal')} fontSize={12} />
         <Rect x={10} y={30} width={15} height={15} fill="#00ff00" />
-        <Text x={30} y={30} text="Shot (Gol)" fontSize={12} />
+        <Text x={30} y={30} text={t('visualization.shotMapDetails.shotGoal')} fontSize={12} />
       </>
     );
   };
@@ -226,10 +228,10 @@ export default function ShotMap({ playerId, season }) {
         </Layer>
       </Stage>
       <div style={{ marginTop: "10px" }}>
-        <p>Gols totals: {stats.totalGoals}</p>
-        <p>Gols esperats (xG) totals: {stats.totalXg.toFixed(2)}</p>
-        <p>Diferència entre els gols i el xG (Gols - xG): {stats.overallXgDiff.toFixed(2)} </p>
-        <p>Nota: Els valors positius en aquesta diferència indiquen un millor rendiment de l'esperat</p>
+        <p>{t('visualization.shotMapDetails.totalGoals')} {stats.totalGoals}</p>
+        <p>{t('visualization.shotMapDetails.totalXg')} {stats.totalXg.toFixed(2)}</p>
+        <p>{t('visualization.shotMapDetails.xgDiff')} {stats.overallXgDiff.toFixed(2)} </p>
+        <p>{t('visualization.shotMapDetails.xgNote')}</p>
       </div>
       {tooltip.visible && (
         <div
@@ -246,7 +248,7 @@ export default function ShotMap({ playerId, season }) {
             zIndex: 1000,
           }}
         >
-          xG: {tooltip.xg.toFixed(2)}
+          {t('visualization.shotMapDetails.xgLabel')} {tooltip.xg.toFixed(2)}
         </div>
       )}
 
