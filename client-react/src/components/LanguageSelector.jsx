@@ -5,9 +5,9 @@ const LanguageSelector = ({ isScouting }) => {
   const { i18n } = useTranslation();
   
   const languages = [
-    { code: 'ca', name: 'CAT', flag: '🇪🇸' },
-    { code: 'es', name: 'ESP', flag: '🇪🇸' },
-    { code: 'en', name: 'ENG', flag: '🇬🇧' }
+    { code: 'ca', name: 'CAT'},
+    { code: 'es', name: 'ESP'},
+    { code: 'en', name: 'ENG'}
   ];
 
   const changeLanguage = (lng) => {
