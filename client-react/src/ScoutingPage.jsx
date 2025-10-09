@@ -1207,7 +1207,7 @@ function ScoutingPage() {
         </div>
       </section>
 
-      {/* Modal informatiu del Model V14 */}
+{/* Modal informatiu del Model V14 (CORREGIT) */}
       {showV14Info && v14ModelConfig && (
         <div
           style={{
@@ -1254,9 +1254,11 @@ function ScoutingPage() {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 600 }}>
+                  {/* Aquest valor ve traduït del backend */}
                   {v14ModelConfig.model_name}
                 </h2>
                 <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
+                  {/* Aquest valor ve traduït del backend */}
                   {v14ModelConfig.description}
                 </p>
               </div>
@@ -1279,7 +1281,7 @@ function ScoutingPage() {
                 }}
                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
                 onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                title={t('scouting.v14Modal.close')}
+                title={t('scouting.v14Config.close')} // Corregit: v14Config
               >
                 ×
               </button>
@@ -1296,23 +1298,23 @@ function ScoutingPage() {
                 border: '1px solid #e5e7eb'
               }}>
                 <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.technicalTitle')}
+                  {t('scouting.v14Config.technicalTitle')} {/* Corregit: v14Config */}
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.algorithm')}</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.algorithm')}</strong> {/* Corregit: v14Config */}
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.targetVariable')}</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.targetVariable')}</strong> {/* Corregit: v14Config */}
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.trainingData')}</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.trainingData')}</strong> {/* Corregit: v14Config */}
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Modal.evaluationSeason')}</strong>
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.evaluationSeason')}</strong> {/* Corregit: v14Config */}
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
                   </div>
                 </div>
@@ -1321,10 +1323,10 @@ function ScoutingPage() {
               {/* KPIs per posició */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.targetKpisTitle')}
+                  {t('scouting.v14Config.targetKpisTitle')} {/* Corregit: v14Config */}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.targetKpisDesc')}
+                  {t('scouting.v14Config.targetKpisDesc')} {/* Corregit: v14Config */}
                 </p>
                 {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1367,10 +1369,10 @@ function ScoutingPage() {
               {/* Composite Impact KPIs */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.impactKpisTitle')}
+                  {t('scouting.v14Config.impactKpisTitle')} {/* Corregit: v14Config */}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.impactKpisDesc')}
+                  {t('scouting.v14Config.impactKpisDesc')} {/* Corregit: v14Config */}
                 </p>
                 {Object.entries(v14ModelConfig.composite_impact_kpis).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1411,7 +1413,7 @@ function ScoutingPage() {
                 ))}
               </div>
 
-              {/* Feature Engineering */}
+              {/* Feature Engineering (CORREGIT) */}
               <div style={{
                 background: '#fef3c7',
                 padding: '20px',
@@ -1419,14 +1421,18 @@ function ScoutingPage() {
                 border: '1px solid #fde68a'
               }}>
                 <h3 style={{ marginTop: 0, color: '#92400e', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Modal.featureEngineeringTitle')}
+                  {t('scouting.v14Config.featureEngineeringTitle')} {/* Corregit: v14Config */}
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
-                  {Object.entries(v14ModelConfig.feature_engineering).map(([key, value]) => (
-                    <li key={key} style={{ marginBottom: '8px' }}>
-                      <strong>{key.replace(/_/g, ' ')}:</strong> {value}
-                    </li>
-                  ))}
+                  <li style={{ marginBottom: '8px' }}>
+                      <strong>{t('scouting.v14Config.currentSeason')}</strong> {v14ModelConfig.feature_engineering.current_season}
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                      <strong>{t('scouting.v14Config.historical')}</strong> {v14ModelConfig.feature_engineering.historical}
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                      <strong>{t('scouting.v14Config.ageBased')}</strong> {v14ModelConfig.feature_engineering.age_based}
+                  </li>
                 </ul>
               </div>
             </div>

@@ -770,78 +770,41 @@ def available_kpis_for_custom_model():
 @app.route("/api/model/default_v14_config")
 def get_default_v14_config():
     """
-    Returns the configuration (KPIs and features) used by the default V14 model,
-    translated into the user's requested language.
+    Retorna la configuració del model V14 amb els textos traduïts.
     """
     try:
-        # 1. Detecta l'idioma de la petició (ex: 'en', 'es', 'ca'). Falla a 'ca' per defecte.
+        # Detecta l'idioma i carrega les traduccions
         lang = request.headers.get('Accept-Language', 'ca').split(',')[0]
-
-        # 2. Carrega el fitxer de traducció correcte
         translations = load_translation(lang)
         
-        # Agafa la secció específica de 'v14Config' de les traduccions
+        # Accedeix a la secció de traduccions específica del model V14
         config_translations = translations.get("scouting", {}).get("v14Config", {})
 
-        # Dades que no es tradueixen (són dades tècniques)
+        # Dades tècniques que no es tradueixen
         kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
         composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
         
-        # 3. Construeix la resposta utilitzant les traduccions
+        # Construeix la resposta JSON amb la mateixa estructura que l'original
         return jsonify({
             "model_id": "peak_potential_v2_15_16",
             "model_name": config_translations.get('title'),
             "description": config_translations.get('description'),
             
-            # Característiques tècniques
-            "technical_characteristics": {
-                "algorithm": {
-                    "label": config_translations.get('algorithm'),
-                    "value": config_translations.get('algorithm_value')
-                },
-                "target_variable": {
-                    "label": config_translations.get('targetVariable'),
-                    "value": config_translations.get('targetVariable_value')
-                },
-                "training_data": {
-                    "label": config_translations.get('trainingData'),
-                    "value": config_translations.get('trainingData_value')
-                },
-                "evaluation_season": {
-                    "label": config_translations.get('evaluationSeason'),
-                    "value": config_translations.get('evaluationSeason_value')
-                }
-            },
+            # Valors traduïts
+            "algorithm": config_translations.get('algorithm_value'),
+            "target_variable": config_translations.get('targetVariable_value'),
+            "training_data": config_translations.get('trainingData_value'),
+            "evaluation_season": config_translations.get('evaluationSeason_value'),
             
-            # Títols i descripcions de KPIs
-            "kpis_for_weight_derivation": {
-                "title": config_translations.get('targetKpisTitle'),
-                "description": config_translations.get('targetKpisDesc'),
-                "data": kpi_definitions
-            },
-            "composite_impact_kpis": {
-                "title": config_translations.get('impactKpisTitle'),
-                "description": config_translations.get('impactKpisDesc'),
-                "data": composite_impact_kpis
-            },
+            # Dades de KPIs (no canvien)
+            "kpi_definitions_for_weight_derivation": kpi_definitions,
+            "composite_impact_kpis": composite_impact_kpis,
             
-            # Descripcions de Feature Engineering
+            # Valors de Feature Engineering traduïts
             "feature_engineering": {
-                "title": config_translations.get('featureEngineeringTitle'),
-                "features": {
-                    "current_season": {
-                        "label": config_translations.get('currentSeason'),
-                        "value": config_translations.get('currentSeason_desc')
-                    },
-                    "historical": {
-                        "label": config_translations.get('historical'),
-                        "value": config_translations.get('historical_desc')
-                    },
-                    "age_based": {
-                        "label": config_translations.get('ageBased'),
-                        "value": config_translations.get('ageBased_desc')
-                    }
-                }
+                "current_season": config_translations.get('currentSeason_desc'),
+                "historical": config_translations.get('historical_desc'),
+                "age_based": config_translations.get('ageBased_desc')
             }
         })
     except Exception as e:
