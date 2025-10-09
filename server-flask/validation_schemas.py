@@ -48,6 +48,7 @@ class CustomModelTrainingSchema(Schema):
     ml_features = fields.List(
         fields.Str(),
         required=False,
+        allow_none=True,  # Allow null value when using default features
         validate=validate.Length(
             max=200,
             error="ML features list cannot exceed 200 items"

@@ -319,8 +319,12 @@ function ScoutingPage() {
       impact_kpis: selectedImpactKpisForCustom,
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
-      ml_features: mlFeaturesPayload
     };
+    
+    // Only include ml_features if it's not null (to avoid validation error)
+    if (mlFeaturesPayload !== null) {
+      payload.ml_features = mlFeaturesPayload;
+    }
     
     console.log('🔍 Sending payload to backend:', payload);
     console.log('📊 Validation check:', {
