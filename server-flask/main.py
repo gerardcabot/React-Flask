@@ -125,21 +125,27 @@ def load_translation(lang_code):
     Carrega el fitxer de traducció per a un idioma específic.
     Si no el troba, retorna la traducció per defecte (català).
     """
-    # Normalitza el codi d'idioma (ex: 'en-US' -> 'en')
     lang = lang_code.split('-')[0].lower()
     
-    # Defineix el directori on es troben els fitxers de traducció
-    # Ajusta aquesta ruta si els teus fitxers estan en un altre lloc
-    translations_dir = os.path.join(os.path.dirname(__file__), 'translations') # O la teva ruta
+    # --- CANVI CLAU AQUÍ ---
+    # Assegurem que la ruta base sigui sempre absoluta al directori del fitxer main.py
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    translations_dir = os.path.join(base_dir, 'translations')
     
-    # Construeix la ruta al fitxer
     file_path = os.path.join(translations_dir, f"{lang}.json")
 
     # Si el fitxer de l'idioma demanat no existeix, utilitza 'ca' per defecte
     if not os.path.exists(file_path):
+        # Per a depuració, podem afegir un log
+        logger.warning(f"Translation file not found for lang '{lang}' at '{file_path}'. Falling back to 'ca'.")
         file_path = os.path.join(translations_dir, "ca.json")
 
-    # Obre i carrega el fitxer JSON
+    # Comprovem si el fitxer per defecte existeix abans de intentar obrir-lo
+    if not os.path.exists(file_path):
+        logger.error(f"CRITICAL: Default translation file 'ca.json' also not found at '{file_path}'.")
+        # Aquesta excepció farà que el servidor retorni un error 500 clar
+        raise FileNotFoundError("Translation files are missing from the server.")
+
     with open(file_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
