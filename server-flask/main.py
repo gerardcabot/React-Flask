@@ -878,9 +878,14 @@ def trigger_github_training():
     if not data:
         return jsonify({"error": "Missing JSON payload"}), 400
 
+    # Log received data for debugging
+    logger.info(f"🔍 Received training request: {json.dumps(data, indent=2)}")
+    logger.info(f"📊 Data types: position_group={type(data.get('position_group'))}, impact_kpis={type(data.get('impact_kpis'))}, target_kpis={type(data.get('target_kpis'))}")
+
     # Validate input data with Marshmallow
     validated_data, error_response = validate_request_data(CustomModelTrainingSchema, data)
     if error_response:
+        logger.error(f"❌ Validation failed: {error_response[0].json}")
         return error_response
     
     # Extract validated data

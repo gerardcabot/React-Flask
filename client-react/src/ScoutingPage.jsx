@@ -129,7 +129,7 @@ function ScoutingPage() {
   const [predictionError, setPredictionError] = useState("");
   const [structuredKpiOptions, setStructuredKpiOptions] = useState([]);
   const [customModelName, setCustomModelName] = useState("");
-  const [selectedPositionGroupForCustom, setSelectedPositionGroupForCustom] = useState("Attacker");
+  const [selectedPositionGroupForCustom, setSelectedPositionGroupForCustom] = useState("Atacant");
   const [selectedImpactKpisForCustom, setSelectedImpactKpisForCustom] = useState([]);
   const [selectedTargetKpisForCustom, setSelectedTargetKpisForCustom] = useState([]);
   const [useDefaultMlFeatures, setUseDefaultMlFeatures] = useState(true);
@@ -314,14 +314,24 @@ function ScoutingPage() {
     }
     
     // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
-    toast.promise(
-      axios.post(`${API_URL}/api/custom_model/trigger_github_training`, {
+    const payload = {
       position_group: backendPositionGroup,
       impact_kpis: selectedImpactKpisForCustom,
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
       ml_features: mlFeaturesPayload
-      }, { headers }),
+    };
+    
+    console.log('🔍 Sending payload to backend:', payload);
+    console.log('📊 Validation check:', {
+      position_group_valid: ['Attacker', 'Midfielder', 'Defender'].includes(backendPositionGroup),
+      impact_kpis_count: selectedImpactKpisForCustom.length,
+      target_kpis_count: selectedTargetKpisForCustom.length,
+      model_name_length: (customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`).length
+    });
+    
+    toast.promise(
+      axios.post(`${API_URL}/api/custom_model/trigger_github_training`, payload, { headers }),
       {
         loading: t('scouting.customModelBuilder.starting'),
         success: (res) => {
@@ -351,13 +361,23 @@ function ScoutingPage() {
           return `${t('scouting.customModelBuilder.successTitle')} ${additionalInfo}`;
         },
         error: (err) => {
+          console.error('❌ Error response:', err.response?.data);
+          console.error('❌ Full error:', err);
+          
           const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
+          const validationDetails = err.response?.data?.details;
           const manualUrl = err.response?.data?.manual_url;
+          
+          let fullErrorMsg = errorMsg;
+          if (validationDetails) {
+            fullErrorMsg += '\n\n' + t('scouting.customModelBuilder.validationErrors') + ':\n' + JSON.stringify(validationDetails, null, 2);
+          }
           
           setCustomModelBuildStatus({ 
             success: false, 
-            message: errorMsg,
-            manualUrl: manualUrl
+            message: fullErrorMsg,
+            manualUrl: manualUrl,
+            validationDetails: validationDetails
           });
           
           return errorMsg;
@@ -1105,6 +1125,26 @@ function ScoutingPage() {
                 color: customModelBuildStatus.success ? '#385723' : '#dc2626'
               }}>
                 <strong>{customModelBuildStatus.success ? t('scouting.customModelBuilder.successTitle') : "Error:"}</strong> {customModelBuildStatus.message}
+                {customModelBuildStatus.validationDetails && (
+                  <div style={{ 
+                    marginTop: "12px", 
+                    padding: "10px", 
+                    background: 'rgba(0,0,0,0.05)', 
+                    borderRadius: '4px',
+                    fontSize: '0.9em'
+                  }}>
+                    <strong>Validation errors:</strong>
+                    <pre style={{ 
+                      marginTop: '8px', 
+                      whiteSpace: 'pre-wrap', 
+                      wordBreak: 'break-word',
+                      fontFamily: 'monospace',
+                      fontSize: '0.85em'
+                    }}>
+                      {JSON.stringify(customModelBuildStatus.validationDetails, null, 2)}
+                    </pre>
+                  </div>
+                )}
                 {customModelBuildStatus.id && (
                   <p style={{ marginTop: "8px", marginBottom: "4px" }}>
                     {t('scouting.customModelBuilder.modelId')} <span style={{ fontFamily: "monospace" }}>{customModelBuildStatus.id}</span>
