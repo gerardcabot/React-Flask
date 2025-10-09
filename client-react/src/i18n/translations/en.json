@@ -139,21 +139,8 @@
       "defaultLogic": "Default Logic:",
       "defaultLogicDesc": "If the \"Use default...\" option is checked, the system selects features related to target definition KPIs."
     },
-    "v14Modal": {
-      "close": "Close",
-      "technicalTitle": "Technical Characteristics",
-      "algorithm": "Algorithm:",
-      "targetVariable": "Target Variable:",
-      "trainingData": "Training Data:",
-      "evaluationSeason": "Evaluation Season:",
-      "targetKpisTitle": "KPIs for Weight Derivation (Target KPIs)",
-      "targetKpisDesc": "These metrics are used to calculate KPI weights through correlation with player impact:",
-      "impactKpisTitle": "Composite Impact KPIs (Impact KPIs)",
-      "impactKpisDesc": "Key metrics that define player impact for each position:",
-      "featureEngineeringTitle": "Feature Engineering"
-    },
     "v14Config": {
-      "title": "Default V14 Model Configuration",
+      "title": "Default Model V14",
       "description": "XGBoost model trained to predict peak career potential based on U21 data.",
       "technicalTitle": "Technical Characteristics",
       "algorithm": "Algorithm:",
