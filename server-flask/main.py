@@ -122,31 +122,33 @@ def _format_value_counts(series, sort_index=False):
 
 def load_translation(lang_code):
     """
-    Carrega el fitxer de traducció per a un idioma específic.
-    Si no el troba, retorna la traducció per defecte (català).
+    Carrega el fitxer de traducció amb missatges de depuració detallats.
     """
     lang = lang_code.split('-')[0].lower()
     
-    # --- CANVI CLAU AQUÍ ---
-    # Assegurem que la ruta base sigui sempre absoluta al directori del fitxer main.py
+    # --- INICI DEL BLOC DE DEPURACIÓ ---
+    logger.info("--- Iniciant càrrega de traducció ---")
+    logger.info(f"Codi d'idioma rebut: '{lang_code}', normalitzat a: '{lang}'")
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))
     translations_dir = os.path.join(base_dir, 'translations')
-    
     file_path = os.path.join(translations_dir, f"{lang}.json")
+    
+    logger.info(f"Ruta absoluta construïda per al fitxer: '{file_path}'")
+    logger.info(f"El fitxer existeix? -> {os.path.exists(file_path)}")
+    # --- FI DEL BLOC DE DEPURACIÓ ---
 
-    # Si el fitxer de l'idioma demanat no existeix, utilitza 'ca' per defecte
     if not os.path.exists(file_path):
-        # Per a depuració, podem afegir un log
-        logger.warning(f"Translation file not found for lang '{lang}' at '{file_path}'. Falling back to 'ca'.")
+        logger.warning(f"No s'ha trobat el fitxer per a '{lang}'. Es farà servir 'ca.json' com a alternativa.")
         file_path = os.path.join(translations_dir, "ca.json")
 
-    # Comprovem si el fitxer per defecte existeix abans de intentar obrir-lo
     if not os.path.exists(file_path):
-        logger.error(f"CRITICAL: Default translation file 'ca.json' also not found at '{file_path}'.")
-        # Aquesta excepció farà que el servidor retorni un error 500 clar
-        raise FileNotFoundError("Translation files are missing from the server.")
+        logger.error(f"CRÍTIC: Tampoc s'ha trobat el fitxer per defecte 'ca.json' a '{file_path}'.")
+        raise FileNotFoundError("Els fitxers de traducció no existeixen al servidor.")
 
     with open(file_path, 'r', encoding='utf-8') as f:
+        logger.info(f"S'ha carregat correctament el fitxer: '{file_path}'")
+        logger.info("------------------------------------")
         return json.load(f)
 
 def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya no se usa, pero lo dejamos
