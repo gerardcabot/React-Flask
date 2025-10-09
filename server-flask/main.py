@@ -120,6 +120,28 @@ def _format_value_counts(series, sort_index=False):
     if sort_index: counts = counts.sort_index()
     return [{"name": str(idx), "value": int(val)} for idx, val in counts.items()]
 
+def load_translation(lang_code):
+    """
+    Carrega el fitxer de traducció per a un idioma específic.
+    Si no el troba, retorna la traducció per defecte (català).
+    """
+    # Normalitza el codi d'idioma (ex: 'en-US' -> 'en')
+    lang = lang_code.split('-')[0].lower()
+    
+    # Defineix el directori on es troben els fitxers de traducció
+    # Ajusta aquesta ruta si els teus fitxers estan en un altre lloc
+    translations_dir = os.path.join(os.path.dirname(__file__), 'translations') # O la teva ruta
+    
+    # Construeix la ruta al fitxer
+    file_path = os.path.join(translations_dir, f"{lang}.json")
+
+    # Si el fitxer de l'idioma demanat no existeix, utilitza 'ca' per defecte
+    if not os.path.exists(file_path):
+        file_path = os.path.join(translations_dir, "ca.json")
+
+    # Obre i carrega el fitxer JSON
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya no se usa, pero lo dejamos
     def try_load_one_from_r2(player_id, season):
@@ -716,29 +738,110 @@ def available_kpis_for_custom_model():
         logger.error(f"Error fetching available KPIs for custom model: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
+# @app.route("/api/model/default_v14_config")
+# def get_default_v14_config():
+#     """
+#     Returns the configuration (KPIs and features) used by the default V14 model
+#     """
+#     try:
+#         kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
+#         composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
+        
+#         return jsonify({
+#             "model_id": "peak_potential_v2_15_16",
+#             "model_name": "Model per defecte V14",
+#             "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21",
+#             "algorithm": "XGBoost Regressor",
+#             "target_variable": "Puntuació de potencial màxim de carrera (0-200)",
+#             "training_data": "Totes les dades de jugadors històrics",
+#             "evaluation_season": "2015/2016",
+#             "kpi_definitions_for_weight_derivation": kpi_definitions,
+#             "composite_impact_kpis": composite_impact_kpis,
+#             "feature_engineering": {
+#                 "current_season": "Mètriques de la temporada actual",
+#                 "historical": "Mitjanes i tendències de temporades anteriors",
+#                 "age_based": "Característiques basades en l'edat del jugador"
+#             }
+#         })
+#     except Exception as e:
+#         logger.error(f"Error fetching default V14 config: {e}", exc_info=True)
+#         return jsonify({"error": str(e)}), 500
+
 @app.route("/api/model/default_v14_config")
 def get_default_v14_config():
     """
-    Returns the configuration (KPIs and features) used by the default V14 model
+    Returns the configuration (KPIs and features) used by the default V14 model,
+    translated into the user's requested language.
     """
     try:
+        # 1. Detecta l'idioma de la petició (ex: 'en', 'es', 'ca'). Falla a 'ca' per defecte.
+        lang = request.headers.get('Accept-Language', 'ca').split(',')[0]
+
+        # 2. Carrega el fitxer de traducció correcte
+        translations = load_translation(lang)
+        
+        # Agafa la secció específica de 'v14Config' de les traduccions
+        config_translations = translations.get("scouting", {}).get("v14Config", {})
+
+        # Dades que no es tradueixen (són dades tècniques)
         kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
         composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
         
+        # 3. Construeix la resposta utilitzant les traduccions
         return jsonify({
             "model_id": "peak_potential_v2_15_16",
-            "model_name": "Model per defecte V14",
-            "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21",
-            "algorithm": "XGBoost Regressor",
-            "target_variable": "Puntuació de potencial màxim de carrera (0-200)",
-            "training_data": "Totes les dades de jugadors històrics",
-            "evaluation_season": "2015/2016",
-            "kpi_definitions_for_weight_derivation": kpi_definitions,
-            "composite_impact_kpis": composite_impact_kpis,
+            "model_name": config_translations.get('title'),
+            "description": config_translations.get('description'),
+            
+            # Característiques tècniques
+            "technical_characteristics": {
+                "algorithm": {
+                    "label": config_translations.get('algorithm'),
+                    "value": config_translations.get('algorithm_value')
+                },
+                "target_variable": {
+                    "label": config_translations.get('targetVariable'),
+                    "value": config_translations.get('targetVariable_value')
+                },
+                "training_data": {
+                    "label": config_translations.get('trainingData'),
+                    "value": config_translations.get('trainingData_value')
+                },
+                "evaluation_season": {
+                    "label": config_translations.get('evaluationSeason'),
+                    "value": config_translations.get('evaluationSeason_value')
+                }
+            },
+            
+            # Títols i descripcions de KPIs
+            "kpis_for_weight_derivation": {
+                "title": config_translations.get('targetKpisTitle'),
+                "description": config_translations.get('targetKpisDesc'),
+                "data": kpi_definitions
+            },
+            "composite_impact_kpis": {
+                "title": config_translations.get('impactKpisTitle'),
+                "description": config_translations.get('impactKpisDesc'),
+                "data": composite_impact_kpis
+            },
+            
+            # Descripcions de Feature Engineering
             "feature_engineering": {
-                "current_season": "Mètriques de la temporada actual",
-                "historical": "Mitjanes i tendències de temporades anteriors",
-                "age_based": "Característiques basades en l'edat del jugador"
+                "title": config_translations.get('featureEngineeringTitle'),
+                "features": {
+                    "current_season": {
+                        "label": config_translations.get('currentSeason'),
+                        "value": config_translations.get('currentSeason_desc')
+                    },
+                    "historical": {
+                        "label": config_translations.get('historical'),
+                        "value": config_translations.get('historical_desc')
+                    },
+                    "age_based": {
+                        "label": config_translations.get('ageBased'),
+                        "value": config_translations.get('ageBased_desc')
+                    }
+                }
             }
         })
     except Exception as e:
