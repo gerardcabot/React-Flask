@@ -44,9 +44,9 @@
     },
     "context": {
       "title": "Context sobre els resultats",
-      "attackers": "Per context, dins de la secció d'atacants el que ha rebut més potencial és Lionel Andrés Messi amb un potencial de 110.60.",
-      "midfielders": "Migcampistes: Jorge Resurrección Merodio (2013/14)",
-      "defenders": "Defensors: Gerard Piqué Bernabéu (2008/09)"
+      "attackers": "Per context, dins de la secció d'atacants el que ha rebut més potencial és Lionel Andrés Messi (2005/2006) amb un potencial de 110.60.",
+      "midfielders": "Dins de la secció de migcampistes, el jugador que ha rebut més potencial és Jorge Resurrección Merodio (2013/14), amb 125.90",
+      "defenders": "Dins de la secció de defensors, el jugador que ha rebut més potencial és Gerard Piqué Bernabéu (2008/09), amb 114.46"
     },
     "playerDob": "Data de naixement del jugador",
     "age": "Edat",
