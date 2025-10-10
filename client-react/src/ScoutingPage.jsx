@@ -554,10 +554,8 @@ function ScoutingPage() {
                 fontWeight: 600
             }}>{t('scouting.context.title')}</h3>
             <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.attackers')}</p>
-            <ul style={{ paddingLeft: '20px', margin: '10px 0 0', color: '#4b5563' }}>
-                <li style={{ marginBottom: '5px' }}>{t('scouting.context.midfielders')}</li>
-                <li>{t('scouting.context.defenders')}</li>
-            </ul>
+            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.midfielders')}</p>
+            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.defenders')}</p>
         </div>
         <div style={{
           display: "flex",
