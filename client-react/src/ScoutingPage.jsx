@@ -371,7 +371,6 @@ function ScoutingPage() {
           const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
           const validationDetails = err.response?.data?.details;
           const manualUrl = err.response?.data?.manual_url;
-<<<<<<< HEAD
           
           let fullErrorMsg = errorMsg;
           if (validationDetails) {
@@ -383,13 +382,6 @@ function ScoutingPage() {
             message: fullErrorMsg,
             manualUrl: manualUrl,
             validationDetails: validationDetails
-=======
-
-          setCustomModelBuildStatus({
-            success: false,
-            message: errorMsg,
-            manualUrl: manualUrl
->>>>>>> 7524e63 (Context added)
           });
 
           return errorMsg;
