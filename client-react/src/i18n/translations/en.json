@@ -42,6 +42,12 @@
       "predictionFailed": "Could not obtain prediction.",
       "playersLoadFailed": "Could not load players list."
     },
+    "context": {
+        "title": "Context about the results",
+        "attackers": "For context, within the attackers section, the player who has received the most potential is Lionel Andrés Messi with a potential of 110.60.",
+        "midfielders": "Midfielders: Jorge Resurrección Merodio (2013/14)",
+        "defenders": "Defenders: Gerard Piqué Bernabéu (2008/09)"
+    },
     "playerDob": "Player's date of birth",
     "age": "Age",
     "modelConfigButton": "View V14 model configuration",
