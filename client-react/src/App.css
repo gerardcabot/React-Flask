@@ -614,3 +614,82 @@ button[disabled] {
   gap: 0.5rem;
   cursor: pointer;
 }
+
+/* ============================================
+    ESTILS AFEGITS PER A CORRECCIONS
+   ============================================ */
+
+/* --- 1. Estils per a Botons d'Informació i Tooltips --- */
+
+/* Contenidor del tooltip per posicionar-lo correctament */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle; /* Alinea la icona amb el text */
+}
+
+/* Estandarització de la icona d'informació */
+.info-icon {
+  font-size: 1.1rem;      /* Mida de la font de la icona */
+  color: #007bff;        /* Color blau consistent */
+  cursor: pointer;
+  margin-left: 8px;
+  width: 22px;            /* Amplada fixa */
+  height: 22px;           /* Alçada fixa */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estil base del text emergent (tooltip) */
+.tooltip-text {
+  visibility: hidden;
+  width: 250px;
+  background-color: #333; /* Fons fosc */
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 10;            /* Assegura que es mostri per sobre d'altres elements */
+  bottom: 125%;           /* El posiciona a sobre de la icona */
+  left: 50%;
+  margin-left: -125px;    /* Centra el tooltip horitzontalment */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.85rem;     /* Mida de lletra llegible */
+  font-weight: 400;       /* Pes de la font normal */
+}
+
+/* Mostra el tooltip quan es passa el ratolí per sobre del contenidor */
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Estil específic pel tooltip de la pàgina de Scouting (més ample) */
+.scouting-tooltip {
+  width: 320px;
+  margin-left: -160px; /* La meitat de la nova amplada per centrar-lo */
+}
+
+
+/* --- 2. Estils per a la secció de Visualització --- */
+
+/* Contenidor per les opcions de tipus de passada */
+.pass-options {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* Permet que els elements es moguin a la línia de sota si no hi caben */
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.pass-options label {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
