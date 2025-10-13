@@ -1,4 +1,3 @@
-// ScoutingPage.jsx
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -54,29 +53,39 @@ function calculatePlayerAge(dob, season) {
   return referenceDateForAge.diff(dobDate, "year");
 }
 
+// ==================================================================
+// ==================== CANVIS APLICATS AQUÍ =======================
+// ==================================================================
+
+// 1. Estil unificat per a totes les icones d'informació
+const infoIconStyle = {
+  marginLeft: '8px',
+  cursor: 'pointer',
+  position: 'relative',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1.5px solid #dc2626',
+  borderRadius: '50%',
+  width: '22px',
+  height: '22px',
+  textAlign: 'center',
+  fontSize: '13px',
+  color: '#dc2626',
+  fontWeight: 'bold',
+  userSelect: 'none',
+  background: 'white',
+  transition: 'background-color 0.2s, color 0.2s'
+};
+
+
 const InfoTooltip = ({ text }) => {
   const [show, setShow] = useState(false);
   return (
     <span
       className="scouting-tooltip"
-      style={{
-        marginLeft: '8px',
-        cursor: 'help',
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '1px solid #dc2626',
-        borderRadius: '50%',
-        width: '18px',
-        height: '18px',
-        textAlign: 'center',
-        fontSize: '11px',
-        color: '#dc2626',
-        fontWeight: 'bold',
-        userSelect: 'none',
-        transition: 'background-color 0.2s, color 0.2s'
-      }}
+      // S'aplica l'estil unificat
+      style={infoIconStyle}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
       onFocus={() => setShow(true)}
@@ -91,18 +100,19 @@ const InfoTooltip = ({ text }) => {
         <div
           id="tooltip-content"
           style={{
+            // 2. Canvi de posicionament per evitar que es talli
             position: 'absolute',
-            bottom: '125%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginBottom: '7px',
+            top: '50%', // Centrat verticalment respecte a la icona
+            left: '125%', // Posicionat a la dreta de la icona
+            transform: 'translateY(-50%)', // Ajust fi per centrar perfectament
+            marginLeft: '10px', // Espai entre la icona i el text
             background: 'rgba(220,38,38,0.95)',
             color: 'white',
             padding: '12px',
             borderRadius: '6px',
             zIndex: 1000,
             maxWidth: '300px',
-            minWidth: '200px',
+            minWidth: '250px',
             fontSize: '0.9em',
             textAlign: 'left',
             boxShadow: '0 4px 10px rgba(0,0,0,0.35)',
@@ -118,6 +128,9 @@ const InfoTooltip = ({ text }) => {
     </span>
   );
 };
+// ==================================================================
+// ==================== FI DELS CANVIS =============================
+// ==================================================================
 
 function ScoutingPage() {
   const { t } = useTranslation();
@@ -150,8 +163,8 @@ function ScoutingPage() {
     // axios.get("http://localhost:5000/players")
     axios.get(`${API_URL}/players`)
       .then(res => setAllPlayers(res.data || []))
-      .catch((err) => { 
-        setAllPlayers([]); 
+      .catch((err) => {
+        setAllPlayers([]);
         if (err.code === 'ERR_NETWORK' || err.response?.status >= 500) {
           setPredictionError(`⚠️ Server is starting up (cold start). Please wait 30-60 seconds and refresh the page. Error: ${err.message}`);
         } else {
@@ -256,28 +269,28 @@ function ScoutingPage() {
     setPredictionError("");
 
     toast.promise(
-    axios.get(`${API_URL}/scouting_predict`, {
-      params: {
-        player_id: selectedPlayer.player_id,
-        season: selectedSeason,
-        model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
-      }
+      axios.get(`${API_URL}/scouting_predict`, {
+        params: {
+          player_id: selectedPlayer.player_id,
+          season: selectedSeason,
+          model_id: modelTypeForPrediction === 'custom' ? selectedCustomModelId : 'default_v14'
+        }
       }),
       {
         loading: t('scouting.predicting'),
         success: (res) => {
-        setPredictionResult(res.data);
+          setPredictionResult(res.data);
           return `${t('scouting.result.score')}: ${res.data.predicted_potential_score}/200`;
         },
         error: (err) => {
           const errorMsg = err.response?.data?.error || t('scouting.errors.predictionFailed');
-        setPredictionError(errorMsg);
+          setPredictionError(errorMsg);
           return errorMsg;
         },
       }
     ).finally(() => {
-        setIsLoadingPrediction(false);
-      });
+      setIsLoadingPrediction(false);
+    });
   };
 
   const handleKpiToggle = (kpi_id, type) => {
@@ -298,8 +311,8 @@ function ScoutingPage() {
   const handleBuildCustomModelSubmit = (event) => {
     event.preventDefault();
     if (!selectedPositionGroupForCustom ||
-        !selectedImpactKpisForCustom.length ||
-        !selectedTargetKpisForCustom.length) {
+      !selectedImpactKpisForCustom.length ||
+      !selectedTargetKpisForCustom.length) {
       toast.error(t('scouting.customModelBuilder.errorValidation'));
       return;
     }
@@ -328,12 +341,12 @@ function ScoutingPage() {
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
     };
-   
+
     // Only include ml_features if it's not null (to avoid validation error)
     if (mlFeaturesPayload !== null) {
       payload.ml_features = mlFeaturesPayload;
     }
-   
+
     console.log('🔍 Sending payload to backend:', payload);
     console.log('📊 Validation check:', {
       position_group_valid: ['Attacker', 'Midfielder', 'Defender'].includes(backendPositionGroup),
@@ -341,7 +354,7 @@ function ScoutingPage() {
       target_kpis_count: selectedTargetKpisForCustom.length,
       model_name_length: (customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`).length
     });
-   
+
     toast.promise(
       axios.post(`${API_URL}/api/custom_model/trigger_github_training`, payload, { headers }),
       {
@@ -375,39 +388,39 @@ function ScoutingPage() {
         error: (err) => {
           console.error('❌ Error response:', err.response?.data);
           console.error('❌ Full error:', err);
-         
+
           // Check if it's a server down / cold start error
           if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
             const coldStartMsg = '⚠️ Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
-            setCustomModelBuildStatus({ 
-              success: false, 
+            setCustomModelBuildStatus({
+              success: false,
               message: coldStartMsg,
               isColdStart: true
             });
             return coldStartMsg;
           }
-         
+
           if (err.response?.status >= 500) {
             const serverErrorMsg = `⚠️ Server error (${err.response.status}). The backend might be restarting. Please wait 30-60 seconds and try again.`;
-            setCustomModelBuildStatus({ 
-              success: false, 
+            setCustomModelBuildStatus({
+              success: false,
               message: serverErrorMsg,
               isColdStart: true
             });
             return serverErrorMsg;
           }
-         
+
           const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
           const validationDetails = err.response?.data?.details;
           const manualUrl = err.response?.data?.manual_url;
-         
+
           let fullErrorMsg = errorMsg;
           if (validationDetails) {
             fullErrorMsg += '\n\n' + t('scouting.customModelBuilder.validationErrors') + ':\n' + JSON.stringify(validationDetails, null, 2);
           }
-         
-          setCustomModelBuildStatus({ 
-            success: false, 
+
+          setCustomModelBuildStatus({
+            success: false,
             message: fullErrorMsg,
             manualUrl: manualUrl,
             validationDetails: validationDetails
@@ -417,8 +430,8 @@ function ScoutingPage() {
         },
       }
     ).finally(() => {
-        setIsBuildingCustomModel(false);
-      });
+      setIsBuildingCustomModel(false);
+    });
   };
 
   const formatMlFeatureName = (featureName) => {
@@ -447,9 +460,9 @@ function ScoutingPage() {
     const searchTermLower = mlFeatureSearchTerm.toLowerCase();
     const filtered = mlFeatureSearchTerm
       ? availableMlFeaturesOptions.filter(f =>
-          f.toLowerCase().includes(searchTermLower) ||
-          formatMlFeatureName(f).toLowerCase().includes(searchTermLower)
-        )
+        f.toLowerCase().includes(searchTermLower) ||
+        formatMlFeatureName(f).toLowerCase().includes(searchTermLower)
+      )
       : availableMlFeaturesOptions;
 
     return Object.entries(
@@ -570,21 +583,21 @@ function ScoutingPage() {
         borderRadius: "12px",
       }}>
         <div style={{
-            background: '#fef2f2', // light red background
-            border: '1px solid #fecaca', // red border
-            borderRadius: '8px',
-            padding: '15px 20px',
-            marginBottom: '2rem'
+          background: '#fef2f2', // light red background
+          border: '1px solid #fecaca', // red border
+          borderRadius: '8px',
+          padding: '15px 20px',
+          marginBottom: '2rem'
         }}>
-            <h3 style={{
-                marginTop: 0,
-                color: '#b91c1c', // dark red
-                fontSize: '1.2rem',
-                fontWeight: 600
-            }}>{t('scouting.context.title')}</h3>
-            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.attackers')}</p>
-            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.midfielders')}</p>
-            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.defenders')}</p>
+          <h3 style={{
+            marginTop: 0,
+            color: '#b91c1c', // dark red
+            fontSize: '1.2rem',
+            fontWeight: 600
+          }}>{t('scouting.context.title')}</h3>
+          <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.attackers')}</p>
+          <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.midfielders')}</p>
+          <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.defenders')}</p>
         </div>
         <div style={{
           display: "flex",
@@ -679,21 +692,8 @@ function ScoutingPage() {
                 <button
                   onClick={() => setShowV14Info(true)}
                   style={{
-                    marginLeft: '10px',
-                    cursor: 'pointer',
-                    border: '1.5px solid #dc2626',
-                    borderRadius: '50%',
-                    width: '22px',
-                    height: '22px',
-                    background: 'white',
-                    color: '#dc2626',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s',
-                    padding: 0
+                    ...infoIconStyle, // 3. S'aplica l'estil unificat al botó V14
+                    padding: 0,
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#dc2626';
@@ -799,7 +799,7 @@ function ScoutingPage() {
         </button>
         {isLoadingPrediction && (
           <p style={{ textAlign: 'center', marginTop: '15px', color: '#dc2626' }}>
-              {t('scouting.loadingModel')}
+            {t('scouting.loadingModel')}
           </p>
         )}
         {predictionError && (
@@ -938,7 +938,7 @@ function ScoutingPage() {
                       <option key={group} value={group}>
                         {group === "Atacant" ? t('scouting.customModelBuilder.attacker') :
                           group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') :
-                          t('scouting.customModelBuilder.defender')}
+                            t('scouting.customModelBuilder.defender')}
                       </option>
                     ))}
                   </select>
@@ -1209,17 +1209,17 @@ function ScoutingPage() {
                   </div>
                 )}
                 {customModelBuildStatus.validationDetails && (
-                  <div style={{ 
-                    marginTop: "12px", 
-                    padding: "10px", 
-                    background: 'rgba(0,0,0,0.05)', 
+                  <div style={{
+                    marginTop: "12px",
+                    padding: "10px",
+                    background: 'rgba(0,0,0,0.05)',
                     borderRadius: '4px',
                     fontSize: '0.9em'
                   }}>
                     <strong>Validation errors:</strong>
-                    <pre style={{ 
-                      marginTop: '8px', 
-                      whiteSpace: 'pre-wrap', 
+                    <pre style={{
+                      marginTop: '8px',
+                      whiteSpace: 'pre-wrap',
                       wordBreak: 'break-word',
                       fontFamily: 'monospace',
                       fontSize: '0.85em'
@@ -1330,7 +1330,7 @@ function ScoutingPage() {
         </div>
       </section>
 
-{/* Modal informatiu del Model V14 (CORREGIT) */}
+      {/* Modal informatiu del Model V14 (CORREGIT) */}
       {showV14Info && v14ModelConfig && (
         <div
           style={{
@@ -1548,13 +1548,13 @@ function ScoutingPage() {
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
                   <li style={{ marginBottom: '8px' }}>
-                      <strong>{t('scouting.v14Config.currentSeason')}</strong> {v14ModelConfig.feature_engineering.current_season}
+                    <strong>{t('scouting.v14Config.currentSeason')}</strong> {v14ModelConfig.feature_engineering.current_season}
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                      <strong>{t('scouting.v14Config.historical')}</strong> {v14ModelConfig.feature_engineering.historical}
+                    <strong>{t('scouting.v14Config.historical')}</strong> {v14ModelConfig.feature_engineering.historical}
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                      <strong>{t('scouting.v14Config.ageBased')}</strong> {v14ModelConfig.feature_engineering.age_based}
+                    <strong>{t('scouting.v14Config.ageBased')}</strong> {v14ModelConfig.feature_engineering.age_based}
                   </li>
                 </ul>
               </div>
