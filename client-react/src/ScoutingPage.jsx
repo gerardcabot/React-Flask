@@ -65,13 +65,13 @@ const InfoTooltip = ({ text }) => {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid #dc2626', 
+        border: '1px solid #dc2626',
         borderRadius: '50%',
         width: '18px',
         height: '18px',
         textAlign: 'center',
         fontSize: '11px',
-        color: '#dc2626', 
+        color: '#dc2626',
         fontWeight: 'bold',
         userSelect: 'none',
         transition: 'background-color 0.2s, color 0.2s'
@@ -91,24 +91,24 @@ const InfoTooltip = ({ text }) => {
           id="tooltip-content"
           style={{
             position: 'absolute',
-            bottom: '125%', 
+            bottom: '125%',
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '7px',
-            background: 'rgba(220,38,38,0.95)', 
+            background: 'rgba(220,38,38,0.95)',
             color: 'white',
             padding: '12px',
             borderRadius: '6px',
             zIndex: 1000,
-            maxWidth: '300px', 
-            minWidth: '200px', 
+            maxWidth: '300px',
+            minWidth: '200px',
             fontSize: '0.9em',
             textAlign: 'left',
             boxShadow: '0 4px 10px rgba(0,0,0,0.35)',
             pointerEvents: 'none',
-            whiteSpace: 'normal', 
-            overflowWrap: 'break-word', 
-            lineHeight: '1.4' 
+            whiteSpace: 'normal',
+            overflowWrap: 'break-word',
+            lineHeight: '1.4'
           }}
         >
           {text}
@@ -120,7 +120,7 @@ const InfoTooltip = ({ text }) => {
 
 function ScoutingPage() {
   const { t } = useTranslation();
-  
+
   const [allPlayers, setAllPlayers] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("");
@@ -187,7 +187,7 @@ function ScoutingPage() {
       .catch(() => {
         console.error("Failed to load V14 model configuration.");
       });
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (modelTypeForPrediction === 'custom') {
@@ -253,7 +253,7 @@ function ScoutingPage() {
     setIsLoadingPrediction(true);
     setPredictionResult(null);
     setPredictionError("");
-    
+
     toast.promise(
     axios.get(`${API_URL}/scouting_predict`, {
       params: {
@@ -313,13 +313,13 @@ function ScoutingPage() {
     setIsBuildingCustomModel(true);
     setCustomModelBuildStatus(null);
     const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
-    
+
     // Prepare headers (add admin secret if available for workflow URL access)
     const headers = {};
     if (ADMIN_SECRET) {
       headers['X-Admin-Secret'] = ADMIN_SECRET;
     }
-    
+
     // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
     const payload = {
       position_group: backendPositionGroup,
@@ -349,10 +349,10 @@ function ScoutingPage() {
           const workflowUrl = res.data.workflow_url;
           const estimatedTime = res.data.estimated_time;
           const modelId = res.data.custom_model_id;
-          
+
           // Save model ID to localStorage as "my model"
           addMyModel(modelId);
-          
+
           // Prepare additional info for display
           let additionalInfo = `${t('scouting.customModelBuilder.estimatedTimeMessage', { time: estimatedTime })}`;
           if (workflowUrl) {
@@ -360,15 +360,15 @@ function ScoutingPage() {
           } else {
             additionalInfo += ` ${t('scouting.customModelBuilder.willAppear')}`;
           }
-          
-          setCustomModelBuildStatus({ 
-            success: true, 
+
+          setCustomModelBuildStatus({
+            success: true,
             message: res.data.message,
             id: modelId,
             workflowUrl: workflowUrl,
             additionalInfo: additionalInfo
           });
-          
+
           return `${t('scouting.customModelBuilder.successTitle')} ${additionalInfo}`;
         },
         error: (err) => {
@@ -411,7 +411,7 @@ function ScoutingPage() {
             manualUrl: manualUrl,
             validationDetails: validationDetails
           });
-          
+
           return errorMsg;
         },
       }
@@ -479,7 +479,7 @@ function ScoutingPage() {
       const order = ['Current Season: Metrics', 'Current Season: Interactions & Polynomials', 'Historical Performance: Aggregates', 'Historical Performance: Trends', 'Season-over-Season: Growth & Ratios', 'Historical Context', 'Other Contextual'];
       return order.indexOf(groupA) - order.indexOf(groupB);
     });
-  }, [availableMlFeaturesOptions, mlFeatureSearchTerm]);
+  }, [availableMlFeaturesOptions, mlFeatureSearchTerm, t]);
 
   const filteredStructuredKpiOptions = useMemo(() => {
     if (!kpiSearchTerm) return structuredKpiOptions;
@@ -536,8 +536,8 @@ function ScoutingPage() {
   };
   const kpiOptionLabelSelectedStyle = {
     ...kpiOptionLabelStyle,
-    background: "#fee2e2", 
-    border: '1px solid #dc2626' 
+    background: "#fee2e2",
+    border: '1px solid #dc2626'
   };
 
   const mapPositionGroupToBackend = (uiValue) => {
@@ -568,6 +568,23 @@ function ScoutingPage() {
         padding: "2rem 2.5rem",
         borderRadius: "12px",
       }}>
+        <div style={{
+            background: '#fef2f2', // light red background
+            border: '1px solid #fecaca', // red border
+            borderRadius: '8px',
+            padding: '15px 20px',
+            marginBottom: '2rem'
+        }}>
+            <h3 style={{
+                marginTop: 0,
+                color: '#b91c1c', // dark red
+                fontSize: '1.2rem',
+                fontWeight: 600
+            }}>{t('scouting.context.title')}</h3>
+            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.attackers')}</p>
+            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.midfielders')}</p>
+            <p style={{ margin: '8px 0', color: '#374151' }}>{t('scouting.context.defenders')}</p>
+        </div>
         <div style={{
           display: "flex",
           flexWrap: "wrap",
@@ -768,12 +785,12 @@ function ScoutingPage() {
           }}
           onMouseOver={e => {
             if (!(!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId))) {
-              e.currentTarget.style.backgroundColor = '#b91c1c'; 
+              e.currentTarget.style.backgroundColor = '#b91c1c';
             }
           }}
           onMouseOut={e => {
             if (!(!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId))) {
-              e.currentTarget.style.backgroundColor = '#dc2626'; 
+              e.currentTarget.style.backgroundColor = '#dc2626';
             }
           }}
         >
@@ -800,15 +817,15 @@ function ScoutingPage() {
         {predictionResult && !predictionError && (
           <div style={{
             marginTop: "28px",
-            background: "#fee2e2", 
+            background: "#fee2e2",
             padding: "18px",
             borderRadius: "12px",
-            border: "1px solid #fca5a5", 
+            border: "1px solid #fca5a5",
           }}>
             <h3 style={{
               marginTop: 0,
               marginBottom: '10px',
-              color: '#b91c1c', 
+              color: '#b91c1c',
               fontWeight: 700,
               fontSize: "1.18rem"
             }}>
@@ -822,7 +839,7 @@ function ScoutingPage() {
             <p style={{
               fontSize: '1.2em',
               fontWeight: 'bold',
-              color: '#b91c1c', 
+              color: '#b91c1c',
               margin: "18px 0 0 0"
             }}>
               {t('scouting.result.potentialScore')}: <span style={{ fontSize: '1.3em' }}>{predictionResult.predicted_potential_score} / 200</span>
@@ -843,7 +860,7 @@ function ScoutingPage() {
           fontSize: "1.6rem",
           marginBottom: "25px",
           color: "#1f2937",
-          borderBottom: "2px solid #dc2626", 
+          borderBottom: "2px solid #dc2626",
           paddingBottom: "10px"
         }}>
           {t('scouting.customModel.title')}
@@ -918,8 +935,8 @@ function ScoutingPage() {
                   >
                     {["Atacant", "Migcampista", "Defensor"].map(group => (
                       <option key={group} value={group}>
-                        {group === "Atacant" ? t('scouting.customModelBuilder.attacker') : 
-                         group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') : 
+                        {group === "Atacant" ? t('scouting.customModelBuilder.attacker') :
+                         group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') :
                          t('scouting.customModelBuilder.defender')}
                       </option>
                     ))}
@@ -1222,12 +1239,12 @@ function ScoutingPage() {
                 )}
                 {customModelBuildStatus.workflowUrl && (
                   <p style={{ marginTop: "8px" }}>
-                    <a 
-                      href={customModelBuildStatus.workflowUrl} 
-                      target="_blank" 
+                    <a
+                      href={customModelBuildStatus.workflowUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#385723', 
+                      style={{
+                        color: '#385723',
                         textDecoration: 'underline',
                         fontWeight: 'bold'
                       }}
@@ -1238,12 +1255,12 @@ function ScoutingPage() {
                 )}
                 {customModelBuildStatus.manualUrl && (
                   <p style={{ marginTop: "8px" }}>
-                    <a 
-                      href={customModelBuildStatus.manualUrl} 
-                      target="_blank" 
+                    <a
+                      href={customModelBuildStatus.manualUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#dc2626', 
+                      style={{
+                        color: '#dc2626',
                         textDecoration: 'underline'
                       }}
                     >
