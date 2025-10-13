@@ -1,290 +1,75 @@
-/* ============================================
-   RESPONSIVE IMPROVEMENTS FOR MOBILE DEVICES
-   ============================================ */
-
-/* Mobile-first responsive utilities */
 @media (max-width: 768px) {
-  /* Header adjustments */
-  header {
-    padding: 1.5rem 0 0.8rem 0 !important;
-    font-size: 2rem !important;
+  /* --- CHANGE: Adjusted root padding for mobile --- */
+  #root {
+    padding: 1rem;
   }
 
-  /* Navigation adjustments */
-  nav {
-    padding: 0.8rem 1rem !important;
+  .app-header {
+    flex-direction: column;
+    padding: 1rem;
   }
 
-  nav > div {
-    gap: 15px !important;
-    flex-wrap: wrap !important;
+  .app-header nav {
+    margin-top: 10px;
   }
 
-  nav a {
-    font-size: 0.95rem !important;
-    padding: 6px 10px !important;
+  .filters {
+    flex-direction: column;
   }
 
-  /* Form elements - make them full width on mobile */
-  select,
-  input[type="text"],
-  input[type="number"],
-  textarea {
-    width: 100% !important;
-    max-width: 100% !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
+  .filters select,
+  .filters button {
+    width: 100%;
+    margin: 5px 0;
   }
 
-  /* Buttons - full width on mobile */
-  button {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 12px !important;
-    font-size: 1rem !important;
+  .heatmaps-container {
+    flex-direction: column;
+    align-items: center;
   }
 
-  /* Cards and containers */
-  .card,
-  .container,
-  .section {
-    padding: 1rem !important;
-    margin: 0.5rem !important;
+  .heatmap {
+    width: 100%;
   }
 
-  /* Tables - make them scrollable */
-  table {
-    display: block;
+  .form-group-row {
+    flex-direction: column;
+  }
+
+  .form-group-row .form-group {
+    width: 100%;
+  }
+
+  /* --- CHANGE: Added to fix Scouting Page centering --- */
+  .scouting-container {
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* --- CHANGE: Added to make maps scrollable on mobile --- */
+  .map-container {
+    width: 100%;
     overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+    border: 1px solid #eee;
+    padding-bottom: 10px; /* To prevent scrollbar from hiding content */
   }
 
-  /* Modals - take full screen on mobile */
-  .modal-content,
-  div[style*="maxWidth"][style*="900px"] {
-    max-width: 95vw !important;
-    max-height: 90vh !important;
-    margin: 1rem !important;
-    overflow-y: auto !important;
+  /* --- CHANGE: Added to stack pass options vertically --- */
+  .pass-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align to the left */
+    gap: 10px;
+  }
+  
+  .pass-options label {
+    margin: 0;
   }
 
-  /* Grid layouts - stack on mobile */
-  .grid,
-  div[style*="display: grid"],
-  div[style*="display:grid"] {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
-  }
-
-  /* Flex containers - wrap on mobile */
-  .flex,
-  div[style*="display: flex"],
-  div[style*="display:flex"] {
-    flex-wrap: wrap !important;
-    gap: 0.5rem !important;
-  }
-
-  /* Language selector - smaller on mobile */
-  .language-selector {
-    transform: scale(0.9);
-  }
-
-  /* Images and visualizations - responsive */
-  img,
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Font sizes - smaller on mobile */
-  h1 { font-size: 1.8rem !important; }
-  h2 { font-size: 1.5rem !important; }
-  h3 { font-size: 1.3rem !important; }
-  h4 { font-size: 1.1rem !important; }
-  p, span, div { font-size: 0.95rem !important; }
-}
-
-/* Tablet adjustments (768px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-  header {
-    font-size: 2.3rem !important;
-  }
-
-  nav > div {
-    gap: 20px !important;
-  }
-
-  select,
-  input {
-    font-size: 1rem !important;
-  }
-}
-
-/* ============================================
-   SKELETON LOADING STATES
-   ============================================ */
-
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-  border-radius: 4px;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Skeleton variants */
-.skeleton-text {
-  height: 1rem;
-  margin-bottom: 0.5rem;
-  width: 100%;
-}
-
-.skeleton-text-short {
-  height: 1rem;
-  margin-bottom: 0.5rem;
-  width: 60%;
-}
-
-.skeleton-title {
-  height: 1.5rem;
-  margin-bottom: 0.75rem;
-  width: 80%;
-}
-
-.skeleton-button {
-  height: 2.5rem;
-  margin-bottom: 0.5rem;
-  width: 100%;
-}
-
-.skeleton-card {
-  height: 150px;
-  margin-bottom: 1rem;
-  width: 100%;
-}
-
-.skeleton-image {
-  height: 200px;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-/* Loading spinner */
-.spinner {
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #1d4ed8;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-.spinner-small {
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #1d4ed8;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  display: inline-block;
-  margin-left: 10px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Loading overlay */
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 1000;
-  border-radius: inherit;
-}
-
-.loading-overlay-text {
-  margin-top: 15px;
-  color: #64748b;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-/* Fade-in animation for loaded content */
-.fade-in {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Improve touch targets on mobile */
-@media (max-width: 768px) {
-  button,
-  a,
-  select,
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-height: 44px !important;
-    min-width: 44px !important;
-  }
-}
-
-/* Hide scrollbars but keep functionality */
-.scrollable-content {
-  overflow: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollable-content::-webkit-scrollbar {
-  display: none;
-}
-
-/* Improve accessibility - focus states */
-button:focus,
-select:focus,
-input:focus,
-textarea:focus,
-a:focus {
-  outline: 2px solid #1d4ed8;
-  outline-offset: 2px;
-}
-
-/* Print styles */
-@media print {
-  nav,
-  button,
-  .language-selector {
-    display: none !important;
-  }
-
-  body {
-    font-size: 12pt !important;
+  /* Make tables scrollable */
+  .results {
+    overflow-x: auto;
   }
 }

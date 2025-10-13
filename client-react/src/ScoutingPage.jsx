@@ -58,6 +58,7 @@ const InfoTooltip = ({ text }) => {
   const [show, setShow] = useState(false);
   return (
     <span
+      className="scouting-tooltip"
       style={{
         marginLeft: '8px',
         cursor: 'help',
@@ -327,12 +328,12 @@ function ScoutingPage() {
       target_kpis: selectedTargetKpisForCustom,
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
     };
-    
+   
     // Only include ml_features if it's not null (to avoid validation error)
     if (mlFeaturesPayload !== null) {
       payload.ml_features = mlFeaturesPayload;
     }
-    
+   
     console.log('🔍 Sending payload to backend:', payload);
     console.log('📊 Validation check:', {
       position_group_valid: ['Attacker', 'Midfielder', 'Defender'].includes(backendPositionGroup),
@@ -340,7 +341,7 @@ function ScoutingPage() {
       target_kpis_count: selectedTargetKpisForCustom.length,
       model_name_length: (customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`).length
     });
-    
+   
     toast.promise(
       axios.post(`${API_URL}/api/custom_model/trigger_github_training`, payload, { headers }),
       {
@@ -374,7 +375,7 @@ function ScoutingPage() {
         error: (err) => {
           console.error('❌ Error response:', err.response?.data);
           console.error('❌ Full error:', err);
-          
+         
           // Check if it's a server down / cold start error
           if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
             const coldStartMsg = '⚠️ Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
@@ -385,7 +386,7 @@ function ScoutingPage() {
             });
             return coldStartMsg;
           }
-          
+         
           if (err.response?.status >= 500) {
             const serverErrorMsg = `⚠️ Server error (${err.response.status}). The backend might be restarting. Please wait 30-60 seconds and try again.`;
             setCustomModelBuildStatus({ 
@@ -395,16 +396,16 @@ function ScoutingPage() {
             });
             return serverErrorMsg;
           }
-          
+         
           const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
           const validationDetails = err.response?.data?.details;
           const manualUrl = err.response?.data?.manual_url;
-          
+         
           let fullErrorMsg = errorMsg;
           if (validationDetails) {
             fullErrorMsg += '\n\n' + t('scouting.customModelBuilder.validationErrors') + ':\n' + JSON.stringify(validationDetails, null, 2);
           }
-          
+         
           setCustomModelBuildStatus({ 
             success: false, 
             message: fullErrorMsg,
@@ -936,8 +937,8 @@ function ScoutingPage() {
                     {["Atacant", "Migcampista", "Defensor"].map(group => (
                       <option key={group} value={group}>
                         {group === "Atacant" ? t('scouting.customModelBuilder.attacker') :
-                         group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') :
-                         t('scouting.customModelBuilder.defender')}
+                          group === "Migcampista" ? t('scouting.customModelBuilder.midfielder') :
+                          t('scouting.customModelBuilder.defender')}
                       </option>
                     ))}
                   </select>
