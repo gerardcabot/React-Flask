@@ -149,7 +149,14 @@ function ScoutingPage() {
     // axios.get("http://localhost:5000/players")
     axios.get(`${API_URL}/players`)
       .then(res => setAllPlayers(res.data || []))
-      .catch(() => { setAllPlayers([]); setPredictionError(t('scouting.errors.playersLoadFailed')); });
+      .catch((err) => { 
+        setAllPlayers([]); 
+        if (err.code === 'ERR_NETWORK' || err.response?.status >= 500) {
+          setPredictionError(`⚠️ Server is starting up (cold start). Please wait 30-60 seconds and refresh the page. Error: ${err.message}`);
+        } else {
+          setPredictionError(t('scouting.errors.playersLoadFailed'));
+        }
+      });
 
     // axios.get("http://localhost:5000/api/custom_model/available_kpis")
     axios.get(`${API_URL}/api/custom_model/available_kpis`)
@@ -367,6 +374,27 @@ function ScoutingPage() {
         error: (err) => {
           console.error('❌ Error response:', err.response?.data);
           console.error('❌ Full error:', err);
+          
+          // Check if it's a server down / cold start error
+          if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+            const coldStartMsg = '⚠️ Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
+            setCustomModelBuildStatus({ 
+              success: false, 
+              message: coldStartMsg,
+              isColdStart: true
+            });
+            return coldStartMsg;
+          }
+          
+          if (err.response?.status >= 500) {
+            const serverErrorMsg = `⚠️ Server error (${err.response.status}). The backend might be restarting. Please wait 30-60 seconds and try again.`;
+            setCustomModelBuildStatus({ 
+              success: false, 
+              message: serverErrorMsg,
+              isColdStart: true
+            });
+            return serverErrorMsg;
+          }
           
           const errorMsg = err.response?.data?.error || t('scouting.customModelBuilder.errorBuildFailed');
           const validationDetails = err.response?.data?.details;
@@ -1129,6 +1157,39 @@ function ScoutingPage() {
                 color: customModelBuildStatus.success ? '#385723' : '#dc2626'
               }}>
                 <strong>{customModelBuildStatus.success ? t('scouting.customModelBuilder.successTitle') : "Error:"}</strong> {customModelBuildStatus.message}
+                {customModelBuildStatus.isColdStart && (
+                  <div style={{ marginTop: '12px' }}>
+                    <button
+                      onClick={() => window.open(`${API_URL}/health`, '_blank')}
+                      style={{
+                        padding: '8px 16px',
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.9em',
+                        marginRight: '10px'
+                      }}
+                    >
+                      🏓 Wake up server
+                    </button>
+                    <button
+                      onClick={() => window.location.reload()}
+                      style={{
+                        padding: '8px 16px',
+                        background: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.9em'
+                      }}
+                    >
+                      🔄 Refresh page
+                    </button>
+                  </div>
+                )}
                 {customModelBuildStatus.validationDetails && (
                   <div style={{ 
                     marginTop: "12px", 
