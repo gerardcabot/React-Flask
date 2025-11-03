@@ -392,22 +392,16 @@ def structure_kpis_for_frontend(kpi_definitions_by_position):
         if kpi_name.endswith("_p90_sqrt_"):
             base_name = kpi_name.replace("_p90_sqrt_", "")
             variant_type = "p90_sqrt"
-            label_suffix = " (per 90 min, arrel quadrada)"
+            label_suffix = " (per 90 min, sqrt)"
         elif kpi_name.endswith("_sqrt_"):
             base_name = kpi_name.replace("_sqrt_", "")
             variant_type = "sqrt"
-            label_suffix = " (arrel quadrada)"
-        elif kpi_name.endswith("_p90"):
-            base_name = kpi_name.replace("_p90", "")
-            variant_type = "p90"
-            label_suffix = " (per 90 min)"
-        elif kpi_name.endswith("_kpi"): 
-             base_name = kpi_name
-             variant_type = "direct_kpi" 
+            label_suffix = " (sqrt)" 
+
         elif kpi_name.endswith("_base") and "_inv_kpi_base" in kpi_name: 
              base_name = kpi_name.replace("_p90_inv_kpi_base", "_turnovers") 
              variant_type = "p90_inv_base"
-             label_suffix = " (Pèrdues p90, invertit, valor base)"
+             label_suffix = " (p90, inv, base)"
         
         label_base = base_name.replace('_', ' ').replace("count ", "").replace("sum ", "")
         label_base = ' '.join(word.capitalize() for word in label_base.split(' '))

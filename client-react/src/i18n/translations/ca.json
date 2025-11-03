@@ -146,6 +146,13 @@
       "defaultLogic": "Lògica per defecte:",
       "defaultLogicDesc": "Si l'opció \"Utilitza l'opció per defecte...\" està marcada, el sistema selecciona les característiques relacionades amb els KPI de definició d'objectiu."
     },
+    "variants": {
+      "total": "Total",
+      "per90": "per 90 min",
+      "sqrt": "arrel",
+      "per90sqrt": "per 90 min, arrel",
+      "p90InvBase": "p90, inv, base"
+    },
     "v14Config": {
       "title": "Model per defecte V14",
       "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21.",

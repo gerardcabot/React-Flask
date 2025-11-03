@@ -146,6 +146,13 @@
       "defaultLogic": "Default Logic:",
       "defaultLogicDesc": "If the \"Use default...\" option is checked, the system selects features related to target definition KPIs."
     },
+    "variants": {
+      "total": "Total",
+      "per90": "per 90 min",
+      "sqrt": "sqrt",
+      "per90sqrt": "per 90 min, sqrt",
+      "p90InvBase": "p90, inv, base"
+    },
     "v14Config": {
       "title": "Default Model V14",
       "description": "XGBoost model trained to predict peak career potential based on U21 data.",

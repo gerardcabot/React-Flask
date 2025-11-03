@@ -528,6 +528,23 @@ function ScoutingPage() {
     return uiValue;
   };
 
+  const getTranslatedVariant = (option) => {
+    if (!option.label_variant) {
+      return t('scouting.sidebar.totalCount').replace(':', '');
+    }
+    
+    const variantMap = {
+      'per 90 min': t('scouting.variants.per90'),
+      'sqrt': t('scouting.variants.sqrt'),
+      'per 90 min, sqrt': t('scouting.variants.per90sqrt'),
+      'p90, inv, base': t('scouting.variants.p90InvBase'),
+      '': t('scouting.variants.total')
+    };
+    
+    const cleanVariant = option.label_variant.replace(/^\(|\)$/g, '').trim();
+    return variantMap[cleanVariant] || cleanVariant;
+  };
+
   return (
     <div className="app-root" style={{
       minHeight: "100vh",
@@ -951,7 +968,7 @@ function ScoutingPage() {
                                 onChange={() => handleKpiToggle(option.id, "impact")}
                                 style={{ marginRight: "6px" }}
                               />
-                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || t('scouting.sidebar.totalCount').replace(':', '')}
+                              {getTranslatedVariant(option)}
                             </label>
                           ))}
                         </div>
@@ -985,7 +1002,7 @@ function ScoutingPage() {
                                 onChange={() => handleKpiToggle(option.id, "target")}
                                 style={{ marginRight: "6px" }}
                               />
-                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || t('scouting.sidebar.totalCount').replace(':', '')}
+                              {getTranslatedVariant(option)}
                             </label>
                           ))}
                         </div>
