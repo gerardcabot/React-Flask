@@ -399,9 +399,11 @@ def structure_kpis_for_frontend(kpi_definitions_by_position):
             label_suffix = " (sqrt)" 
 
         elif kpi_name.endswith("_base") and "_inv_kpi_base" in kpi_name: 
-             base_name = kpi_name.replace("_p90_inv_kpi_base", "_turnovers") 
-             variant_type = "p90_inv_base"
-             label_suffix = " (p90, inv, base)"
+            base_name = kpi_name.replace("_p90_inv_kpi_base", "").replace("_", " ").strip()
+            if not base_name:
+                base_name = "turnovers"
+            variant_type = "p90_inv_base"
+            label_suffix = " (p90, inv, base)"
         
         label_base = base_name.replace('_', ' ').replace("count ", "").replace("sum ", "")
         label_base = ' '.join(word.capitalize() for word in label_base.split(' '))
