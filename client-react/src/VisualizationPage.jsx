@@ -527,11 +527,13 @@ return (
                     .filter(metric => !/sqrt/i.test(metric.id)) 
                     .map((metric) => (
                       <option key={metric.id} value={metric.id}>
-                _           {(metric.label || metric.id)
-                          .replace(/kpi/gi, '')
-                          .replace(/inv[\s_]*base/gi, '') 
-                          .replace(/\s{2,}/g, ' ')
-                          .trim()}
+                            {(metric.label || metric.id)
+                            .replace(/^_+/, '')          
+                            .replace(/kpi/gi, '')
+                            .replace(/inv[\s_]*base/gi, '') 
+                            .replace(/_/g, ' ')         
+                            .replace(/\s{2,}/g, ' ')
+                            .trim()}
                       </option>
                     ))}
                 </select>

@@ -951,7 +951,7 @@ function ScoutingPage() {
                                 onChange={() => handleKpiToggle(option.id, "impact")}
                                 style={{ marginRight: "6px" }}
                               />
-                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || "Total/Count"}
+                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || t('scouting.sidebar.totalCount').replace(':', '')}
                             </label>
                           ))}
                         </div>

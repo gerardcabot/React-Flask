@@ -751,7 +751,7 @@ def handle_build_custom_model():
 
 
 @app.route("/api/custom_model/trigger_github_training", methods=['POST'])
-@limiter.limit("2 per hour") 
+@limiter.limit("20 per hour") 
 def trigger_github_training():
     """
     Triggers a GitHub Actions workflow to train a custom model.
