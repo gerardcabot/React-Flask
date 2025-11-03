@@ -510,7 +510,7 @@ button[disabled] {
   appearance: none; 
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); /* Custom arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); 
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
   background-size: 0.9em auto;
@@ -550,22 +550,19 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-/* === NEW STYLES FOR FIXES === */
-
-/* Tooltip and Info Icon Styles */
 .tooltip-container {
   position: relative;
   display: inline-block;
-  vertical-align: middle; /* Align icon with text */
+  vertical-align: middle; 
 }
 
 .info-icon {
-  font-size: 1rem; /* Standardized size */
+  font-size: 1rem; 
   color: #007bff;
   cursor: pointer;
   margin-left: 8px;
-  width: 20px; /* Standardized width */
-  height: 20px; /* Standardized height */
+  width: 20px; 
+  height: 20px; 
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -580,7 +577,7 @@ button[disabled] {
   border-radius: 6px;
   padding: 8px;
   position: absolute;
-  z-index: 10; /* Ensure it's on top */
+  z-index: 10; 
   bottom: 125%;
   left: 50%;
   margin-left: -125px;
@@ -593,13 +590,11 @@ button[disabled] {
   opacity: 1;
 }
 
-/* Specific tooltip for scouting page */
 .scouting-tooltip {
   width: 320px;
   margin-left: -160px;
 }
 
-/* Pass/Shot Map specific styles */
 .pass-options {
   display: flex;
   justify-content: center;
@@ -615,73 +610,59 @@ button[disabled] {
   cursor: pointer;
 }
 
-/* ============================================
-    ESTILS AFEGITS PER A CORRECCIONS
-   ============================================ */
-
-/* --- 1. Estils per a Botons d'Informació i Tooltips --- */
-
-/* Contenidor del tooltip per posicionar-lo correctament */
 .tooltip-container {
   position: relative;
   display: inline-block;
-  vertical-align: middle; /* Alinea la icona amb el text */
+  vertical-align: middle; 
 }
 
-/* Estandarització de la icona d'informació */
 .info-icon {
-  font-size: 1.1rem;      /* Mida de la font de la icona */
-  color: #007bff;        /* Color blau consistent */
+  font-size: 1.1rem;      
+  color: #007bff;        
   cursor: pointer;
   margin-left: 8px;
-  width: 22px;            /* Amplada fixa */
-  height: 22px;           /* Alçada fixa */
+  width: 22px;            
+  height: 22px;           
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Estil base del text emergent (tooltip) */
 .tooltip-text {
   visibility: hidden;
   width: 250px;
-  background-color: #333; /* Fons fosc */
+  background-color: #333; 
   color: #fff;
   text-align: center;
   border-radius: 6px;
   padding: 8px;
   position: absolute;
-  z-index: 10;            /* Assegura que es mostri per sobre d'altres elements */
-  bottom: 125%;           /* El posiciona a sobre de la icona */
+  z-index: 10;            
+  bottom: 125%;           
   left: 50%;
-  margin-left: -125px;    /* Centra el tooltip horitzontalment */
+  margin-left: -125px;    
   opacity: 0;
   transition: opacity 0.3s;
-  font-size: 0.85rem;     /* Mida de lletra llegible */
-  font-weight: 400;       /* Pes de la font normal */
+  font-size: 0.85rem;     
+  font-weight: 400;       
 }
 
-/* Mostra el tooltip quan es passa el ratolí per sobre del contenidor */
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
 }
 
-/* Estil específic pel tooltip de la pàgina de Scouting (més ample) */
 .scouting-tooltip {
   width: 320px;
-  margin-left: -160px; /* La meitat de la nova amplada per centrar-lo */
+  margin-left: -160px; 
 }
 
 
-/* --- 2. Estils per a la secció de Visualització --- */
-
-/* Contenidor per les opcions de tipus de passada */
 .pass-options {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap; /* Permet que els elements es moguin a la línia de sota si no hi caben */
+  flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 20px;
 }

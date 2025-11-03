@@ -7,22 +7,19 @@ import es from './translations/es.json';
 import en from './translations/en.json';
 
 i18n
-  // Detect user language
   .use(LanguageDetector)
-  // Pass the i18n instance to react-i18next
   .use(initReactI18next)
-  // Init i18next
   .init({
     resources: {
       ca: { translation: ca },
       es: { translation: es },
       en: { translation: en }
     },
-    fallbackLng: 'ca', // Default language
-    lng: localStorage.getItem('language') || 'ca', // Load from localStorage or default
+    fallbackLng: 'ca', 
+    lng: localStorage.getItem('language') || 'ca', 
     debug: false,
     interpolation: {
-      escapeValue: false // React already escapes by default
+      escapeValue: false 
     },
     detection: {
       order: ['localStorage', 'navigator'],
@@ -30,7 +27,6 @@ i18n
     }
   });
 
-// Save language preference whenever it changes
 i18n.on('languageChanged', (lng) => {
   localStorage.setItem('language', lng);
 });

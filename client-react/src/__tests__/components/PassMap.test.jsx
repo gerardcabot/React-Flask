@@ -1,19 +1,12 @@
-/**
- * Test suite for the PassMap component.
- * Tests pass visualization, filtering, and statistics.
- */
-
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n/config';
 import PassMap from '../../components/PassMap';
 import axios from 'axios';
 
-// Mock axios
 jest.mock('axios');
 const mockedAxios = axios;
 
-// Mock react-konva
 jest.mock('react-konva', () => ({
   Stage: ({ children, ...props }) => <div data-testid="stage" {...props}>{children}</div>,
   Layer: ({ children, ...props }) => <div data-testid="layer" {...props}>{children}</div>,
@@ -22,7 +15,6 @@ jest.mock('react-konva', () => ({
   Text: (props) => <div data-testid="text" {...props} />
 }));
 
-// Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key, options) => {
@@ -90,7 +82,6 @@ describe('PassMap Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock successful API response
     mockedAxios.get.mockResolvedValue({
       data: {
         passes: mockPassData
@@ -143,9 +134,7 @@ describe('PassMap Component', () => {
     renderWithProviders(<PassMap playerId="12345" season="2015_2016" />);
     
     await waitFor(() => {
-      // 2 completed out of 3 total = 66.67%
       expect(screen.getByText('66.67%')).toBeInTheDocument();
-      // 1 assist
       expect(screen.getByText('1')).toBeInTheDocument();
     });
   });
@@ -195,7 +184,6 @@ describe('PassMap Component', () => {
   });
 
   test('displays heatmap when R2_PUBLIC_URL is available', () => {
-    // Mock environment variable
     const originalEnv = process.env;
     process.env = {
       ...originalEnv,
@@ -277,7 +265,6 @@ describe('PassMap Component', () => {
     const image = screen.getByAltText('Pass Completion Heatmap');
     fireEvent.error(image);
     
-    // Error message should be shown
     expect(screen.getByText('Error loading heatmap')).toBeInTheDocument();
 
     process.env = originalEnv;
@@ -290,7 +277,6 @@ describe('PassMap Component', () => {
       expect(mockedAxios.get).toHaveBeenCalledTimes(1);
     });
 
-    // Change props
     rerender(
       <I18nextProvider i18n={i18n}>
         <PassMap playerId="67890" season="2016_2017" />

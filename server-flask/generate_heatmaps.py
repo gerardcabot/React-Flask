@@ -1,18 +1,16 @@
-# server-flask/generate_heatmaps.py
 import os
 import pandas as pd
 import json
 import logging
-import numpy as np  # <-- SOLUCIÓ 1: IMPORTACIÓ DE NUMPY
+import numpy as np  
 from matplotlib import pyplot as plt
-import matplotlib # <-- AFEGIM AIXÒ
-matplotlib.use('Agg') # <-- SOLUCIÓ 2: FORÇAR EL BACKEND NO INTERACTIU
+import matplotlib 
+matplotlib.use('Agg') 
 from mplsoccer import Pitch, VerticalPitch
 from scipy.ndimage import gaussian_filter
 from matplotlib import patheffects
 from ast import literal_eval
 
-# --- Configuració ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 _DATA_DIR = os.path.join(_PROJECT_ROOT, 'data')
@@ -154,7 +152,6 @@ def generate_all_heatmaps():
                 logging.error(f"  Could not read {event_file}: {e}")
                 continue
 
-            # Generar i guardar cada heatmap
             generate_and_save_pass_completion(df.copy(), player_id, season)
             generate_and_save_position(df.copy(), player_id, season)
             generate_and_save_pressure(df.copy(), player_id, season)

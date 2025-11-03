@@ -14,7 +14,6 @@ const LanguageSelector = ({ isScouting }) => {
     i18n.changeLanguage(lng);
   };
 
-  // Colors based on page (blue for visualization, red for scouting)
   const primaryColor = isScouting ? '#dc2626' : '#1d4ed8';
   const lightColor = isScouting ? 'rgba(220,38,38,0.1)' : 'rgba(29,78,216,0.1)';
 

@@ -1,15 +1,9 @@
-/**
- * Test suite for the main App component.
- * Tests routing, navigation, and basic functionality.
- */
-
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../i18n/config';
 import App from '../App';
 
-// Mock the child components
 jest.mock('../ScoutingPage', () => {
   return function MockScoutingPage() {
     return <div data-testid="scouting-page">Scouting Page</div>;
@@ -22,12 +16,10 @@ jest.mock('../VisualizationPage', () => {
   };
 });
 
-// Mock react-hot-toast
 jest.mock('react-hot-toast', () => ({
   Toaster: () => <div data-testid="toaster">Toaster</div>
 }));
 
-// Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key) => key,
@@ -38,7 +30,6 @@ jest.mock('react-i18next', () => ({
   })
 }));
 
-// Mock LanguageSelector
 jest.mock('../components/LanguageSelector', () => {
   return function MockLanguageSelector() {
     return <div data-testid="language-selector">Language Selector</div>;
@@ -57,7 +48,6 @@ const renderWithProviders = (component) => {
 
 describe('App Component', () => {
   beforeEach(() => {
-    // Reset any mocks before each test
     jest.clearAllMocks();
   });
 
@@ -97,7 +87,6 @@ describe('App Component', () => {
   test('navigates to visualization page when visualization link is clicked', async () => {
     renderWithProviders(<App />);
     
-    // First go to scouting page
     const scoutingLink = screen.getByText('nav.scouting');
     fireEvent.click(scoutingLink);
     
@@ -105,7 +94,6 @@ describe('App Component', () => {
       expect(screen.getByTestId('scouting-page')).toBeInTheDocument();
     });
     
-    // Then go back to visualization
     const visualizationLink = screen.getByText('nav.visualization');
     fireEvent.click(visualizationLink);
     
@@ -130,7 +118,6 @@ describe('App Component', () => {
     const visualizationLink = screen.getByText('nav.visualization');
     const scoutingLink = screen.getByText('nav.scouting');
     
-    // Visualization should be active by default
     expect(visualizationLink).toHaveStyle('color: #fff');
     expect(scoutingLink).toHaveStyle('color: #adb5bd');
   });
@@ -140,30 +127,23 @@ describe('App Integration', () => {
   test('maintains state across navigation', () => {
     renderWithProviders(<App />);
     
-    // Navigate to scouting
     fireEvent.click(screen.getByText('nav.scouting'));
     
-    // Navigate back to visualization
     fireEvent.click(screen.getByText('nav.visualization'));
     
-    // Should still be on visualization page
     expect(screen.getByTestId('visualization-page')).toBeInTheDocument();
   });
 
   test('handles browser back/forward navigation', () => {
     renderWithProviders(<App />);
     
-    // Start on visualization
     expect(screen.getByTestId('visualization-page')).toBeInTheDocument();
     
-    // Navigate to scouting
     fireEvent.click(screen.getByText('nav.scouting'));
     expect(screen.getByTestId('scouting-page')).toBeInTheDocument();
     
-    // Simulate browser back
     window.history.back();
     
-    // Should be back on visualization
     expect(screen.getByTestId('visualization-page')).toBeInTheDocument();
   });
 });

@@ -11,7 +11,6 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
 
-# Add the server directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from main import app, load_player_data, _calculate_goalkeeper_metrics, get_age_at_fixed_point_in_season
@@ -77,7 +76,6 @@ class TestPlayerEndpoints:
     
     def test_players_endpoint_success(self, client, mock_s3_client, sample_player_data):
         """Test /players endpoint returns player list."""
-        # Mock the player index data
         mock_s3_client.get_object.return_value = {
             'Body': MagicMock()
         }
@@ -118,7 +116,6 @@ class TestPlayerEvents:
     
     def test_player_events_success(self, client, mock_s3_client, sample_events_data):
         """Test /player_events endpoint."""
-        # Mock the load_player_data function
         with patch('main.load_player_data') as mock_load:
             mock_df = pd.DataFrame(sample_events_data)
             mock_load.return_value = mock_df
@@ -150,7 +147,7 @@ class TestVisualizationEndpoints:
             assert response.status_code == 200
             data = json.loads(response.data)
             assert 'passes' in data
-            assert len(data['passes']) == 1  # Only one pass in sample data
+            assert len(data['passes']) == 1  
     
     def test_shot_map_success(self, client, sample_events_data):
         """Test /shot_map endpoint."""
@@ -162,25 +159,24 @@ class TestVisualizationEndpoints:
             assert response.status_code == 200
             data = json.loads(response.data)
             assert 'shots' in data
-            assert len(data['shots']) == 1  # Only one shot in sample data
+            assert len(data['shots']) == 1  
     
     def test_heatmap_redirects(self, client):
         """Test heatmap endpoints redirect to R2."""
         response = client.get('/pass_completion_heatmap?player_id=12345&season=2015_2016')
-        assert response.status_code == 302  # Redirect
+        assert response.status_code == 302  
         
         response = client.get('/position_heatmap?player_id=12345&season=2015_2016')
-        assert response.status_code == 302  # Redirect
+        assert response.status_code == 302  
         
         response = client.get('/pressure_heatmap?player_id=12345&season=2015_2016')
-        assert response.status_code == 302  # Redirect
+        assert response.status_code == 302  
 
 class TestGoalkeeperAnalysis:
     """Test goalkeeper analysis endpoint."""
     
     def test_goalkeeper_analysis_success(self, client):
         """Test goalkeeper analysis endpoint."""
-        # Create sample goalkeeper data
         gk_data = [
             {
                 "player_id": "12345",
@@ -207,12 +203,10 @@ class TestPredictionEndpoint:
     
     def test_scouting_predict_success(self, client, mock_s3_client):
         """Test /scouting_predict endpoint."""
-        # Mock all required data
         mock_s3_client.get_object.return_value = {
             'Body': MagicMock()
         }
         
-        # Mock player index
         mock_s3_client.get_object.return_value['Body'].read.return_value = json.dumps({
             "Test Player": {
                 "player_id": "12345",
@@ -222,15 +216,13 @@ class TestPredictionEndpoint:
             }
         }).encode('utf-8')
         
-        # Mock model loading
         with patch('main.load_model_from_r2_cached') as mock_model:
             mock_model.return_value = (
-                MagicMock(),  # model
-                MagicMock(),  # scaler
-                {"features_used_for_ml_model": ["feature1", "feature2"]}  # config
+                MagicMock(), 
+                MagicMock(),
+                {"features_used_for_ml_model": ["feature1", "feature2"]}
             )
             
-            # Mock feature extraction
             with patch('main.trainer_extract_base_features') as mock_extract:
                 mock_extract.return_value = pd.Series({"feature1": 1.0, "feature2": 2.0})
                 
@@ -294,8 +286,6 @@ class TestRateLimiting:
     
     def test_rate_limiting_applied(self, client):
         """Test that rate limiting is applied to endpoints."""
-        # This would require more complex setup to test actual rate limiting
-        # For now, just verify the limiter is configured
         from main import limiter
         assert limiter is not None
 

@@ -1,19 +1,13 @@
-/**
- * Test suite for the ScoutingPage component.
- * Tests player selection, prediction functionality, and custom model building.
- */
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../i18n/config';
 import ScoutingPage from '../ScoutingPage';
 import axios from 'axios';
-
-// Mock axios
+  
 jest.mock('axios');
 const mockedAxios = axios;
 
-// Mock react-hot-toast
 jest.mock('react-hot-toast', () => ({
   toast: {
     error: jest.fn(),
@@ -32,7 +26,6 @@ jest.mock('react-hot-toast', () => ({
   }
 }));
 
-// Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key, options) => {
@@ -163,10 +156,8 @@ const renderWithProviders = (component) => {
 
 describe('ScoutingPage Component', () => {
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks();
     
-    // Mock successful API responses
     mockedAxios.get.mockImplementation((url) => {
       if (url.includes('/players')) {
         return Promise.resolve({
@@ -334,13 +325,11 @@ describe('ScoutingPage Component', () => {
     renderWithProviders(<ScoutingPage />);
     
     await waitFor(() => {
-      // Select player
       const playerSelect = screen.getByDisplayValue('-- Select Player --');
       fireEvent.change(playerSelect, { target: { value: 'Test Player' } });
     });
     
     await waitFor(() => {
-      // Select season
       const seasonSelect = screen.getByDisplayValue('-- Select Season --');
       fireEvent.change(seasonSelect, { target: { value: '2015_2016' } });
     });
@@ -355,19 +344,16 @@ describe('ScoutingPage Component', () => {
     renderWithProviders(<ScoutingPage />);
     
     await waitFor(() => {
-      // Select player
       const playerSelect = screen.getByDisplayValue('-- Select Player --');
       fireEvent.change(playerSelect, { target: { value: 'Test Player' } });
     });
     
     await waitFor(() => {
-      // Select season
       const seasonSelect = screen.getByDisplayValue('-- Select Season --');
       fireEvent.change(seasonSelect, { target: { value: '2015_2016' } });
     });
     
     await waitFor(() => {
-      // Click predict
       const predictButton = screen.getByText('Predict');
       fireEvent.click(predictButton);
     });
@@ -390,19 +376,16 @@ describe('ScoutingPage Component', () => {
     renderWithProviders(<ScoutingPage />);
     
     await waitFor(() => {
-      // Select player
       const playerSelect = screen.getByDisplayValue('-- Select Player --');
       fireEvent.change(playerSelect, { target: { value: 'Test Player' } });
     });
     
     await waitFor(() => {
-      // Select season
       const seasonSelect = screen.getByDisplayValue('-- Select Season --');
       fireEvent.change(seasonSelect, { target: { value: '2015_2016' } });
     });
     
     await waitFor(() => {
-      // Click predict
       const predictButton = screen.getByText('Predict');
       fireEvent.click(predictButton);
     });
@@ -434,16 +417,12 @@ describe('ScoutingPage Component', () => {
     renderWithProviders(<ScoutingPage />);
     
     await waitFor(() => {
-      // Fill in model name
       const modelNameInput = screen.getByPlaceholderText('Enter model name');
       fireEvent.change(modelNameInput, { target: { value: 'Test Model' } });
       
-      // Select position group
       const positionSelect = screen.getByDisplayValue('Attacker');
       fireEvent.change(positionSelect, { target: { value: 'Migcampista' } });
       
-      // Select some KPIs (this would require more complex setup in real test)
-      // For now, just test that the form exists
       expect(screen.getByText('Build Model')).toBeInTheDocument();
     });
   });
@@ -454,7 +433,6 @@ describe('ScoutingPage Component', () => {
     renderWithProviders(<ScoutingPage />);
     
     await waitFor(() => {
-      // Should still render without crashing
       expect(screen.getByText('Select Player')).toBeInTheDocument();
     });
   });
@@ -468,13 +446,13 @@ describe('ScoutingPage Component', () => {
               player_id: '12345',
               name: 'Young Player',
               seasons: ['2015_2016', '2016_2017'],
-              dob: '1995-01-01' // 21 years old in 2016
+              dob: '1995-01-01' 
             },
             {
               player_id: '67890',
               name: 'Old Player',
               seasons: ['2015_2016', '2016_2017'],
-              dob: '1990-01-01' // 26 years old in 2016
+              dob: '1990-01-01' 
             }
           ]
         });
@@ -490,7 +468,6 @@ describe('ScoutingPage Component', () => {
     });
     
     await waitFor(() => {
-      // Should only show U21 eligible seasons
       expect(screen.getByText('2015_2016 (Age: 21)')).toBeInTheDocument();
     });
   });

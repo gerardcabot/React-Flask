@@ -6,9 +6,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ''; // Optional: for viewing GitHub workflow URLs
 
-// Helper functions for tracking user's own models
 const MY_MODELS_KEY = 'my_custom_models';
 
 const getMyModels = () => {
@@ -53,11 +51,6 @@ function calculatePlayerAge(dob, season) {
   return referenceDateForAge.diff(dobDate, "year");
 }
 
-// ==================================================================
-// ==================== CANVIS APLICATS AQUÍ =======================
-// ==================================================================
-
-// 1. Estil unificat per a totes les icones d'informació
 const infoIconStyle = {
   marginLeft: '8px',
   cursor: 'pointer',
@@ -84,7 +77,6 @@ const InfoTooltip = ({ text }) => {
   return (
     <span
       className="scouting-tooltip"
-      // S'aplica l'estil unificat
       style={infoIconStyle}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
@@ -100,12 +92,11 @@ const InfoTooltip = ({ text }) => {
         <div
           id="tooltip-content"
           style={{
-            // 2. Canvi de posicionament per evitar que es talli
             position: 'absolute',
-            top: '50%', // Centrat verticalment respecte a la icona
-            left: '125%', // Posicionat a la dreta de la icona
-            transform: 'translateY(-50%)', // Ajust fi per centrar perfectament
-            marginLeft: '10px', // Espai entre la icona i el text
+            top: '50%', 
+            left: '125%', 
+            transform: 'translateY(-50%)', 
+            marginLeft: '10px', 
             background: 'rgba(220,38,38,0.95)',
             color: 'white',
             padding: '12px',
@@ -128,9 +119,6 @@ const InfoTooltip = ({ text }) => {
     </span>
   );
 };
-// ==================================================================
-// ==================== FI DELS CANVIS =============================
-// ==================================================================
 
 function ScoutingPage() {
   const { t } = useTranslation();
@@ -160,7 +148,6 @@ function ScoutingPage() {
   const [showV14Info, setShowV14Info] = useState(false);
 
   useEffect(() => {
-    // axios.get("http://localhost:5000/players")
     axios.get(`${API_URL}/players`)
       .then(res => setAllPlayers(res.data || []))
       .catch((err) => {
@@ -172,7 +159,6 @@ function ScoutingPage() {
         }
       });
 
-    // axios.get("http://localhost:5000/api/custom_model/available_kpis")
     axios.get(`${API_URL}/api/custom_model/available_kpis`)
       .then(res => {
         setStructuredKpiOptions(res.data?.structured_kpis || []);
@@ -183,7 +169,6 @@ function ScoutingPage() {
         setStructuredKpiOptions([]);
       });
 
-    // axios.get("http://localhost:5000/api/custom_model/available_ml_features")
     axios.get(`${API_URL}/api/custom_model/available_ml_features`)
       .then(res => {
         setAvailableMlFeaturesOptions(res.data?.available_ml_features || []);
@@ -193,7 +178,6 @@ function ScoutingPage() {
         console.error("Failed to load available ML features.");
       });
 
-    // Load V14 model configuration
     axios.get(`${API_URL}/api/model/default_v14_config`)
       .then(res => {
         setV14ModelConfig(res.data);
@@ -206,7 +190,6 @@ function ScoutingPage() {
   useEffect(() => {
     if (modelTypeForPrediction === 'custom') {
       setIsLoadingPrediction(true);
-      // axios.get("http://localhost:5000/api/custom_model/list")
       axios.get(`${API_URL}/api/custom_model/list`)
         .then(res => {
           setAvailableCustomModels(res.data?.custom_models || []);
@@ -328,13 +311,8 @@ function ScoutingPage() {
     setCustomModelBuildStatus(null);
     const backendPositionGroup = mapPositionGroupToBackend(selectedPositionGroupForCustom);
 
-    // Prepare headers (add admin secret if available for workflow URL access)
     const headers = {};
-    if (ADMIN_SECRET) {
-      headers['X-Admin-Secret'] = ADMIN_SECRET;
-    }
 
-    // Use GitHub Actions endpoint to avoid timeout issues on Render free tier
     const payload = {
       position_group: backendPositionGroup,
       impact_kpis: selectedImpactKpisForCustom,
@@ -342,7 +320,6 @@ function ScoutingPage() {
       model_name: customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`,
     };
 
-    // Only include ml_features if it's not null (to avoid validation error)
     if (mlFeaturesPayload !== null) {
       payload.ml_features = mlFeaturesPayload;
     }
@@ -364,10 +341,8 @@ function ScoutingPage() {
           const estimatedTime = res.data.estimated_time;
           const modelId = res.data.custom_model_id;
 
-          // Save model ID to localStorage as "my model"
           addMyModel(modelId);
 
-          // Prepare additional info for display
           let additionalInfo = `${t('scouting.customModelBuilder.estimatedTimeMessage', { time: estimatedTime })}`;
           if (workflowUrl) {
             additionalInfo += ` ${t('scouting.customModelBuilder.monitorGitHub')}`;
@@ -389,7 +364,6 @@ function ScoutingPage() {
           console.error('❌ Error response:', err.response?.data);
           console.error('❌ Full error:', err);
 
-          // Check if it's a server down / cold start error
           if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
             const coldStartMsg = '⚠️ Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
             setCustomModelBuildStatus({
@@ -518,7 +492,7 @@ function ScoutingPage() {
   };
   const kpiSectionTitleStyle = {
     marginTop: 0,
-    color: '#dc2626', // vermell
+    color: '#dc2626', 
     display: 'flex',
     alignItems: 'center',
     fontSize: '1.2rem',
@@ -583,15 +557,15 @@ function ScoutingPage() {
         borderRadius: "12px",
       }}>
         <div style={{
-          background: '#fef2f2', // light red background
-          border: '1px solid #fecaca', // red border
+          background: '#fef2f2', 
+          border: '1px solid #fecaca', 
           borderRadius: '8px',
           padding: '15px 20px',
           marginBottom: '2rem'
         }}>
           <h3 style={{
             marginTop: 0,
-            color: '#b91c1c', // dark red
+            color: '#b91c1c', 
             fontSize: '1.2rem',
             fontWeight: 600
           }}>{t('scouting.context.title')}</h3>
@@ -692,7 +666,7 @@ function ScoutingPage() {
                 <button
                   onClick={() => setShowV14Info(true)}
                   style={{
-                    ...infoIconStyle, // 3. S'aplica l'estil unificat al botó V14
+                    ...infoIconStyle, 
                     padding: 0,
                   }}
                   onMouseEnter={(e) => {
@@ -774,7 +748,7 @@ function ScoutingPage() {
           style={{
             width: "100%",
             padding: "12px",
-            background: (!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId)) ? "#fca5a5" : "#dc2626", // vermell clar/desactivat
+            background: (!selectedPlayer || !selectedSeason || isLoadingPrediction || (modelTypeForPrediction === 'custom' && !selectedCustomModelId)) ? "#fca5a5" : "#dc2626", 
             color: "#fff",
             border: "none",
             borderRadius: "6px",
@@ -1149,7 +1123,7 @@ function ScoutingPage() {
                   type="submit"
                   disabled={isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length}
                   style={{
-                    background: isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length ? "#fca5a5" : "#dc2626", // vermell clar/desactivat
+                    background: isBuildingCustomModel || !selectedPositionGroupForCustom || !selectedImpactKpisForCustom.length || !selectedTargetKpisForCustom.length ? "#fca5a5" : "#dc2626", 
                     color: "#fff",
                     border: "none",
                     borderRadius: "6px",
@@ -1404,7 +1378,7 @@ function ScoutingPage() {
                 }}
                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
                 onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                title={t('scouting.v14Config.close')} // Corregit: v14Config
+                title={t('scouting.v14Config.close')}
               >
                 ×
               </button>

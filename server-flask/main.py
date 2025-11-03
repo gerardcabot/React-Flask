@@ -28,7 +28,6 @@ from model_trainer.trainer_v2 import (
     get_trainer_kpi_definitions_for_weight_derivation,
     get_trainer_composite_impact_kpis_definitions,
     get_general_position as trainer_get_general_position, 
-    # parse_location as trainer_parse_location,
     get_feature_names_for_extraction as trainer_get_feature_names,
     extract_season_features as trainer_extract_base_features,
     trainer_construct_ml_features_for_player_season, 
@@ -45,28 +44,23 @@ from validation_schemas import (
 )
 
 
-# --- CONFIGURACIÓN DE CONEXIÓN A R2 (CORRECTO) ---
 R2_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
 R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
 
-# Configure logging FIRST (before using logger)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURACIÓN DE GITHUB ACTIONS ---
 GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
 GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
 GITHUB_REPO_NAME = os.environ.get('GITHUB_REPO_NAME', 'React-Flask')
 
-# Admin secret for viewing GitHub Actions workflow URLs (security for public repos)
-# REQUIRED: Must be set in production environment
 ADMIN_SECRET = os.environ.get('ADMIN_SECRET')
 if not ADMIN_SECRET:
     logger.warning("⚠️  ADMIN_SECRET not set! Admin features (GitHub workflow links) will be disabled.")
     logger.warning("   To enable admin features, set ADMIN_SECRET environment variable.")
-    ADMIN_SECRET = None  # Explicitly set to None for clarity
+    ADMIN_SECRET = None  
 
 s3_client = None
 if R2_ENDPOINT_URL and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME:
@@ -76,7 +70,7 @@ if R2_ENDPOINT_URL and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_N
         endpoint_url=R2_ENDPOINT_URL,
         aws_access_key_id=R2_ACCESS_KEY_ID,
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        region_name='auto'  # 'auto' is correct for R2
+        region_name='auto'
     )
 else:
     logger.warning("R2 environment variables not set. S3 client not initialized. App will likely fail.")
@@ -86,12 +80,9 @@ else:
 BASE_DIR_SERVER_FLASK = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "data")
 
-# V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_v14_rebuild_trainer", "v14_rebuild") # Ruta ajustada
-# V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_peak_potential", "peak_potential_v1")
 V14_MODEL_BASE_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "..", "ml_models", "ml_model_files_peak_potential", "peak_potential_v2_15_16")
 
 PLAYER_MINUTES_PATH = os.path.join(DATA_DIR, "player_season_minutes_with_names.csv")
-# LOADED_V14_MODELS = {}
 
 STATIC_IMG_DIR = os.path.join(BASE_DIR_SERVER_FLASK, "static", "images")
 os.makedirs(STATIC_IMG_DIR, exist_ok=True)
@@ -126,7 +117,6 @@ def load_translation(lang_code):
     """
     lang = lang_code.split('-')[0].lower()
     
-    # --- INICI DEL BLOC DE DEPURACIÓ ---
     logger.info("--- Iniciant càrrega de traducció ---")
     logger.info(f"Codi d'idioma rebut: '{lang_code}', normalitzat a: '{lang}'")
     
@@ -136,7 +126,6 @@ def load_translation(lang_code):
     
     logger.info(f"Ruta absoluta construïda per al fitxer: '{file_path}'")
     logger.info(f"El fitxer existeix? -> {os.path.exists(file_path)}")
-    # --- FI DEL BLOC DE DEPURACIÓ ---
 
     if not os.path.exists(file_path):
         logger.warning(f"No s'ha trobat el fitxer per a '{lang}'. Es farà servir 'ca.json' com a alternativa.")
@@ -151,24 +140,21 @@ def load_translation(lang_code):
         logger.info("------------------------------------")
         return json.load(f)
 
-def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya no se usa, pero lo dejamos
+def load_player_data(player_id, season, data_dir): 
     def try_load_one_from_r2(player_id, season):
         if not s3_client:
             logger.error("Cannot load from R2: S3 client not initialized.")
             return None
             
-        # La ruta al archivo dentro del bucket
         file_key_csv = f"data/{season}/players/{player_id}_{season}.csv"
         
         try:
             logger.debug(f"Attempting to load from R2: {R2_BUCKET_NAME}/{file_key_csv}")
             response = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=file_key_csv)
             
-            # Leer el contenido en un DataFrame de pandas
             csv_content = response['Body'].read().decode('utf-8')
             df = pd.read_csv(StringIO(csv_content), low_memory=False)
 
-            # --- TU LÓGICA DE PROCESADO SE MANTIENE EXACTAMENTE IGUAL ---
             loc_cols = [col for col in df.columns if 'location' in col or 'end_location' in col]
             for col in loc_cols:
                 if col in df.columns: df[col] = df[col].apply(lambda x: safe_literal_eval(x) if pd.notna(x) else None)
@@ -193,15 +179,15 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
                 if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
             
             return df
-        except s3_client.exceptions.NoSuchKey:
-            logger.warning(f"R2 object not found: {R2_BUCKET_NAME}/{file_key_csv}")
+        except Exception as e:
+            if hasattr(e, 'response') and e.response.get('Error', {}).get('Code') == 'NoSuchKey':
+                    logger.warning(f"R2 object not found: {R2_BUCKET_NAME}/{file_key_csv}")
             return None
         except Exception as e:
             logger.error(f"Error loading {file_key_csv} from R2: {e}", exc_info=True)
             return None
 
-    # El modo "all" es ineficiente y no funcionará sin listar el bucket.
-    # Por ahora, lo simplificamos para que la app funcione.
+
     if season == "all":
         logger.warning("Loading 'all' seasons is not fully supported in production environment. Returning empty DataFrame.")
         return pd.DataFrame()
@@ -209,7 +195,6 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
         return try_load_one_from_r2(player_id, season)
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR_SERVER_FLASK, 'static'), static_url_path='/static')
-# CORS configuration - allow Vercel domain and localhost for development
 CORS(app, resources={
     r"/*": {
         "origins": ["https://react-flask-psi.vercel.app", "http://localhost:5173", "http://localhost:5174"],
@@ -219,14 +204,12 @@ CORS(app, resources={
     }
 })
 
-# Rate limiting configuration to protect API from abuse and reduce R2 costs
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["300 per day", "100 per hour"],  # Global limits
-    storage_uri="memory://"  # Use in-memory storage (suitable for single-instance deployments)
+    default_limits=["300 per day", "100 per hour"], 
+    storage_uri="memory://"  
 )
-
 
 
 def _calculate_goalkeeper_metrics(player_df, player_id_str):
@@ -321,7 +304,6 @@ def _calculate_goalkeeper_metrics(player_df, player_id_str):
     shot_related_gk_types_for_direct_analysis = ['Shot Saved', 'Penalty Saved', 'Goal Conceded', 'Save', 'Shot Faced']
     df_direct_shot_interactions = df_gk_actions[df_gk_actions.get('goalkeeper_type', pd.Series(dtype=str)).isin(shot_related_gk_types_for_direct_analysis)]
 
-    # Attempt to find an xG column on GK events (though unlikely as per spec)
     xg_col_on_gk_event = None
     if not df_direct_shot_interactions.empty:
         potential_xg_cols = ['shot_statsbomb_xg', 'goalkeeper.shot_statsbomb_xg', 'xg']
@@ -522,70 +504,9 @@ def player_events_route():
         return df.to_json(orient="records", date_format="iso", default_handler=str)
     except Exception as e: logger.error(f"Error in /player_events: {e}", exc_info=True); return jsonify({"error": str(e)}), 500
 
-# @app.route("/pass_completion_heatmap")
-# def pass_completion_heatmap_route():
-#     player_id = request.args.get("player_id")
-#     season = request.args.get("season")
-#     if not player_id or not season: return jsonify({"error": "Missing player_id or season"}), 400
-#     try:
-#         player_dir = os.path.join(STATIC_IMG_DIR, str(player_id))
-#         os.makedirs(player_dir, exist_ok=True)
-#         image_filename = f"{str(player_id)}_{season}_pass_compl_heatmap.png"
-#         image_path = os.path.join(player_dir, image_filename)
-#         image_url = f"/static/images/{str(player_id)}/{image_filename}"
 
-#         df = load_player_data(player_id, season, DATA_DIR)
-#         if df is None or df.empty:
-#             logger.warning(f"No data for pass completion heatmap {player_id}/{season}")
-#             return jsonify({"error": "No data found"}), 404
-
-#         df_passes = df[df.get("type") == "Pass"].copy() if "type" in df.columns else pd.DataFrame()
-
-#         if df_passes.empty or not all(c in df_passes.columns for c in ["location", "pass_outcome"]):
-#             logger.warning(f"Required columns missing for pass completion heatmap {player_id}/{season}")
-#             return jsonify({"error": "Required columns for pass completion missing"}), 400
-
-#         df_passes["location_eval"] = df_passes["location"].apply(safe_literal_eval)
-#         df_valid_loc = df_passes[df_passes["location_eval"].apply(lambda x: isinstance(x, (list, tuple)) and len(x) >= 2)].copy()
-
-#         if df_valid_loc.empty:
-#             logger.warning(f"No valid pass location data for pass completion heatmap {player_id}/{season}")
-#             return jsonify({"error": "No valid pass location data"}), 404
-
-#         df_valid_loc["x"] = df_valid_loc["location_eval"].apply(lambda loc: loc[0])
-#         df_valid_loc["y"] = df_valid_loc["location_eval"].apply(lambda loc: loc[1])
-#         df_valid_loc["completed"] = df_valid_loc["pass_outcome"].isna() 
-
-#         pitch = VerticalPitch(pitch_type='statsbomb', line_zorder=2, pitch_color='#22312b', line_color='white')
-#         fig, ax = pitch.draw(figsize=(4.125, 6))
-#         fig.set_facecolor('#22312b')
-
-#         bin_statistic = pitch.bin_statistic_positional(df_valid_loc.x, df_valid_loc.y, values=df_valid_loc.completed, statistic='mean', positional='full')
-
-#         for section_data in bin_statistic:
-#             if 'statistic' in section_data and isinstance(section_data['statistic'], np.ndarray):
-#                 section_data['statistic'] = np.nan_to_num(section_data['statistic'], nan=0.0)
-#             elif 'statistic' not in section_data or section_data['statistic'] is None : 
-#                 if 'x_grid' in section_data and 'y_grid' in section_data and section_data['x_grid'] is not None and section_data['y_grid'] is not None:
-#                     section_data['statistic'] = np.zeros((section_data['y_grid'].shape[0]-1, section_data['x_grid'].shape[1]-1), dtype=float)
-#                 else:
-#                     logger.warning(f"Missing grid info for a section in pass completion heatmap for {player_id}/{season}, section: {section_data.get('pos_section')}")
-#                     section_data['statistic'] = np.array([[0.0]])
-
-
-#         pitch.heatmap_positional(bin_statistic, ax=ax, cmap='Blues', edgecolors='#22312b', vmin=0, vmax=1)
-#         path_eff = [patheffects.withStroke(linewidth=3, foreground='#22312b')]
-#         pitch.label_heatmap(bin_statistic, color='#f4edf0', fontsize=15, ax=ax, ha='center', va='center', str_format='{:.0%}', path_effects=path_eff)
-
-#         # plt.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         fig.savefig(image_path, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
-#         plt.close(fig)
-#         return jsonify({"image_url": image_url})
-#     except Exception as e:
-#         logger.error(f"Error in /pass_completion_heatmap for {player_id}/{season}: {e}", exc_info=True)
-#         return jsonify({"error": f"Failed to generate pass completion heatmap: {str(e)}"}), 500
 @app.route("/pass_completion_heatmap")
-@limiter.limit("30 per minute")  # Visualization endpoints
+@limiter.limit("30 per minute") 
 def pass_completion_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -596,15 +517,13 @@ def pass_completion_heatmap_route():
     if not public_r2_url:
         return jsonify({"error": "Server is not configured with R2_PUBLIC_URL"}), 500
 
-    # Construïm el nom de l'arxiu exactament com el vas pujar a R2
     image_filename = f"{player_id}_{season}_pass_completion_heatmap.png"
     image_url = f"{public_r2_url}/{image_filename}"
     
-    # Redirigim el navegador de l'usuari a la URL pública de la imatge
     return redirect(image_url)
 
 @app.route("/position_heatmap")
-@limiter.limit("30 per minute")  # Visualization endpoints
+@limiter.limit("30 per minute")
 def position_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -620,7 +539,7 @@ def position_heatmap_route():
     return redirect(image_url)
 
 @app.route("/pressure_heatmap")
-@limiter.limit("30 per minute")  # Visualization endpoints
+@limiter.limit("30 per minute") 
 def pressure_heatmap_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -637,7 +556,7 @@ def pressure_heatmap_route():
 
 
 @app.route("/pass_map_zona_stats")
-@limiter.limit("30 per minute")  # Data processing endpoint
+@limiter.limit("30 per minute")
 def pass_map_zona_stats_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -689,7 +608,7 @@ def pass_map_zona_stats_route():
 
 
 @app.route("/shot_map")
-@limiter.limit("30 per minute")  # Visualization endpoints
+@limiter.limit("30 per minute")  
 def shot_map_route():
     player_id = request.args.get("player_id")
     season = request.args.get("season")
@@ -746,69 +665,33 @@ def available_kpis_for_custom_model():
         logger.error(f"Error fetching available KPIs for custom model: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/api/model/default_v14_config")
-# def get_default_v14_config():
-#     """
-#     Returns the configuration (KPIs and features) used by the default V14 model
-#     """
-#     try:
-#         kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
-#         composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
-        
-#         return jsonify({
-#             "model_id": "peak_potential_v2_15_16",
-#             "model_name": "Model per defecte V14",
-#             "description": "Model d'XGBoost entrenat per predir el potencial màxim de carrera basat en dades U21",
-#             "algorithm": "XGBoost Regressor",
-#             "target_variable": "Puntuació de potencial màxim de carrera (0-200)",
-#             "training_data": "Totes les dades de jugadors històrics",
-#             "evaluation_season": "2015/2016",
-#             "kpi_definitions_for_weight_derivation": kpi_definitions,
-#             "composite_impact_kpis": composite_impact_kpis,
-#             "feature_engineering": {
-#                 "current_season": "Mètriques de la temporada actual",
-#                 "historical": "Mitjanes i tendències de temporades anteriors",
-#                 "age_based": "Característiques basades en l'edat del jugador"
-#             }
-#         })
-#     except Exception as e:
-#         logger.error(f"Error fetching default V14 config: {e}", exc_info=True)
-#         return jsonify({"error": str(e)}), 500
-
 @app.route("/api/model/default_v14_config")
 def get_default_v14_config():
     """
     Retorna la configuració del model V14 amb els textos traduïts.
     """
     try:
-        # Detecta l'idioma i carrega les traduccions
         lang = request.headers.get('Accept-Language', 'ca').split(',')[0]
         translations = load_translation(lang)
         
-        # Accedeix a la secció de traduccions específica del model V14
         config_translations = translations.get("scouting", {}).get("v14Config", {})
 
-        # Dades tècniques que no es tradueixen
         kpi_definitions = get_trainer_kpi_definitions_for_weight_derivation()
         composite_impact_kpis = get_trainer_composite_impact_kpis_definitions()
         
-        # Construeix la resposta JSON amb la mateixa estructura que l'original
         return jsonify({
             "model_id": "peak_potential_v2_15_16",
             "model_name": config_translations.get('title'),
             "description": config_translations.get('description'),
             
-            # Valors traduïts
             "algorithm": config_translations.get('algorithm_value'),
             "target_variable": config_translations.get('targetVariable_value'),
             "training_data": config_translations.get('trainingData_value'),
             "evaluation_season": config_translations.get('evaluationSeason_value'),
             
-            # Dades de KPIs (no canvien)
             "kpi_definitions_for_weight_derivation": kpi_definitions,
             "composite_impact_kpis": composite_impact_kpis,
             
-            # Valors de Feature Engineering traduïts
             "feature_engineering": {
                 "current_season": config_translations.get('currentSeason_desc'),
                 "historical": config_translations.get('historical_desc'),
@@ -868,7 +751,7 @@ def handle_build_custom_model():
 
 
 @app.route("/api/custom_model/trigger_github_training", methods=['POST'])
-@limiter.limit("2 per hour")  # Training is very expensive, strict limit
+@limiter.limit("2 per hour") 
 def trigger_github_training():
     """
     Triggers a GitHub Actions workflow to train a custom model.
@@ -878,34 +761,28 @@ def trigger_github_training():
     if not data:
         return jsonify({"error": "Missing JSON payload"}), 400
 
-    # Log received data for debugging
-    logger.info(f"🔍 Received training request: {json.dumps(data, indent=2)}")
-    logger.info(f"📊 Data types: position_group={type(data.get('position_group'))}, impact_kpis={type(data.get('impact_kpis'))}, target_kpis={type(data.get('target_kpis'))}")
+    logger.info(f" Received training request: {json.dumps(data, indent=2)}")
+    logger.info(f" Data types: position_group={type(data.get('position_group'))}, impact_kpis={type(data.get('impact_kpis'))}, target_kpis={type(data.get('target_kpis'))}")
 
-    # Validate input data with Marshmallow
     validated_data, error_response = validate_request_data(CustomModelTrainingSchema, data)
     if error_response:
-        logger.error(f"❌ Validation failed: {error_response[0].json}")
+        logger.error(f" Validation failed: {error_response[0].json}")
         return error_response
     
-    # Extract validated data
     position_group = validated_data["position_group"]
     user_impact_kpis_list = validated_data["impact_kpis"]
     user_target_kpis_list = validated_data["target_kpis"]
     custom_model_name_prefix = validated_data.get("model_name", f"custom_{position_group.lower()}")
     user_ml_feature_selection = validated_data.get("ml_features")
 
-    # Check if GitHub token is configured
     if not GITHUB_TOKEN:
         return jsonify({
             "error": "GitHub Actions integration not configured. Please set GITHUB_TOKEN environment variable.",
             "fallback": "You can manually trigger the workflow at: https://github.com/{}/{}/actions/workflows/train_model.yml".format(GITHUB_REPO_OWNER, GITHUB_REPO_NAME)
         }), 503
 
-    # Generate unique model ID
     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
 
-    # Prepare payload for GitHub Actions
     github_api_url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/dispatches"
     
     payload = {
@@ -929,11 +806,7 @@ def trigger_github_training():
         logger.info(f"Triggering GitHub Actions workflow for model: {custom_model_id}")
         response = requests.post(github_api_url, json=payload, headers=headers, timeout=10)
         
-        if response.status_code == 204:
-            # Success - GitHub Actions triggered
-            # Check if user is admin (for security in public repos)
-            is_admin = ADMIN_SECRET and request.headers.get('X-Admin-Secret') == ADMIN_SECRET
-            
+        if response.status_code == 204:            
             response_data = {
                 "success": True,
                 "message": f"Model training started successfully",
@@ -942,7 +815,6 @@ def trigger_github_training():
                 "instructions": "The model will be available in the list once training completes. This typically takes 45-90 minutes depending on data size and complexity."
             }
             
-            # Only include workflow URL for admin users (to protect logs in public repos)
             if is_admin:
                 workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
                 response_data["workflow_url"] = workflow_url
@@ -969,25 +841,20 @@ def trigger_github_training():
 def list_custom_models():
     custom_models_list = []
     
-    # Load models from R2 (where GitHub Actions saves them)
     if s3_client and R2_BUCKET_NAME:
         try:
             logger.info("Listing custom models from R2...")
-            # List all objects in the ml_models/custom_models/ prefix (where trainer saves them)
             response = s3_client.list_objects_v2(
                 Bucket=R2_BUCKET_NAME,
                 Prefix='ml_models/custom_models/',
                 Delimiter='/'
             )
             
-            # Get all model folders (common prefixes)
             if 'CommonPrefixes' in response:
                 for prefix in response['CommonPrefixes']:
-                    # prefix['Prefix'] looks like: 'ml_models/custom_models/model_id/'
                     model_folder = prefix['Prefix']
                     model_id = model_folder.strip('/').split('/')[-1]
                     
-                    # Try to find config files for each position group
                     for position_group in ['attacker', 'midfielder', 'defender']:
                         config_key = f"{model_folder}{position_group}/model_config_{position_group}_{model_id}.json"
                         try:
@@ -995,7 +862,6 @@ def list_custom_models():
                             config_content = config_obj['Body'].read().decode('utf-8')
                             cfg = json.loads(config_content)
                             
-                            # Capitalize position group for display
                             position_display = position_group.capitalize()
                             custom_models_list.append({
                                 "id": model_id,
@@ -1005,7 +871,6 @@ def list_custom_models():
                             })
                             logger.info(f"Found custom model: {model_id} for {position_display}")
                         except Exception as e:
-                            # Skip if config doesn't exist for this position group
                             if 'NoSuchKey' in str(e) or '404' in str(e):
                                 pass
                             else:
@@ -1014,9 +879,7 @@ def list_custom_models():
             logger.info(f"Found {len(custom_models_list)} custom models in R2")
         except Exception as e:
             logger.error(f"Error listing custom models from R2: {e}", exc_info=True)
-            # Fall through to check local models if R2 fails
     
-    # Fallback: Also check local models (for backwards compatibility)
     if os.path.exists(CUSTOM_MODELS_DIR):
         for model_id_folder in os.listdir(CUSTOM_MODELS_DIR):
             model_folder_path = os.path.join(CUSTOM_MODELS_DIR, model_id_folder)
@@ -1030,7 +893,6 @@ def list_custom_models():
                             try:
                                 with open(config_path, 'r') as f_cfg: 
                                     cfg = json.load(f_cfg)
-                                # Check if not already in list from R2
                                 if not any(m['id'] == model_id_folder for m in custom_models_list):
                                     custom_models_list.append({
                                         "id": model_id_folder,
@@ -1045,8 +907,6 @@ def list_custom_models():
     return jsonify({"custom_models": custom_models_list})
 
 
-# TODO: Implement proper model caching with Redis or in-memory dict
-# lru_cache doesn't work well with large ML models and boto3 clients
 def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
     """
     Load model, scaler, and config from R2.
@@ -1063,35 +923,31 @@ def load_model_from_r2_cached(model_key: str, scaler_key: str, config_key: str):
     logger.info(f"Loading model from R2: {model_key}")
     
     try:
-        # Load model
         with BytesIO() as f_model:
             s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=model_key, Fileobj=f_model)
             f_model.seek(0)
             model = joblib.load(f_model)
         
-        # Load scaler
         with BytesIO() as f_scaler:
             s3_client.download_fileobj(Bucket=R2_BUCKET_NAME, Key=scaler_key, Fileobj=f_scaler)
             f_scaler.seek(0)
             scaler = joblib.load(f_scaler)
         
-        # Load config
         response_cfg = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=config_key)
         config_content = response_cfg['Body'].read().decode('utf-8')
         config = json.loads(config_content)
         
-        logger.info(f"✅ Model loaded successfully: {model_key}")
+        logger.info(f" Model loaded successfully: {model_key}")
         return model, scaler, config
     
     except Exception as e:
-        logger.error(f"❌ Failed to load model from R2: {str(e)}")
+        logger.error(f" Failed to load model from R2: {str(e)}")
         raise
 
 
 @app.route("/scouting_predict")
-@limiter.limit("10 per minute")  # ML prediction is resource-intensive
+@limiter.limit("10 per minute") 
 def scouting_predict():
-    # Validate query parameters
     validated_data, error_response = validate_request_data(
         PredictionRequestSchema,
         {
@@ -1134,7 +990,6 @@ def scouting_predict():
             is_custom_model = False 
             base_path_in_bucket = "ml_models/ml_model_files_peak_potential"
 
-        # --- INICI DEL BLOC MODIFICAT PER LLEGIR DES DE R2 ---
 
         if not s3_client:
             return jsonify({"error": "S3 client not initialized. Check server configuration."}), 500
@@ -1143,13 +998,11 @@ def scouting_predict():
 
         model_file_name_suffix = f"_{effective_model_id_for_path}"
         
-        # Construïm les rutes (keys) dels fitxers dins del bucket de R2
         model_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
         scaler_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
         config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
 
         try:
-            # Use cached loading function for better performance
             model_to_load, scaler_to_load, model_cfg = load_model_from_r2_cached(
                 model_key, scaler_key, config_key
             )
@@ -1168,12 +1021,10 @@ def scouting_predict():
                 logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: model={model_key}, scaler={scaler_key}, config={config_key}. Error: {error_str}", exc_info=True)
                 return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}. Error: {error_str}"}), 500
 
-        # --- FINAL DEL BLOC MODIFICAT ---
 
         player_seasons_all = player_metadata.get("seasons", [])
         if not player_seasons_all: return jsonify({"error": "No seasons for player"}), 404
         
-        # Carregar minuts des de R2 (ja hauria d'estar correcte de la passa anterior)
         minutes_df_global = pd.DataFrame()
         if s3_client:
             try:
@@ -1274,7 +1125,6 @@ def scouting_predict():
             "debug_num_ml_features_expected_by_model": len(expected_ml_feature_names_for_model)
         })
         
-        # Clean up large DataFrames to free memory
         if 'df_all_seasons_base_features' in locals():
             del df_all_seasons_base_features
         if 'minutes_df_global' in locals():
@@ -1287,7 +1137,6 @@ def scouting_predict():
 
     except Exception as e:
         logger.error(f"Error in /scouting_predict (model: {model_identifier}): {e}", exc_info=True)
-        # Clean up memory even on error
         gc.collect()
         return jsonify({"error": f"Unexpected error during prediction: {str(e)}"}), 500
 
@@ -1302,7 +1151,7 @@ def available_ml_features_for_custom_model():
 
 
 @app.route("/api/player/<player_id>/goalkeeper/analysis/<season>")
-@limiter.limit("20 per minute")  # Analysis involves heavy data processing
+@limiter.limit("20 per minute")
 def goalkeeper_analysis_route(player_id, season):
     """Serveix una anàlisi completa del porter incloent estadístiques i dades de gràfics."""
     if not player_id or not season:
@@ -1311,9 +1160,8 @@ def goalkeeper_analysis_route(player_id, season):
         df_player = load_player_data(player_id, season, DATA_DIR)
         analysis_results = _calculate_goalkeeper_metrics(df_player, player_id)
 
-        # Alliberem memòria del DataFrame un cop ja no el necessitem
         del df_player
-        gc.collect() # <--- AFEGEIX AQUESTA LÍNIA
+        gc.collect() 
 
         if analysis_results.get("error"):
             logger.warning(f"L'anàlisi del porter per a {player_id}/{season} ha resultat en un error: {analysis_results.get('error')}")
@@ -1423,7 +1271,6 @@ def player_seasonal_metric_trend_route():
         if not player_seasons:
             return jsonify({"trend_data": [], "metric_label": metric_to_aggregate}), 200
 
-        # --- INICI DEL BLOC MODIFICAT ---
         minutes_df_global = pd.DataFrame()
         if s3_client:
             try:
@@ -1436,7 +1283,6 @@ def player_seasonal_metric_trend_route():
                 return jsonify({"error": "Could not load essential minutes data from cloud storage."}), 500
         else:
              return jsonify({"error": "Server not configured for cloud data access."}), 500
-        # --- FINAL DEL BLOC MODIFICAT ---
 
         trend_data_list = []
         all_possible_base_features = trainer_get_feature_names() 
@@ -1538,7 +1384,6 @@ def player_single_season_aggregated_metric_route():
         if metric_to_aggregate not in all_possible_base_features:
             return jsonify({"error": f"Metric '{metric_to_aggregate}' is not a valid aggregatable metric."}), 400
 
-        # Carregar les dades de minuts des de R2
         minutes_df_global = pd.DataFrame()
         if s3_client:
             try:
@@ -1581,30 +1426,27 @@ def player_single_season_aggregated_metric_route():
             num_90s
         )
         
-        # --- INICI DEL BLOC MODIFICAT ---
         
         metric_value = base_features_series.get(metric_to_aggregate, 0.0)
         
-        # Converteix a float per a la comprovació. Aquesta línia pot generar un error si el valor no és numèric.
+
         try:
             numeric_metric_value = float(metric_value)
         except (ValueError, TypeError):
-             # Si no es pot convertir a float (ex: és un string), el tractem com a no finit.
+
             numeric_metric_value = float('nan')
 
-        # Comprovació robusta per a NaN (Not a Number), infinit positiu i infinit negatiu.
+
         if not math.isfinite(numeric_metric_value):
             metric_value = 0.0
-        
-        # --- FINAL DEL BLOC MODIFICAT ---
-        
+                
         metric_label_friendly = format_base_feature_label(metric_to_aggregate)
 
         return jsonify({
             "season": season_str,
             "metric_id": metric_to_aggregate,
             "metric_label": metric_label_friendly,
-            "value": float(metric_value) # Assegurem que el valor final sigui un float.
+            "value": float(metric_value) 
         })
 
     except Exception as e:

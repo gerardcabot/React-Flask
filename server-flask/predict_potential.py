@@ -1,4 +1,3 @@
-# server-flask/predict_potential.py
 import os
 import pandas as pd
 import joblib
@@ -6,12 +5,10 @@ import json
 from datetime import datetime
 import numpy as np
 import logging
-from typing import Optional # <--- IMPORTACIÓ AFEGIDA
+from typing import Optional 
 
-# Configuració del logging per veure el progrés
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- IMPORTACIÓ DE LÒGICA CLAU DES DE L'SCRIPT D'ENTRENAMENT ---
 try:
     from model_trainer.trainer_v2 import (
         get_age_at_fixed_point_in_season,
@@ -24,19 +21,14 @@ except ImportError:
     logging.error("No s'ha pogut importar des de 'model_trainer.trainer'. Assegura't que l'script 'predict_potential.py' està en el directori correcte (p. ex., 'server-flask/') i que 'model_trainer' té un fitxer '__init__.py'.")
     exit()
 
-# --- CONFIGURACIÓ DE PATHS ---
 _PREDICTOR_SCRIPT_DIR = os.path.dirname(__file__)
 _PROJECT_ROOT = os.path.abspath(os.path.join(_PREDICTOR_SCRIPT_DIR, '..'))
 _DATA_DIR = os.path.join(_PROJECT_ROOT, 'data')
 _MODELS_DIR = os.path.join(_PROJECT_ROOT, 'ml_models', 'ml_model_files_peak_potential')
 
-# --- PARÀMETRES DE LA PREDICCIÓ ---
 MODEL_ID = "peak_potential_v2_15_16"
-# MODEL_ID = "peak_potential_v1" 
-# MAX_AGE_FOR_PREDICTION = 21
 MAX_AGE_FOR_PREDICTION = 35
 
-# LÍNIA CORREGIDA AMB Optional[str]
 def generate_predictions(model_id: str, target_season: Optional[str] = None, num_players_to_display: int = 30):
     """
     Funció principal que carrega models i genera prediccions.
@@ -51,7 +43,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
         logging.info(f"\n{'#'*60}\n# INICIANT PREDICCIONS PER A TOTES LES TEMPORADES \n{'#'*60}")
         output_filename = "predictions_all_seasons_v15_16_double_new.csv"
 
-    # --- 1. Càrrega de Dades Base ---
     try:
         with open(os.path.join(_DATA_DIR, 'player_index.json'), 'r', encoding='utf-8') as f:
             player_index = json.load(f)
@@ -65,7 +56,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
     all_predictions = []
     positions = ["Attacker", "Midfielder", "Defender"]
 
-    # --- 2. Iterar per cada posició ---
     for position in positions:
         logging.info(f"\n{'='*20} Processant posició: {position} {'='*20}")
         
@@ -99,7 +89,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
             logging.warning(f"No s'han trobat els fitxers del model per a la posició '{position}'. Saltant...")
             continue
 
-        # --- 3. Identificar jugadors i temporades candidats ---
         candidate_instances = []
         player_items = player_index.items() if isinstance(player_index, dict) else [(p.get("name", ""), p) for p in player_index]
 
@@ -131,7 +120,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
             
         logging.info(f"Trobades {len(candidate_instances)} instàncies candidates per a '{position}'. Generant features...")
 
-        # --- 4. Generar Features i fer Prediccions per a cada instància ---
         for i, candidate in enumerate(candidate_instances):
             if (i + 1) % 100 == 0:
                 logging.info(f"  Processant instància {i+1}/{len(candidate_instances)}...")
@@ -139,7 +127,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
             player_id = candidate['id']
             season_to_predict_on = candidate['season_for_prediction']
             
-            # A) Base features de la temporada actual
             season_numeric_current = int(season_to_predict_on.split('_')[0])
             minutes_current = minutes_df_dict.get((player_id, season_to_predict_on), 0.0)
             num_90s_current = safe_division(minutes_current, 90.0)
@@ -151,7 +138,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
             base_features_current = extract_season_features(events_df_current, candidate['age_in_season'], season_numeric_current, num_90s_current)
             base_features_current['general_position_identifier'] = candidate['position']
             
-            # B) Base features històriques
             historical_seasons = [s for s in candidate['all_seasons_history'] if s < season_to_predict_on]
             historical_features_list = []
             if historical_seasons:
@@ -168,26 +154,22 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
                     historical_features_list.append(base_features_hist)
             historical_df = pd.DataFrame(historical_features_list) if historical_features_list else pd.DataFrame()
             
-            # C) Construir vector de features ML
             instance_ml_features = trainer_construct_ml_features_for_player_season(
                 current_season_base_features_row=base_features_current,
                 historical_base_features_df=historical_df,
                 all_base_metric_names=base_features_current.index.tolist()
             )
             
-            # Preparar per a la predicció
             X = pd.DataFrame([instance_ml_features]).fillna(0.0)
             X = X[features_for_model]
             X_scaled = scaler.transform(X)
             
-            # Predicció
             prediction = model.predict(X_scaled)[0]
             prediction_clipped = np.clip(prediction, 0, 200)
 
             candidate['predicted_potential'] = prediction_clipped
             all_predictions.append(candidate)
 
-    # --- 5. Consolidar i Desar Resultats ---
     if not all_predictions:
         logging.error("No s'ha pogut realitzar cap predicció.")
         return
@@ -202,7 +184,6 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
     except Exception as e:
         logging.error(f"No s'ha pogut desar el fitxer CSV '{output_filename}': {e}")
 
-    # Mostrar un resum a la terminal
     logging.info(f"\n{'='*25} RESUM DELS RESULTATS {'='*25}")
     print(f"Top {num_players_to_display} prediccions (de {len(final_df_sorted)} totals):\n")
     
@@ -213,14 +194,12 @@ def generate_predictions(model_id: str, target_season: Optional[str] = None, num
     print(output_df.to_string())
 
 if __name__ == "__main__":
-    # 1. Generar prediccions NOMÉS per a la temporada 2015/2016
     generate_predictions(
         model_id=MODEL_ID,
         target_season="2015_2016"
     )
 
-    # 2. Generar prediccions per a TOTES les temporades
     generate_predictions(
         model_id=MODEL_ID,
-        target_season=None # Passar None per indicar "totes les temporades"
+        target_season=None 
     )

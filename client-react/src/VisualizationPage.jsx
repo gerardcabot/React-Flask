@@ -1,29 +1,10 @@
-// import { useEffect, useState, useRef } from "react";
-// import axios from "axios";
-// import {
-//     Chart, 
-//     CategoryScale,
-//     LinearScale,
-//     ArcElement,
-//     BarElement,
-//     PointElement,
-//     LineElement,
-//     Title,
-//     Tooltip,
-//     Legend,
-//     Filler,
-// } from 'chart.js';
-// import { Line } from 'react-chartjs-2';
-// import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
 
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Chart } from 'chart.js'; // Només necessitem Chart per la referència, no per registrar.
+import { Chart } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
 import { useTranslation } from 'react-i18next'; 
-
-// Chart.register(CategoryScale, LinearScale, ArcElement, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 import PassMap from "./components/PassMap";
 import ShotMap from "./components/ShotMap";
@@ -118,20 +99,15 @@ const [aggregatedMetricData, setAggregatedMetricData] = useState(null);
 const [loadingAggregatedMetric, setLoadingAggregatedMetric] = useState(false);
 const chartRefs = useRef({});
 
-// useEffect(() => {
-// axios.get("http://localhost:5000/players").then(res => setPlayers(res.data)).catch(err => console.error("Error fetching players:", err));
-// }, []);
 useEffect(() => {
     axios.get(`${API_URL}/players`).then(res => setPlayers(res.data)).catch(err => console.error("Error fetching players:", err));
 }, []);
 
 useEffect(() => {
   if (selectedPlayer && selectedSeason && selectedSeason !== "all") {
-// if (selectedPlayer && selectedSeason) {
   setLoadingEvents(true);
   setAvailableEventTypes([]);
 
-  // axios.get(`http://localhost:5000/player_events`, {
   axios.get(`${API_URL}/player_events`, {
 
     params: { player_id: selectedPlayer.player_id, season: selectedSeason }
@@ -168,7 +144,6 @@ useEffect(() => {
 if (selectedPlayer && selectedSeason && selectedSeason !== "all" && selectedStandardViz === "shotsavemap") {
 setLoadingGkAnalysis(true);
 setGkAnalysisData(null);
-// axios.get(`http://localhost:5000/api/player/${selectedPlayer.player_id}/goalkeeper/analysis/${selectedSeason}`)
 axios.get(`${API_URL}/api/player/${selectedPlayer.player_id}/goalkeeper/analysis/${selectedSeason}`)
 .then(res => { setGkAnalysisData(res.data); setLoadingGkAnalysis(false); })
 .catch(err => { console.error("Error fetching goalkeeper analysis:", err); setGkAnalysisData({ error: t('visualization.analysisError') }); setLoadingGkAnalysis(false); });
@@ -179,56 +154,11 @@ setGkAnalysisData(null);
 
 useEffect(() => {
 if (availableAggregatedMetrics.length === 0) {
-// axios.get("http://localhost:5000/available_aggregated_metrics")
 axios.get(`${API_URL}/available_aggregated_metrics`)
 .then(res => setAvailableAggregatedMetrics(res.data.available_metrics || []))
 .catch(err => console.error("Error fetching available aggregated metrics:", err));
 }
 }, [availableAggregatedMetrics.length]);
-
-// useEffect(() => {
-//   if (selectedPlayer && selectedAggregatedMetric && selectedSeason !== "") {
-//     setLoadingAggregatedMetric(true);
-//     setAggregatedMetricData(null);
-
-//     if (selectedSeason === "all") {
-//       axios.get("http://localhost:5000/player_seasonal_metric_trend", {
-//         params: {
-//           player_id: selectedPlayer.player_id,
-//           metric: selectedAggregatedMetric,
-//         }
-//       })
-//       .then(res => {
-//         setAggregatedMetricData(res.data);
-//         setLoadingAggregatedMetric(false);
-//       })
-//       .catch(err => {
-//         console.error(`Error fetching trend for metric ${selectedAggregatedMetric}:`, err);
-//         setAggregatedMetricData({ error: `Failed to load trend data for ${selectedAggregatedMetric}` });
-//         setLoadingAggregatedMetric(false);
-//       });
-//     } else {
-//       axios.get("http://localhost:5000/player_single_season_aggregated_metric", {
-//         params: {
-//           player_id: selectedPlayer.player_id,
-//           season: selectedSeason,
-//           metric: selectedAggregatedMetric,
-//         }
-//       })
-//       .then(res => {
-//         setAggregatedMetricData(res.data);
-//         setLoadingAggregatedMetric(false);
-//       })
-//       .catch(err => {
-//         console.error(`Error fetching single season metric ${selectedAggregatedMetric} for season ${selectedSeason}:`, err);
-//         setAggregatedMetricData({ error: `Failed to load data for ${selectedAggregatedMetric} in ${selectedSeason.replace('_','-')}` });
-//         setLoadingAggregatedMetric(false);
-//       });
-//     }
-//   } else {
-//     setAggregatedMetricData(null);
-//   }
-// }, [selectedPlayer, selectedSeason, selectedAggregatedMetric]);
 
 useEffect(() => {
     if (selectedPlayer && selectedAggregatedMetric && selectedSeason !== "") {

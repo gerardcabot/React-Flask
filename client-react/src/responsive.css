@@ -1,16 +1,9 @@
-/* ============================================
-    RESPONSIVE IMPROVEMENTS FOR MOBILE DEVICES
-    ============================================ */
-
-/* Mobile-first responsive utilities */
 @media (max-width: 768px) {
-  /* Header adjustments */
   header {
     padding: 1.5rem 0 0.8rem 0 !important;
     font-size: 2rem !important;
   }
 
-  /* Navigation adjustments */
   nav {
     padding: 0.8rem 1rem !important;
   }
@@ -25,17 +18,15 @@
     padding: 6px 10px !important;
   }
 
-  /* Form elements - make them full width on mobile */
   select,
   input[type="text"],
   input[type="number"],
   textarea {
     width: 100% !important;
     max-width: 100% !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
+    font-size: 16px !important; 
   }
 
-  /* Buttons - full width on mobile */
   button {
     width: 100% !important;
     max-width: 100% !important;
@@ -43,17 +34,15 @@
     font-size: 1rem !important;
   }
 
-  /* Cards and containers */
   .card,
   .container,
   .section {
     padding: 1rem !important;
-    margin: 0.5rem auto !important; /* Centra els contenidors */
+    margin: 0.5rem auto !important; 
     width: 100%;
     box-sizing: border-box;
   }
 
-  /* Tables - make them scrollable */
   table {
     display: block;
     overflow-x: auto;
@@ -61,7 +50,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Modals - take full screen on mobile */
   .modal-content,
   div[style*="maxWidth"][style*="900px"] {
     max-width: 95vw !important;
@@ -70,7 +58,6 @@
     overflow-y: auto !important;
   }
 
-  /* Grid layouts - stack on mobile */
   .grid,
   div[style*="display: grid"],
   div[style*="display:grid"] {
@@ -78,7 +65,6 @@
     gap: 1rem !important;
   }
 
-  /* Flex containers - wrap on mobile */
   .flex,
   div[style*="display: flex"],
   div[style*="display:flex"] {
@@ -86,40 +72,31 @@
     gap: 0.5rem !important;
   }
 
-  /* Language selector - smaller on mobile */
   .language-selector {
     transform: scale(0.9);
   }
 
-  /* Images and visualizations - responsive */
   img,
   canvas {
     max-width: 100% !important;
     height: auto !important;
   }
 
-  /* Font sizes - smaller on mobile */
   h1 { font-size: 1.8rem !important; }
   h2 { font-size: 1.5rem !important; }
   h3 { font-size: 1.3rem !important; }
   h4 { font-size: 1.1rem !important; }
-  /* Hem eliminat la regla genèrica de p, span, div per evitar conflictes */
 
-  /* --- INICI DE LES NOVES REGLES DE CORRECCIÓ --- */
-
-  /* 1. Centrat de la pàgina de Scouting */
   .scouting-container {
-    padding: 1rem 1.5rem !important; /* Afegeix una mica de padding lateral */
+    padding: 1rem 1.5rem !important; 
   }
 
-  /* 2. Opcions de passades en format vertical */
   .pass-options {
     flex-direction: column !important;
-    align-items: flex-start !important; /* Alinea els elements a l'esquerra */
+    align-items: flex-start !important; 
     gap: 1rem !important;
   }
 
-  /* 3. Contenidor per a mapes desplaçables (aquesta ja funcionava, la mantenim) */
   .map-container {
     width: 100%;
     overflow-x: auto;
@@ -130,7 +107,6 @@
   }
 }
 
-/* Tablet adjustments (768px - 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
   header {
     font-size: 2.3rem !important;
@@ -146,9 +122,6 @@
   }
 }
 
-/* ============================================
-    SKELETON LOADING STATES
-    ============================================ */
 .skeleton {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
@@ -166,7 +139,6 @@
 .skeleton-card { height: 150px; margin-bottom: 1rem; width: 100%; }
 .skeleton-image { height: 200px; width: 100%; margin-bottom: 1rem; }
 
-/* Loading spinner */
 .spinner {
   border: 3px solid #f3f3f3;
   border-top: 3px solid #1d4ed8;
@@ -191,7 +163,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Loading overlay */
 .loading-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -210,7 +181,6 @@
   font-size: 0.95rem;
 }
 
-/* Fade-in animation for loaded content */
 .fade-in {
   animation: fadeIn 0.3s ease-in;
 }
@@ -219,7 +189,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Improve touch targets on mobile */
 @media (max-width: 768px) {
   button,
   a,
@@ -231,7 +200,6 @@
   }
 }
 
-/* Hide scrollbars but keep functionality */
 .scrollable-content {
   overflow: auto;
   -ms-overflow-style: none;
@@ -241,7 +209,6 @@
   display: none;
 }
 
-/* Improve accessibility - focus states */
 button:focus,
 select:focus,
 input:focus,
@@ -251,7 +218,6 @@ a:focus {
   outline-offset: 2px;
 }
 
-/* Print styles */
 @media print {
   nav, button, .language-selector {
     display: none !important;

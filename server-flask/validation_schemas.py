@@ -48,7 +48,7 @@ class CustomModelTrainingSchema(Schema):
     ml_features = fields.List(
         fields.Str(),
         required=False,
-        allow_none=True,  # Allow null value when using default features
+        allow_none=True,  
         validate=validate.Length(
             max=200,
             error="ML features list cannot exceed 200 items"
@@ -154,11 +154,9 @@ def validate_request_data(schema_class, data, partial=False):
     
     schema = schema_class()
     try:
-        # Load and validate the data
         validated_data = schema.load(data, partial=partial)
         return validated_data, None
     except ValidationError as err:
-        # Return validation errors in a friendly format
         error_response = jsonify({
             "error": "Validation error",
             "details": err.messages

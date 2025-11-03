@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test runner script for the React-Flask application.
 Runs all tests and provides a comprehensive report.
@@ -19,52 +18,49 @@ def run_command(command, cwd=None, capture_output=True):
             cwd=cwd,
             capture_output=capture_output,
             text=True,
-            timeout=300  # 5 minute timeout
+            timeout=300  
         )
         return result
     except subprocess.TimeoutExpired:
-        print(f"❌ Command timed out: {command}")
+        print(f"Command timed out: {command}")
         return None
     except Exception as e:
-        print(f"❌ Error running command: {command} - {e}")
+        print(f"Error running command: {command} - {e}")
         return None
 
 def check_dependencies():
     """Check if all required dependencies are installed."""
-    print("🔍 Checking dependencies...")
+    print("Checking dependencies...")
     
-    # Check Python dependencies
     python_deps = ['pytest', 'pandas', 'numpy', 'requests']
     for dep in python_deps:
         try:
             __import__(dep)
-            print(f"✅ {dep} is installed")
+            print(f"{dep} is installed")
         except ImportError:
-            print(f"❌ {dep} is not installed")
+            print(f"{dep} is not installed")
             return False
     
-    # Check Node.js dependencies
     if os.path.exists('client-react/package.json'):
         result = run_command('npm list --depth=0', cwd='client-react')
         if result and result.returncode == 0:
-            print("✅ Node.js dependencies are installed")
+            print("Node.js dependencies are installed")
         else:
-            print("❌ Node.js dependencies are not installed")
+            print("Node.js dependencies are not installed")
             return False
     
     return True
 
 def run_python_tests():
     """Run Python backend tests."""
-    print("\n🐍 Running Python backend tests...")
+    print("\nRunning Python backend tests...")
     
-    # Run backend tests
     result = run_command('python -m pytest server-flask/test_backend.py -v', cwd='.')
     if result and result.returncode == 0:
-        print("✅ Backend tests passed")
+        print("Backend tests passed")
         return True
     else:
-        print("❌ Backend tests failed")
+        print("Backend tests failed")
         if result:
             print(result.stdout)
             print(result.stderr)
@@ -72,14 +68,14 @@ def run_python_tests():
 
 def run_ml_tests():
     """Run ML model tests."""
-    print("\n🤖 Running ML model tests...")
+    print("\nRunning ML model tests...")
     
     result = run_command('python -m pytest test_ml_models.py -v', cwd='.')
     if result and result.returncode == 0:
-        print("✅ ML model tests passed")
+        print("ML model tests passed")
         return True
     else:
-        print("❌ ML model tests failed")
+        print("ML model tests failed")
         if result:
             print(result.stdout)
             print(result.stderr)
@@ -87,26 +83,24 @@ def run_ml_tests():
 
 def run_react_tests():
     """Run React frontend tests."""
-    print("\n⚛️ Running React frontend tests...")
+    print("\nRunning React frontend tests...")
     
     if not os.path.exists('client-react/package.json'):
-        print("❌ React project not found")
+        print("React project not found")
         return False
     
-    # Install dependencies if needed
-    print("📦 Installing React dependencies...")
+    print("Installing React dependencies...")
     install_result = run_command('npm install', cwd='client-react')
     if not install_result or install_result.returncode != 0:
-        print("❌ Failed to install React dependencies")
+        print("Failed to install React dependencies")
         return False
-    
-    # Run tests
+        
     result = run_command('npm test -- --coverage --watchAll=false', cwd='client-react')
     if result and result.returncode == 0:
-        print("✅ React tests passed")
+        print("React tests passed")
         return True
     else:
-        print("❌ React tests failed")
+        print("React tests failed")
         if result:
             print(result.stdout)
             print(result.stderr)
@@ -114,14 +108,14 @@ def run_react_tests():
 
 def run_integration_tests():
     """Run integration tests."""
-    print("\n🔗 Running integration tests...")
+    print("\nRunning integration tests...")
     
     result = run_command('python -m pytest test_integration.py -v', cwd='.')
     if result and result.returncode == 0:
-        print("✅ Integration tests passed")
+        print("Integration tests passed")
         return True
     else:
-        print("❌ Integration tests failed")
+        print("Integration tests failed")
         if result:
             print(result.stdout)
             print(result.stderr)
@@ -129,44 +123,39 @@ def run_integration_tests():
 
 def run_linting():
     """Run linting checks."""
-    print("\n🔍 Running linting checks...")
+    print("\nRunning linting checks...")
     
-    # Python linting
     python_result = run_command('python -m flake8 server-flask/ --max-line-length=120', cwd='.')
     if python_result and python_result.returncode == 0:
-        print("✅ Python linting passed")
+        print("Python linting passed")
     else:
-        print("❌ Python linting failed")
+        print("Python linting failed")
         if python_result:
             print(python_result.stdout)
             print(python_result.stderr)
     
-    # React linting
     if os.path.exists('client-react/package.json'):
         react_result = run_command('npm run lint', cwd='client-react')
         if react_result and react_result.returncode == 0:
-            print("✅ React linting passed")
+            print("React linting passed")
         else:
-            print("❌ React linting failed")
+            print("React linting failed")
             if react_result:
                 print(react_result.stdout)
                 print(react_result.stderr)
 
 def run_security_checks():
     """Run security checks."""
-    print("\n🔒 Running security checks...")
+    print("\nRunning security checks...")
     
-    # Check for common security issues
     security_issues = []
     
-    # Check for hardcoded secrets
     secret_patterns = ['password', 'secret', 'key', 'token']
     for pattern in secret_patterns:
         result = run_command(f'grep -r -i "{pattern}" server-flask/ --include="*.py"', cwd='.')
         if result and result.stdout:
             security_issues.append(f"Potential hardcoded {pattern} found")
     
-    # Check for SQL injection vulnerabilities
     sql_patterns = ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
     for pattern in sql_patterns:
         result = run_command(f'grep -r -i "{pattern}" server-flask/ --include="*.py"', cwd='.')
@@ -174,16 +163,16 @@ def run_security_checks():
             security_issues.append(f"Potential SQL query found: {pattern}")
     
     if security_issues:
-        print("⚠️ Security issues found:")
+        print("Security issues found:")
         for issue in security_issues:
             print(f"  - {issue}")
     else:
-        print("✅ No obvious security issues found")
+        print("No obvious security issues found")
 
 def generate_report(results):
     """Generate a test report."""
     print("\n" + "="*50)
-    print("📊 TEST REPORT")
+    print("TEST REPORT")
     print("="*50)
     
     total_tests = len(results)
@@ -197,60 +186,50 @@ def generate_report(results):
     
     print("\nDetailed Results:")
     for test_name, result in results.items():
-        status = "✅ PASSED" if result else "❌ FAILED"
+        status = "PASSED" if result else "FAILED"
         print(f"  {test_name}: {status}")
     
     if failed_tests > 0:
-        print("\n❌ Some tests failed. Please check the output above for details.")
+        print("\nSome tests failed. Please check the output above for details.")
         return False
     else:
-        print("\n🎉 All tests passed!")
+        print("\nAll tests passed!")
         return True
 
 def main():
     """Main test runner function."""
-    print("🚀 Starting comprehensive test suite...")
+    print("Starting comprehensive test suite...")
     print("="*50)
     
-    # Check if we're in the right directory
     if not os.path.exists('server-flask') or not os.path.exists('client-react'):
-        print("❌ Please run this script from the project root directory")
+        print("Please run this script from the project root directory")
         sys.exit(1)
     
-    # Check dependencies
     if not check_dependencies():
-        print("❌ Missing dependencies. Please install them first.")
+        print("Missing dependencies. Please install them first.")
         sys.exit(1)
     
-    # Run all tests
     results = {}
     
-    # Backend tests
     results['Backend Tests'] = run_python_tests()
     
-    # ML model tests
     results['ML Model Tests'] = run_ml_tests()
-    
-    # Frontend tests
+
     results['React Tests'] = run_react_tests()
     
-    # Integration tests
     results['Integration Tests'] = run_integration_tests()
     
-    # Linting
     run_linting()
     
-    # Security checks
     run_security_checks()
     
-    # Generate report
     success = generate_report(results)
     
     if success:
-        print("\n🎉 All tests completed successfully!")
+        print("\nAll tests completed successfully!")
         sys.exit(0)
     else:
-        print("\n❌ Some tests failed. Please fix the issues and run again.")
+        print("\nSome tests failed. Please fix the issues and run again.")
         sys.exit(1)
 
 if __name__ == '__main__':
