@@ -2,10 +2,8 @@ name: Keep Render API Alive
 
 on:
   schedule:
-    # Executa cada 3 hores (Aproximadament 240 pings/mes)
-    # Aquesta freqüència és necessària per mantenir-se sota el límit de 300 peticions/mes de Render.
     - cron: '0 */3 * * *'
-  workflow_dispatch:  # Permet execució manual des de GitHub
+  workflow_dispatch:  
 
 jobs:
   ping-api:
@@ -14,7 +12,7 @@ jobs:
     steps:
       - name: Ping Health Endpoint with Retry Logic
         run: |
-          echo "🏓 Pinging API at $(date)"
+          echo "Pinging API at $(date)"
           echo "================================================"
           
           MAX_RETRIES=5
@@ -24,7 +22,7 @@ jobs:
           
           for i in $(seq 1 $MAX_RETRIES); do
             echo ""
-            echo "🔄 Attempt $i of $MAX_RETRIES..."
+            echo "Attempt $i of $MAX_RETRIES..."
             
             # Perform the request
             response=$(curl -s -w "\n%{http_code}" \
@@ -43,21 +41,21 @@ jobs:
               
               # Verify the response contains "healthy"
               if echo "$body" | grep -q "healthy"; then
-                echo "✅ API is healthy!"
-                echo "✅ Response contains 'healthy' keyword"
+                echo " API is healthy!"
+                echo " Response contains 'healthy' keyword"
                 SUCCESS=1
                 break
               else
-                echo "⚠️ Response doesn't contain 'healthy' keyword"
+                echo " Response doesn't contain 'healthy' keyword"
                 echo "Body received: $body"
               fi
             else
-              echo "⚠️ API returned status code: $http_code"
+              echo " API returned status code: $http_code"
               
               # If it's a cold start, Render might return 503 or timeout
               if [ $i -lt $MAX_RETRIES ]; then
-                echo "💤 API might be in cold start..."
-                echo "⏳ Waiting ${RETRY_DELAY}s before retry..."
+                echo " API might be in cold start..."
+                echo " Waiting ${RETRY_DELAY}s before retry..."
                 sleep $RETRY_DELAY
               fi
             fi
@@ -67,16 +65,16 @@ jobs:
           echo "================================================"
           
           if [ $SUCCESS -eq 1 ]; then
-            echo "✅ Keep-alive ping completed successfully"
+            echo " Keep-alive ping completed successfully"
             # Actualització del missatge
-            echo "⏰ Next ping will occur in ~3 hours"
-            echo "📊 This keeps your Render API from spinning down periodically"
+            echo " Next ping will occur in ~3 hours"
+            echo " This keeps your Render API from spinning down periodically"
             echo "================================================"
             exit 0
           else
-            echo "❌ Failed to ping API after $MAX_RETRIES attempts"
-            echo "🔍 This might indicate a real problem with your API"
-            echo "📝 Check Render logs for more details"
+            echo " Failed to ping API after $MAX_RETRIES attempts"
+            echo " This might indicate a real problem with your API"
+            echo " Check Render logs for more details"
             echo "================================================"
             exit 1
           fi

@@ -324,8 +324,8 @@ function ScoutingPage() {
       payload.ml_features = mlFeaturesPayload;
     }
 
-    console.log('🔍 Sending payload to backend:', payload);
-    console.log('📊 Validation check:', {
+    console.log(' Sending payload to backend:', payload);
+    console.log(' Validation check:', {
       position_group_valid: ['Attacker', 'Midfielder', 'Defender'].includes(backendPositionGroup),
       impact_kpis_count: selectedImpactKpisForCustom.length,
       target_kpis_count: selectedTargetKpisForCustom.length,
@@ -361,11 +361,11 @@ function ScoutingPage() {
           return `${t('scouting.customModelBuilder.successTitle')} ${additionalInfo}`;
         },
         error: (err) => {
-          console.error('❌ Error response:', err.response?.data);
-          console.error('❌ Full error:', err);
+          console.error(' Error response:', err.response?.data);
+          console.error(' Full error:', err);
 
           if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-            const coldStartMsg = '⚠️ Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
+            const coldStartMsg = ' Server is currently starting up (cold start on Render free tier). This takes 30-60 seconds. Please wait a moment and try again.';
             setCustomModelBuildStatus({
               success: false,
               message: coldStartMsg,
@@ -375,7 +375,7 @@ function ScoutingPage() {
           }
 
           if (err.response?.status >= 500) {
-            const serverErrorMsg = `⚠️ Server error (${err.response.status}). The backend might be restarting. Please wait 30-60 seconds and try again.`;
+            const serverErrorMsg = ` Server error (${err.response.status}). The backend might be restarting. Please wait 30-60 seconds and try again.`;
             setCustomModelBuildStatus({
               success: false,
               message: serverErrorMsg,
@@ -1164,7 +1164,7 @@ function ScoutingPage() {
                         marginRight: '10px'
                       }}
                     >
-                      🏓 Wake up server
+                       Wake up server
                     </button>
                     <button
                       onClick={() => window.location.reload()}
@@ -1178,7 +1178,7 @@ function ScoutingPage() {
                         fontSize: '0.9em'
                       }}
                     >
-                      🔄 Refresh page
+                       Refresh page
                     </button>
                   </div>
                 )}
@@ -1304,7 +1304,6 @@ function ScoutingPage() {
         </div>
       </section>
 
-      {/* Modal informatiu del Model V14 (CORREGIT) */}
       {showV14Info && v14ModelConfig && (
         <div
           style={{
@@ -1351,11 +1350,9 @@ function ScoutingPage() {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 600 }}>
-                  {/* Aquest valor ve traduït del backend */}
                   {v14ModelConfig.model_name}
                 </h2>
                 <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
-                  {/* Aquest valor ve traduït del backend */}
                   {v14ModelConfig.description}
                 </p>
               </div>
@@ -1386,7 +1383,6 @@ function ScoutingPage() {
 
             {/* Content */}
             <div style={{ padding: '30px' }}>
-              {/* Informació general */}
               <div style={{
                 background: '#f9fafb',
                 padding: '20px',
@@ -1395,23 +1391,23 @@ function ScoutingPage() {
                 border: '1px solid #e5e7eb'
               }}>
                 <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.technicalTitle')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.technicalTitle')}
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.algorithm')}</strong> {/* Corregit: v14Config */}
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.algorithm')}</strong> 
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.targetVariable')}</strong> {/* Corregit: v14Config */}
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.targetVariable')}</strong> 
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.trainingData')}</strong> {/* Corregit: v14Config */}
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.trainingData')}</strong>
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
                   </div>
                   <div>
-                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.evaluationSeason')}</strong> {/* Corregit: v14Config */}
+                    <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.evaluationSeason')}</strong> 
                     <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
                   </div>
                 </div>
@@ -1420,10 +1416,10 @@ function ScoutingPage() {
               {/* KPIs per posició */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.targetKpisTitle')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.targetKpisTitle')} 
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.targetKpisDesc')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.targetKpisDesc')}
                 </p>
                 {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1466,10 +1462,10 @@ function ScoutingPage() {
               {/* Composite Impact KPIs */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#1f2937', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.impactKpisTitle')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.impactKpisTitle')}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.impactKpisDesc')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.impactKpisDesc')} 
                 </p>
                 {Object.entries(v14ModelConfig.composite_impact_kpis).map(([position, kpis]) => (
                   <div key={position} style={{
@@ -1510,7 +1506,7 @@ function ScoutingPage() {
                 ))}
               </div>
 
-              {/* Feature Engineering (CORREGIT) */}
+              {/* Feature Engineering */}
               <div style={{
                 background: '#fef3c7',
                 padding: '20px',
@@ -1518,7 +1514,7 @@ function ScoutingPage() {
                 border: '1px solid #fde68a'
               }}>
                 <h3 style={{ marginTop: 0, color: '#92400e', fontSize: '1.2rem', marginBottom: '15px' }}>
-                  {t('scouting.v14Config.featureEngineeringTitle')} {/* Corregit: v14Config */}
+                  {t('scouting.v14Config.featureEngineeringTitle')} 
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
                   <li style={{ marginBottom: '8px' }}>

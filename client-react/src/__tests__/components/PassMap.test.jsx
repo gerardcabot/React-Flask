@@ -253,7 +253,6 @@ describe('PassMap Component', () => {
   });
 
   test('handles image loading errors', () => {
-    // Mock environment variable
     const originalEnv = process.env;
     process.env = {
       ...originalEnv,
