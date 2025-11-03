@@ -424,8 +424,6 @@ def structure_kpis_for_frontend(kpi_definitions_by_position):
             "label_variant": label_suffix.strip(" ()"), 
             "full_label": label 
         }
-        if not label_suffix and variant_type == "total":
-             metric_map[base_name]["variants"][variant_type]["label_variant"] = "Total / Recompte"
 
 
     for base_info in metric_map.values():

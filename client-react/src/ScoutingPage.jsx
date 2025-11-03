@@ -1343,10 +1343,10 @@ function ScoutingPage() {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 600 }}>
-                  {v14ModelConfig.model_name}
+                  {t('scouting.v14Config.title')}
                 </h2>
                 <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
-                  {v14ModelConfig.description}
+                  {t('scouting.v14Config.description')}
                 </p>
               </div>
               <button
@@ -1428,7 +1428,7 @@ function ScoutingPage() {
                       fontSize: '1.1rem',
                       fontWeight: 600
                     }}>
-                      {position}
+                      {t(`scouting.v14Config.position.${position.toLowerCase()}`)}
                     </h4>
                     <div style={{
                       display: 'flex',
@@ -1511,13 +1511,13 @@ function ScoutingPage() {
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#78350f', fontSize: '0.95rem' }}>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>{t('scouting.v14Config.currentSeason')}</strong> {v14ModelConfig.feature_engineering.current_season}
+                    <strong>{t('scouting.v14Config.currentSeason')}</strong> {t('scouting.v14Config.currentSeason_desc')}
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>{t('scouting.v14Config.historical')}</strong> {v14ModelConfig.feature_engineering.historical}
+                    <strong>{t('scouting.v14Config.historical')}</strong> {t('scouting.v14Config.historical_desc')}
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>{t('scouting.v14Config.ageBased')}</strong> {v14ModelConfig.feature_engineering.age_based}
+                    <strong>{t('scouting.v14Config.ageBased')}</strong> {t('scouting.v14Config.ageBased_desc')}
                   </li>
                 </ul>
               </div>
