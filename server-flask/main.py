@@ -815,11 +815,12 @@ def trigger_github_training():
                 "instructions": "The model will be available in the list once training completes. This typically takes 45-90 minutes depending on data size and complexity."
             }
             
-            if is_admin:
-                workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
-                response_data["workflow_url"] = workflow_url
-                response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes (typically 45-90 minutes)."
             
+# NEW CODE (FIXED):
+            # Always show workflow URL for portfolio transparency
+            workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
+            response_data["workflow_url"] = workflow_url
+            response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes (typically 45-90 minutes)."            
             return jsonify(response_data), 202
         else:
             logger.error(f"GitHub API error: {response.status_code} - {response.text}")
