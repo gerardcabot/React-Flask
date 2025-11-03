@@ -816,8 +816,6 @@ def trigger_github_training():
             }
             
             
-# NEW CODE (FIXED):
-            # Always show workflow URL for portfolio transparency
             workflow_url = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/train_model.yml"
             response_data["workflow_url"] = workflow_url
             response_data["instructions"] = "You can monitor the progress at the workflow URL. The model will be available in the list once training completes (typically 45-90 minutes)."            

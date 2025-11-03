@@ -346,12 +346,12 @@ const renderAggregatedMetricDisplay = () => {
         responsive: true, maintainAspectRatio: false,
         plugins: {
             legend: { position: "top", labels: {color: '#333', font: {size: 12}} },
-            title: { display: true, text: `${aggregatedMetricData.metric_label || selectedAggregatedMetric} Trend for ${selectedPlayer?.name || ''}`, color: '#2c3e50', font: { size: 18, weight: '600' }, padding: {top: 10, bottom: 20} },
+            title: { display: true, text: `${aggregatedMetricData.metric_label || selectedAggregatedMetric} ${t('visualization.trendFor')} ${selectedPlayer?.name || ''}`, color: '#2c3e50', font: { size: 18, weight: '600' }, padding: {top: 10, bottom: 20} },
             tooltip: { callbacks: { label: function(context) { return (context.dataset.label || '') + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) : 'N/A'); } } }
         },
         scales: {
-            x: { title: { display: true, text: "Season", color: '#333', font: {size: 14}}, ticks: {color: '#555', font: {size: 11}} },
-            y: { title: { display: true, text: "Value", color: '#333', font: {size: 14}}, beginAtZero: true, ticks: {color: '#555', font: {size: 11}} }
+            x: { title: { display: true, text: t('visualization.season'), color: '#333', font: {size: 14}}, ticks: {color: '#555', font: {size: 11}} },
+            y: { title: { display: true, text: t('visualization.value'), color: '#333', font: {size: 14}}, beginAtZero: true, ticks: {color: '#555', font: {size: 11}} }
         },
     };
     return (

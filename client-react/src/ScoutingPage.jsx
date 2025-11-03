@@ -985,7 +985,7 @@ function ScoutingPage() {
                                 onChange={() => handleKpiToggle(option.id, "target")}
                                 style={{ marginRight: "6px" }}
                               />
-                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || "Total/Count"}
+                              {option.label_variant || option.full_label.replace(metricGroup.metric_base_label, "").trim().replace(/^\(|\)$/g, "") || t('scouting.sidebar.totalCount').replace(':', '')}
                             </label>
                           ))}
                         </div>
@@ -1389,19 +1389,19 @@ function ScoutingPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', fontSize: '0.95rem' }}>
                   <div>
                     <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.algorithm')}</strong> 
-                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.algorithm}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{t('scouting.v14Config.algorithm_value')}</p>
                   </div>
                   <div>
                     <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.targetVariable')}</strong> 
-                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.target_variable}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{t('scouting.v14Config.targetVariable_value')}</p>
                   </div>
                   <div>
                     <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.trainingData')}</strong>
-                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.training_data}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{t('scouting.v14Config.trainingData_value')}</p>
                   </div>
                   <div>
                     <strong style={{ color: '#dc2626' }}>{t('scouting.v14Config.evaluationSeason')}</strong> 
-                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{v14ModelConfig.evaluation_season}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#4b5563' }}>{t('scouting.v14Config.evaluationSeason_value')}</p>
                   </div>
                 </div>
               </div>
