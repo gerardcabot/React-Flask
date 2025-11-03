@@ -95,7 +95,7 @@ def run_react_tests():
         print("Failed to install React dependencies")
         return False
         
-    result = run_command('npm test -- --coverage --watchAll=false', cwd='client-react')
+    result = run_command('npm test -- --coverage --reporter=verbose', cwd='client-react')
     if result and result.returncode == 0:
         print("React tests passed")
         return True
