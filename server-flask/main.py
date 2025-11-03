@@ -176,7 +176,7 @@ def load_player_data(player_id, season, data_dir): # El parámetro data_dir ya n
             bool_cols_to_check = [
                 'counterpress', 'offensive', 'recovery_failure', 'deflection', 'save_block', 'aerial_won', 'nutmeg', 'overrun',
                 'no_touch', 'leads_to_shot', 'advantage', 'penalty', 'defensive', 'backheel', 'deflected', 'miscommunication',
-                'cross', 'cut_back', 'switch', 'shot_assist', 'goal_assist', 'follows_dribble', 'first_time', 'open_goal',
+                'cross', 'cut_back', 'switch', 'shot_assist', 'pass_goal_assist', 'follows_dribble', 'first_time', 'open_goal',
                 'under_pressure', 'out'
             ]
             bool_cols_to_check = sorted(list(set(bool_cols_to_check)))
