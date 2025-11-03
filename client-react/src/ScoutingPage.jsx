@@ -324,13 +324,6 @@ function ScoutingPage() {
       payload.ml_features = mlFeaturesPayload;
     }
 
-    console.log(' Sending payload to backend:', payload);
-    console.log(' Validation check:', {
-      position_group_valid: ['Attacker', 'Midfielder', 'Defender'].includes(backendPositionGroup),
-      impact_kpis_count: selectedImpactKpisForCustom.length,
-      target_kpis_count: selectedTargetKpisForCustom.length,
-      model_name_length: (customModelName || `custom_${selectedPositionGroupForCustom.toLowerCase()}`).length
-    });
 
     toast.promise(
       axios.post(`${API_URL}/api/custom_model/trigger_github_training`, payload, { headers }),
