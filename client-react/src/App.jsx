@@ -44,6 +44,46 @@ function HeaderBrand() {
   );
 }
 
+function StatsBombInfo() {
+  const location = useLocation();
+  const isScouting = location.pathname === "/scouting";
+  const { t } = useTranslation();
+  
+  // Color scheme based on page
+  const colors = isScouting ? {
+    background: '#fef2f2',
+    border: '#fca5a5',
+    text: '#991b1b',
+    icon: '#dc2626'
+  } : {
+    background: '#e0f2fe',
+    border: '#0ea5e9',
+    text: '#0c4a6e',
+    icon: '#1d4ed8'
+  };
+  
+  return (
+    <div style={{
+      background: colors.background,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '8px',
+      padding: '12px 16px',
+      margin: '1rem auto',
+      maxWidth: '1100px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '0.95rem',
+      color: colors.text
+    }}>
+      <span style={{ fontSize: '1.2rem' }}>ℹ️</span>
+      <span>
+        {t('visualization.statsbombInfo')}
+      </span>
+    </div>
+  );
+}
+
 function App() {
   const location = useLocation();
   const isVisualization = location.pathname === "/visualization";
@@ -148,6 +188,7 @@ function App() {
         </div>
       </nav>
       <div className="app-content-container">
+        <StatsBombInfo />
         <Routes>
           <Route path="/" element={<Navigate to="/visualization" replace />} />
           <Route path="/visualization" element={<VisualizationPage />} />
