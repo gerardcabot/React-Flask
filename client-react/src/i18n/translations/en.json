@@ -189,6 +189,7 @@
     }
   },
   "visualization": {
+    "statsbombInfo": "This application uses StatsBomb Open (free) data from LaLiga Masculina.",
     "title": "Player Analysis",
     "selectPlayer": "Select player",
     "selectSeason": "Select season",

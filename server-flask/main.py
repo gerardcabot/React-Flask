@@ -479,15 +479,22 @@ if s3_client:
         logger.info("Successfully loaded player_index.json from R2.")
     except Exception as e:
         logger.error(f"Error loading player_index.json from R2: {e}")
-
 @app.route("/players")
 def players_route():
     try:
         return jsonify([
-            {"name": name, "player_id": data["player_id"], "seasons": data.get("seasons", []), "dob": data.get("dob", "")}
+            {
+                "name": name, 
+                "player_id": data["player_id"], 
+                "seasons": data.get("seasons", []), 
+                "dob": data.get("dob", ""),
+                "position": data.get("position", "")
+            }
             for name, data in sorted(player_index_main_data.items()) if isinstance(data, dict) and "player_id" in data
         ])
-    except Exception as e: logger.error(f"Error in /players: {e}", exc_info=True); return jsonify({"error": str(e)}), 500
+    except Exception as e: 
+        logger.error(f"Error in /players: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/player_seasons")
 def player_seasons_route():
@@ -729,6 +736,7 @@ def handle_build_custom_model():
 
 
     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+    custom_model_display_name = custom_model_name_prefix
 
     user_impact_kpis_config = {position_group: user_impact_kpis_list}
     user_target_kpis_for_weight_derivation_config = {position_group: user_target_kpis_list}
@@ -787,6 +795,7 @@ def trigger_github_training():
         }), 503
 
     custom_model_id = f"{custom_model_name_prefix.replace(' ', '_').replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+    custom_model_display_name = custom_model_name_prefix
 
     github_api_url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/dispatches"
     
@@ -867,9 +876,11 @@ def list_custom_models():
                             cfg = json.loads(config_content)
                             
                             position_display = position_group.capitalize()
+                            display_name = cfg.get("model_display_name", cfg.get("model_type", ""))
+
                             custom_models_list.append({
                                 "id": model_id,
-                                "name": cfg.get("model_type", f"{model_id} ({position_display})"),
+                                "name": display_name,
                                 "position_group": cfg.get("position_group_trained_for", position_display),
                                 "description": cfg.get("description", "Custom Potential Model")
                             })
@@ -900,7 +911,7 @@ def list_custom_models():
                                 if not any(m['id'] == model_id_folder for m in custom_models_list):
                                     custom_models_list.append({
                                         "id": model_id_folder,
-                                        "name": cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})"),
+                                        "name": cfg.get("model_display_name", cfg.get("model_type", f"{model_id_folder} ({pos_group_folder_name.capitalize()})")),  # ✅ Should use model_display_name
                                         "position_group": cfg.get("position_group_trained_for", pos_group_folder_name.capitalize()),
                                         "description": cfg.get("description", "Custom Potential Model (Local)")
                                     })

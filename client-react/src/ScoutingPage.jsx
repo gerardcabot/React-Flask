@@ -744,7 +744,7 @@ function ScoutingPage() {
                   </option>
                   {availableCustomModels.map(model => (
                     <option key={model.id} value={model.id}>
-                      {model.name} (Pos: {model.position_group}) {isMyModel(model.id) ? t('scouting.customModel.yourModel') : t('scouting.customModel.communityModel')}
+                      {model.name} {isMyModel(model.id) ? t('scouting.customModel.yourModel') : t('scouting.customModel.communityModel')}
                     </option>
                   ))}
                 </select>

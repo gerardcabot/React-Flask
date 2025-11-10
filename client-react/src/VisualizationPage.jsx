@@ -387,6 +387,7 @@ const renderAggregatedMetricDisplay = () => {
 };
 
 
+
 return (
 <div className="app-root" style={{
   minHeight: "100vh",
@@ -399,6 +400,26 @@ return (
   width: "100vw",
   overflowX: "hidden"
 }}>
+  <div style={{
+    background: '#e0f2fe',
+    border: '1px solid #0ea5e9',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    margin: '1rem auto',
+    maxWidth: '1100px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '0.95rem',
+    color: '#0c4a6e'
+  }}>
+    <span style={{ fontSize: '1.2rem' }}>ℹ️</span>
+    <span>
+      {t('visualization.statsbombInfo', {
+        defaultValue: 'This application uses StatsBomb Open (free) data from LaLiga Masculina.'
+      })}
+    </span>
+  </div>
   <section style={{
     width: "100%",
     maxWidth: "1100px",
@@ -606,12 +627,17 @@ return (
               >
                 {t('visualization.heatmaps')}
               </button>
-              <button
-                style={buttonStyle(selectedStandardViz === "shotsavemap")}
-                onClick={() => setSelectedStandardViz("shotsavemap")}
-              >
-                {t('visualization.goalkeeperAnalysis')}
-              </button>
+                {selectedPlayer && 
+                selectedPlayer.position && 
+                selectedPlayer.position.toLowerCase().includes('goalkeeper') && (
+                    <button
+                    style={buttonStyle(selectedStandardViz === "shotsavemap")}
+                    onClick={() => setSelectedStandardViz("shotsavemap")}
+                    >
+                    {t('visualization.goalkeeperAnalysis')}
+                    </button>
+                )
+                }
             </div>
             <div className="standard-viz-content-wrapper" style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginTop: '1rem' }}>
               {selectedStandardViz === "passmap" && (

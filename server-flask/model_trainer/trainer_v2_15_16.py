@@ -870,8 +870,18 @@ def build_and_train_model_from_script_logic(
         if isinstance(v, np.generic): safe_model_params[k] = v.item()
         else: safe_model_params[k] = v
     
+    if "_" in custom_model_id:
+        parts = custom_model_id.rsplit("_", 1)
+        if len(parts) == 2 and len(parts[1]) == 6 and all(c in '0123456789abcdef' for c in parts[1].lower()):
+            custom_model_display_name = parts[0]
+        else:
+            custom_model_display_name = custom_model_id
+    else:
+        custom_model_display_name = custom_model_id
+    
     config = {
-        "model_type": f"XGBRegressor_Custom_{custom_model_id}_for_{position_group_to_train}",
+        "model_type": custom_model_id,
+        "model_display_name": custom_model_display_name,
         "description": f"Custom Model: Position-Specific ({position_group_to_train}) XGBoost. Predicts PEAK CAREER POTENTIAL based on U21 data. Trained on all player data.",
         "features_used_for_ml_model": final_ml_feature_cols_for_model,
         "ml_model_parameters": safe_model_params,
