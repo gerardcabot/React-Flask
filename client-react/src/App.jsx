@@ -165,7 +165,9 @@ function App() {
               fontSize: "1.1rem",
               padding: "8px 12px",
               borderRadius: "4px",
-              transition: "color 0.2s, background 0.2s"
+              border: isVisualization ? "2px solid #1d4ed8" : "2px solid transparent",
+              transition: "color 0.2s, background 0.2s, border 0.2s",
+              outline: "none"
             }}
           >
             {t('nav.visualization')}
@@ -180,7 +182,9 @@ function App() {
               fontSize: "1.1rem",
               padding: "8px 12px",
               borderRadius: "4px",
-              transition: "color 0.2s, background 0.2s"
+              border: isScouting ? "2px solid #dc2626" : "2px solid transparent",
+              transition: "color 0.2s, background 0.2s, border 0.2s",
+              outline: "none"
             }}
           >
             {t('nav.scouting')}

@@ -606,20 +606,11 @@ function ScoutingPage() {
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
-                border: "1px solid #dc2626",
+                border: "1px solid #d1d5db",
                 fontSize: "1rem",
                 background: "#fff",
                 color: "#1f2937",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                outline: "none"
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#dc2626";
-                e.target.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#dc2626";
-                e.target.style.boxShadow = "0 1px 2px rgba(0,0,0,0.05)";
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}
             >
               <option value="">-- {t('scouting.selectPlayer')} --</option>
