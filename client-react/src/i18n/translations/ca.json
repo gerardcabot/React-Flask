@@ -189,6 +189,7 @@
     }
   },
   "visualization": {
+    "statsbombInfo": "Aquesta aplicació utilitza dades de StatsBomb Open (gratuïtes) de LaLiga Masculina. Temporades disponibles: 2004/05 a 2020/21.",
     "title": "Anàlisi del jugador",
     "selectPlayer": "Selecciona jugador",
     "selectSeason": "Selecciona temporada",

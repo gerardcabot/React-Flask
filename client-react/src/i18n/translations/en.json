@@ -189,7 +189,7 @@
     }
   },
   "visualization": {
-    "statsbombInfo": "This application uses StatsBomb Open (free) data from LaLiga Masculina.",
+    "statsbombInfo": "This application uses StatsBomb Open (free) data from the Men's Spanish LaLiga. Seasons available: 2004/05 to 2020/21.",
     "title": "Player Analysis",
     "selectPlayer": "Select player",
     "selectSeason": "Select season",
