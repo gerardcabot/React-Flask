@@ -1,4 +1,4 @@
-```
+```markdown
 # ⚽ Stars of the Future - Football Talent Analysis Platform
 
 > **A full-stack Football Analytics Platform powered by Machine Learning**  
