@@ -5,8 +5,7 @@
 
 **🌐 Live Demo:** [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
 
-![Demo screenshot](https://react-flask-psi.vercel.app/demo-screenshot.jpg)
-
+image.png
 ---
 
 ## 🎯 Overview
