@@ -66,7 +66,13 @@ export default function PassMap({ playerId, season }) {
 
   const handleFilterChange = (filterKey) => { setFilters(prev => ({...prev, [filterKey]: !prev[filterKey]})); };
   const drawPitch = () => {return (<><Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="white" /><Line points={[0,0,canvasWidth,0,canvasWidth,canvasHeight,0,canvasHeight,0,0]} stroke="black" strokeWidth={2} closed /><Line points={[(120-16.5)*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2-33/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[(120-5.5)*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2-11/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[120*scaleX,(80/2-7.32/2)*scaleY,120*scaleX,(80/2+7.32/2)*scaleY]} stroke="black" strokeWidth={4} /><Rect x={10} y={10} width={15} height={15} fill="green"/><Text x={30} y={10} text={t('visualization.passMapDetails.completed')} fontSize={12}/><Rect x={10} y={30} width={15} height={15} fill="red"/><Text x={30} y={30} text={t('visualization.passMapDetails.incomplete')} fontSize={12}/><Rect x={10} y={50} width={15} height={15} fill="blue"/><Text x={30} y={50} text={t('visualization.passMapDetails.assists')} fontSize={12}/><Rect x={10} y={70} width={15} height={15} fill="purple"/><Text x={30} y={70} text={t('visualization.passMapDetails.finalThirdIfApplicable')} fontSize={12}/></>);};
+  const onlyFinalThird = filters.finalThird && !filters.completed && !filters.incomplete && !filters.assists;
+
   const filteredPasses = passes.filter(pass => { 
+    if (onlyFinalThird) {
+      return pass.final_third;
+    }
+    
     const matchesCompleted = filters.completed && pass.completed && !pass.assist; 
     const matchesIncomplete = filters.incomplete && !pass.completed && !pass.assist; 
     const matchesAssist = filters.assists && pass.assist; 
@@ -76,6 +82,7 @@ export default function PassMap({ playerId, season }) {
     const matchesType = matchesCompleted || matchesIncomplete || matchesAssist;
     return matchesType && matchesFinalThird;
   });
+  
   return (
     <div>
       <h3>{t('visualization.passMapDetails.title')}</h3>
@@ -91,8 +98,14 @@ export default function PassMap({ playerId, season }) {
           {drawPitch()}
           {filteredPasses.map((pass, index) => {
             const startX = pass.start_x*scaleX; const startY = pass.start_y*scaleY; const endX = pass.end_x*scaleX; const endY = pass.end_y*scaleY;
-            let color = pass.assist ? "blue" : pass.completed ? "green" : "red";
-            if (filters.finalThird && pass.final_third) color = pass.assist ? "blue" : "purple";
+            let color;
+            if (onlyFinalThird) {
+              color = pass.assist ? "blue" : pass.completed ? "green" : "red";
+            } else if (filters.finalThird && pass.final_third) {
+              color = pass.assist ? "blue" : "purple";
+            } else {
+              color = pass.assist ? "blue" : pass.completed ? "green" : "red";
+            }
             return (<Line key={index} points={[startX, startY, endX, endY]} stroke={color} strokeWidth={2} lineCap="round" lineJoin="round" opacity={0.5} />);
           })}
         </Layer>
