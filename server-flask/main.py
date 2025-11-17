@@ -55,12 +55,7 @@ logger = logging.getLogger(__name__)
 GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
 GITHUB_REPO_OWNER = os.environ.get('GITHUB_REPO_OWNER', 'gerardcabot')
 GITHUB_REPO_NAME = os.environ.get('GITHUB_REPO_NAME', 'React-Flask')
-
-ADMIN_SECRET = os.environ.get('ADMIN_SECRET')
-if not ADMIN_SECRET:
-    logger.warning("⚠️  ADMIN_SECRET not set! Admin features (GitHub workflow links) will be disabled.")
-    logger.warning("   To enable admin features, set ADMIN_SECRET environment variable.")
-    ADMIN_SECRET = None  
+  
 
 s3_client = None
 if R2_ENDPOINT_URL and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME:
@@ -199,7 +194,7 @@ CORS(app, resources={
     r"/*": {
         "origins": ["https://react-flask-psi.vercel.app", "http://localhost:5173", "http://localhost:5174"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Admin-Secret"],
+        "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
 })

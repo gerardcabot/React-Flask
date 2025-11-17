@@ -183,9 +183,9 @@
       "close": "Cerrar"
     },
     "position": {
-      "attacker": "Atacante",
-      "midfielder": "Centrocampista", 
-      "defender": "Defensor"
+      "defender": "Defensor",
+      "midfielder": "Centrocampista",
+      "attacker": "Atacante"
     }
   },
   "visualization": {

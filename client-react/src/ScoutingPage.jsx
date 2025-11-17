@@ -1425,21 +1425,26 @@ function ScoutingPage() {
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
                   {t('scouting.v14Config.targetKpisDesc')}
                 </p>
-                {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation).map(([position, kpis]) => (
-                  <div key={position} style={{
-                    background: '#fff',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginBottom: '15px',
-                    border: '1px solid #e5e7eb'
-                  }}>
-                    <h4 style={{
-                      margin: '0 0 10px 0',
-                      color: '#dc2626',
-                      fontSize: '1.1rem',
-                      fontWeight: 600
+                {Object.entries(v14ModelConfig.kpi_definitions_for_weight_derivation)
+                  .sort(([a], [b]) => {
+                    const order = { 'Defender': 0, 'Midfielder': 1, 'Attacker': 2 };
+                    return (order[a] ?? 999) - (order[b] ?? 999);
+                  })
+                  .map(([position, kpis]) => (
+                    <div key={position} style={{
+                      background: '#fff',
+                      padding: '15px',
+                      borderRadius: '8px',
+                      marginBottom: '15px',
+                      border: '1px solid #e5e7eb'
                     }}>
-                      {t(`scouting.v14Config.position.${position.toLowerCase()}`)}
+                      <h4 style={{
+                        margin: '0 0 10px 0',
+                        color: '#dc2626',
+                        fontSize: '1.1rem',
+                        fontWeight: 600
+                      }}>
+                        {t(`scouting.v14Config.position.${position.toLowerCase()}`)}
                     </h4>
                     <div style={{
                       display: 'flex',
@@ -1471,21 +1476,26 @@ function ScoutingPage() {
                 <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px' }}>
                   {t('scouting.v14Config.impactKpisDesc')} 
                 </p>
-                {Object.entries(v14ModelConfig.composite_impact_kpis).map(([position, kpis]) => (
-                  <div key={position} style={{
-                    background: '#fff',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginBottom: '15px',
-                    border: '1px solid #e5e7eb'
-                  }}>
-                    <h4 style={{
-                      margin: '0 0 10px 0',
-                      color: '#059669',
-                      fontSize: '1.1rem',
-                      fontWeight: 600
+                {Object.entries(v14ModelConfig.composite_impact_kpis)
+                  .sort(([a], [b]) => {
+                    const order = { 'Defender': 0, 'Midfielder': 1, 'Attacker': 2 };
+                    return (order[a] ?? 999) - (order[b] ?? 999);
+                  })
+                  .map(([position, kpis]) => (
+                    <div key={position} style={{
+                      background: '#fff',
+                      padding: '15px',
+                      borderRadius: '8px',
+                      marginBottom: '15px',
+                      border: '1px solid #e5e7eb'
                     }}>
-                      {position}
+                      <h4 style={{
+                        margin: '0 0 10px 0',
+                        color: '#059669',
+                        fontSize: '1.1rem',
+                        fontWeight: 600
+                      }}>
+                        {t(`scouting.v14Config.position.${position.toLowerCase()}`)}
                     </h4>
                     <div style={{
                       display: 'flex',

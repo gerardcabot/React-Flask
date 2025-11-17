@@ -183,9 +183,9 @@
       "close": "Tancar"
     },
     "position": {
-      "attacker": "Atacant",
-      "midfielder": "Migcampista", 
-      "defender": "Defensor"
+      "defender": "Defensor",
+      "midfielder": "Migcampista",
+      "attacker": "Atacant"
     }
   },
   "visualization": {
