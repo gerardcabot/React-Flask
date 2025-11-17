@@ -1,11 +1,3 @@
-Revisant el README actual per millorar-lo:
-
-
-[4 tools called]
-
-
-Versió millorada del README per LinkedIn:
-
 ```markdown
 # ⚽ Stars of the Future - Football Talent Analysis Platform
 
@@ -14,121 +6,146 @@ Versió millorada del README per LinkedIn:
 
 **🌐 Live Demo:** [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
 
+![Demo screenshot](https://react-flask-psi.vercel.app/demo-screenshot.jpg)
+
 ---
 
 ## 🎯 Overview
 
-Stars of the Future is a comprehensive web application that combines **interactive data visualizations**, **machine learning predictions**, and **customizable scouting models** to help identify and analyze football talent. Built with modern web technologies and deployed on serverless infrastructure.
+**Stars of the Future** is a comprehensive web application that combines **interactive data visualizations**, **machine learning predictions**, and **customizable scouting models** to help identify and analyze football talent. Built with modern web technologies and deployed on serverless infrastructure.
 
 ### Key Highlights
-- 🎨 **Interactive Visualizations**: Position heatmaps, pass maps, xG-based shot analysis
-- 🤖 **AI Predictions**: XGBoost model trained on 15+ years of LaLiga data
-- 🛠️ **Custom Model Builder**: Train your own scouting models with personalized KPIs
+- 🎨 **Interactive Visualizations**: Position heatmaps, pass maps, xG-based shot analysis, pressure-resistant metrics
+- 🤖 **AI Predictions**: XGBoost model trained on 15+ years of LaLiga data to forecast peak career potential (U-21 focus)
+- 🛠️ **Custom Model Builder**: Choose your own KPIs and weights → the platform automatically trains and deploys a brand-new model for you in the background using GitHub Actions + Cloudflare R2 (no server timeouts!)
 - 🌍 **Multi-language**: English, Spanish & Catalan support
-- ⚡ **Real-time Training**: Automated ML model training via GitHub Actions
+- ⚡ **Real-time Training**: Automated ML model training via GitHub Actions (45-90 minutes)
 
 ---
 
 ## ✨ Features
 
 ### 📊 Player Analysis & Visualization
-- **Position Heatmaps**: Visualize player movement patterns and activity zones
-- **Pass Maps**: Interactive pass completion analysis with field zone breakdowns
-- **Shot Maps**: xG-based shot analysis with accuracy metrics
+- **Position Heatmaps**: Visualize player movement patterns and activity zones on the pitch
+- **Pass Maps**: Interactive pass completion analysis with field zone breakdowns and final third filtering
+- **Shot Maps**: xG-based shot analysis with accuracy metrics and goal probability visualization
 - **Pressure Heatmaps**: Defensive engagement and pressure resistance visualization
-- **Aggregated Metrics**: Season-by-season performance trends
+- **Aggregated Metrics**: Season-by-season performance trends with customizable metric selection
+- **Goalkeeper Analysis**: Specialized metrics and charts for goalkeeper performance
 
 ### 🎯 AI-Powered Talent Scouting
-- **Default Model V14**: Pre-trained XGBoost regressor for peak career potential prediction
+- **Default Model V14**: Pre-trained XGBoost regressor for peak career potential prediction (0-200 scale)
 - **Custom Model Builder**: 
-  - Choose your own KPIs and weights
+  - Choose your own KPIs and weights for impact and target metrics
   - Position-specific analysis (Attackers, Midfielders, Defenders)
   - Automatic training and deployment via GitHub Actions
   - Models stored in Cloudflare R2 for instant access
+  - No server timeouts - training happens asynchronously
 - **U-21 Focus**: Age-adjusted predictions for young talents
-- **Real-time Predictions**: Get instant potential scores (0-200 scale)
+- **Real-time Predictions**: Get instant potential scores based on historical data patterns
 
 ### 🛠️ Custom Model Training Pipeline
 1. **Select KPIs**: Choose impact and target KPIs for your scouting criteria
-2. **Configure Features**: Customize ML features or use defaults
-3. **Trigger Training**: GitHub Actions automatically trains your model
+2. **Configure Features**: Customize ML features or use intelligent defaults
+3. **Trigger Training**: GitHub Actions automatically trains your model (no server load!)
 4. **Monitor Progress**: Track training status (45-90 minutes)
-5. **Deploy & Use**: Model automatically available for predictions
+5. **Deploy & Use**: Model automatically available for predictions once training completes
 
 ---
 
 ## 🏗️ Tech Stack
 
 ### Frontend
-- **React 18** with **Vite** for fast development and builds
-- **Chart.js** & **react-chartjs-2** for data visualizations
-- **Konva.js** & **react-konva** for interactive pitch visualizations
-- **react-i18next** for internationalization
-- **react-hot-toast** for user notifications
-- **Deployed on Vercel** with automatic CI/CD
+- React 18 + Vite
+- Chart.js + react-chartjs-2
+- Konva.js + react-konva (interactive pitch)
+- react-i18next (EN / ES / CA)
+- react-hot-toast
+- Deployed on Vercel
 
 ### Backend
-- **Flask** REST API with comprehensive error handling
-- **pandas** & **numpy** for data processing
-- **scikit-learn** & **XGBoost** for machine learning
-- **boto3** for Cloudflare R2 integration
-- **Deployed on Render** (free tier with cold start handling)
+- Flask (Python)
+- pandas, numpy, scikit-learn, XGBoost
+- boto3 (Cloudflare R2)
+- Flask-Limiter, Pydantic
+- Deployed on Render (free tier)
 
 ### Infrastructure & DevOps
-- **Cloudflare R2**: Object storage for ML models and heatmap images
-- **GitHub Actions**: 
-  - Automated model training workflows
-  - Keep-alive monitoring for Render API
-- **Rate Limiting**: Flask-Limiter for API protection
-- **CORS**: Secure cross-origin configuration
+- Cloudflare R2 (model & asset storage)
+- GitHub Actions (custom model training + keep-alive)
+- Rate limiting & CORS
+- Automatic cold-start handling with retry logic
 
 ---
 
 ## 📈 Data Source
 
-This application uses **StatsBomb Open Data** from the Men's Spanish LaLiga:
-- **Seasons**: 2004/05 to 2020/21
-- **Data Type**: Event-level match data (passes, shots, pressures, etc.)
-- **License**: Free and open-source
+This project uses **StatsBomb Open Data** – Men's Spanish LaLiga:
+- Seasons 2004/05 – 2020/21 (17 seasons)
+- Event-level data (passes, shots, pressures, GK actions, etc.)
+- License: CC BY-SA 4.0
 
-**Acknowledgments**: Massive thanks to [@StatsBomb](https://twitter.com/StatsBomb) and [@Hudl](https://twitter.com/Hudl) for providing high-quality, open football data.
+**Huge thanks** to [@StatsBomb](https://twitter.com/StatsBomb) and [@Hudl](https://twitter.com/Hudl) for making high-quality open football data available.
 
 ---
 
 ## 🚀 Getting Started
 
 ### For Users
-1. Visit [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
-2. **Explore Players**: Navigate to "Visualization" to analyze any player
-3. **Predict Potential**: Go to "Scouting" and select a U-21 player
-4. **Build Custom Models**: Create your own scouting model with custom KPIs
+Just visit → [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
+
+### For Developers
+
+#### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Cloudflare R2 account
+- GitHub account (for Actions)
+
+#### Frontend
+```bash
+cd client-react
+npm install
+npm run dev
+```
+
+#### Backend
+```bash
+cd server-flask
+pip install -r requirements.txt
+export FLASK_APP=main.py
+flask run
+```
+
+#### Environment Variables
+See `.env.example` in each folder.
+
+---
 
 ## 🎓 How It Works
 
-### Machine Learning Pipeline
-1. **Data Processing**: Load and clean StatsBomb event data
-2. **Feature Engineering**: Extract position-specific KPIs and ML features
-3. **Model Training**: XGBoost regressor trained on historical player data
-4. **Prediction**: Generate potential scores based on U-21 performance
-5. **Deployment**: Models stored in R2 and served via API
+### Default ML Model
+XGBoost regressor trained on 17 seasons of LaLiga data to predict a player’s **peak career potential** (0–200 scale) based on U-21 performance.
 
-### Custom Model Training
-- User selects KPIs and ML features via web interface
-- Backend validates and triggers GitHub Actions workflow
-- Workflow runs training script with user parameters
-- Trained model uploaded to Cloudflare R2
-- Model becomes available for predictions immediately
+### Custom Model Builder
+1. You pick KPIs & weights via the web UI  
+2. Backend triggers a GitHub Actions workflow  
+3. Workflow trains the model (45–90 min)  
+4. Model is uploaded to Cloudflare R2  
+5. Instantly available for predictions
+
+No server timeouts – everything runs asynchronously!
 
 ---
 
 ## 🔒 Security & Performance
 
-- ✅ **Rate Limiting**: 1000 requests/day, 200/hour per IP
-- ✅ **Input Validation**: Comprehensive request schemas
-- ✅ **CORS**: Secure cross-origin configuration
-- ✅ **Error Handling**: Structured logging and user-friendly messages
-- ✅ **Health Monitoring**: Automated uptime checks via GitHub Actions
-- ✅ **Cold Start Handling**: Retry logic with exponential backoff
+- Rate limiting (1000 req/day, 200/hour per IP)
+- Full input validation with Pydantic
+- Secure CORS
+- Structured error handling
+- Automatic Render keep-alive (every 2h)
+- Frontend retry logic for cold starts
 
 ---
 
@@ -136,41 +153,56 @@ This application uses **StatsBomb Open Data** from the Men's Spanish LaLiga:
 
 ```
 React-Flask/
-├── client-react/          # React frontend
+├── client-react/          # React + Vite frontend
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── i18n/          # Translations
-│   │   └── utils/         # API helpers
-├── server-flask/          # Flask backend
-│   ├── main.py            # API routes
-│   ├── model_trainer/     # ML training scripts
-│   └── validation_schemas.py
-└── .github/workflows/     # CI/CD pipelines
+│   │   ├── components/
+│   │   ├── i18n/          # EN, ES, CA translations
+│   │   └── utils/
+│   └── vite.config.ts
+├── server-flask/          # Flask API
+│   ├── main.py
+│   ├── model_trainer/
+│   └── requirements.txt
+├── .github/workflows/
+│   ├── train_model.yml    # Custom model training
+│   └── keep-alive.yml     # Render wake-up
+└── README.md
 ```
 
 ---
 
 ## 🤝 Contributing
 
-This is a personal project, but feedback and suggestions are welcome! If you find bugs or have ideas for improvements, feel free to open an issue or reach out.
+We welcome contributions! Feel free to:
+
+- Open an issue
+- Submit a pull request
+- Suggest new features or report bugs
+- Improve translations
+
+Just fork the repo and send a PR – all help is appreciated!
 
 ---
 
 ## 📄 License
 
-This project uses StatsBomb Open Data, which is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+The **code** in this repository is provided under the MIT License.  
+The football data used is **StatsBomb Open Data** licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **StatsBomb** for providing excellent open football data
-- **Hudl** for supporting the football analytics community
-- All the open-source libraries that made this project possible
+- StatsBomb & Hudl for the amazing open data
+- All the open-source libraries and tools that made this possible
+- Everyone who has tested, given feedback, or starred the project ❤️
 
 ---
 
-**Built with ❤️ for football analytics enthusiasts**
+**Built with ❤️ for the football analytics community**
 
-🌐 **Try it now**: [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
-```
+🌐 **Try it now:** [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
+
+---
+
+*This started as a weekend passion project combining football + data science and turned into the most challenging (and rewarding) thing I’ve ever built. Any feedback – positive, negative, bugs, ideas – is hugely appreciated!*
