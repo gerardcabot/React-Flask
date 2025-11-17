@@ -5,7 +5,7 @@
 
 **🌐 Live Demo:** [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
 
-image.png
+
 ---
 
 ## 🎯 Overview
@@ -91,32 +91,6 @@ This project uses **StatsBomb Open Data** – Men's Spanish LaLiga:
 
 ### For Users
 Just visit → [https://react-flask-psi.vercel.app/](https://react-flask-psi.vercel.app/)
-
-### For Developers
-
-#### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Cloudflare R2 account
-- GitHub account (for Actions)
-
-#### Frontend
-```bash
-cd client-react
-npm install
-npm run dev
-```
-
-#### Backend
-```bash
-cd server-flask
-pip install -r requirements.txt
-export FLASK_APP=main.py
-flask run
-```
-
-#### Environment Variables
-See `.env.example` in each folder.
 
 ---
 
