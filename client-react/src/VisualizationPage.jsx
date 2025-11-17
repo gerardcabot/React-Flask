@@ -443,15 +443,17 @@ return (
           {t('visualization.selectSeason')}:
         </label>
         <select
-          id="season-select"
-          value={selectedSeason}
-          onChange={(e) => {
-            setSelectedSeason(e.target.value);
-            setGkAnalysisData(null);
-          }}
-          style={selectStyle}
-          disabled={!selectedPlayer}
-        >
+          id="season-select"
+          value={selectedSeason}
+          onChange={(e) => {
+            setSelectedSeason(e.target.value);
+            setGkAnalysisData(null);
+            setSelectedAggregatedMetric('');
+            setAggregatedMetricData(null);
+          }}
+          style={selectStyle}
+          disabled={!selectedPlayer}
+        >
           <option value="">
             {selectedPlayer ? `-- ${t('visualization.selectSeason')} --` : `-- ${t('visualization.selectPlayerFirst')} --`}
           </option>

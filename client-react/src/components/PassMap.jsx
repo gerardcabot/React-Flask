@@ -70,8 +70,11 @@ export default function PassMap({ playerId, season }) {
     const matchesCompleted = filters.completed && pass.completed && !pass.assist; 
     const matchesIncomplete = filters.incomplete && !pass.completed && !pass.assist; 
     const matchesAssist = filters.assists && pass.assist; 
-    const matchesFinalThird = !filters.finalThird || (filters.finalThird && pass.final_third); 
-    return (matchesCompleted || matchesIncomplete || matchesAssist) && matchesFinalThird; 
+    
+    const matchesFinalThird = !filters.finalThird || pass.final_third || (filters.assists && pass.assist);
+    
+    const matchesType = matchesCompleted || matchesIncomplete || matchesAssist;
+    return matchesType && matchesFinalThird;
   });
   return (
     <div>
