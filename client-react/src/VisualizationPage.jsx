@@ -36,7 +36,7 @@ return () => {
     delete chartRefs.current[id]; 
   }
 };
-}, [id, chartType, chartDataConfig, chartOptions, chartRefs]);
+}, [id, chartType, chartDataConfig, chartOptions]);
 
 return <canvas id={`chart-${id}`}></canvas>;
 }

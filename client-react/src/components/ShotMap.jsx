@@ -50,7 +50,7 @@ export default function ShotMap({ playerId, season }) {
         console.error("Axios error:", err.response ? err.response.data : err.message);
         setError(t('visualization.shotMapDetails.errorFetch') + " " + (err.response ? err.response.data.error : err.message));
       });
-  }, [playerId, season]);
+  }, [playerId, season, t]);
 
   const drawPitch = () => {
     const goalCenterY = pitchHeight / 2;
