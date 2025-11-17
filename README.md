@@ -1,4 +1,3 @@
-```markdown
 # ⚽ Stars of the Future - Football Talent Analysis Platform
 
 > **A full-stack Football Analytics Platform powered by Machine Learning**  
@@ -206,4 +205,3 @@ The football data used is **StatsBomb Open Data** licensed under [CC BY-SA 4.0](
 ---
 
 *This started as a weekend passion project combining football + data science and turned into the most challenging (and rewarding) thing I’ve ever built. Any feedback – positive, negative, bugs, ideas – is hugely appreciated!*
-```
