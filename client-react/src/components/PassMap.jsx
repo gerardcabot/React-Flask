@@ -62,7 +62,7 @@ export default function PassMap({ playerId, season }) {
         setError(t('visualization.passMapDetails.errorFetch'));
         console.error(err);
       });
-  }, [playerId, season]);
+  }, [playerId, season, t]);
 
   const handleFilterChange = (filterKey) => { setFilters(prev => ({...prev, [filterKey]: !prev[filterKey]})); };
   const drawPitch = () => {return (<><Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="white" /><Line points={[0,0,canvasWidth,0,canvasWidth,canvasHeight,0,canvasHeight,0,0]} stroke="black" strokeWidth={2} closed /><Line points={[(120-16.5)*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2-33/2)*scaleY,120*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2+33/2)*scaleY,(120-16.5)*scaleX,(80/2-33/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[(120-5.5)*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2-11/2)*scaleY,120*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2+11/2)*scaleY,(120-5.5)*scaleX,(80/2-11/2)*scaleY]} stroke="black" strokeWidth={2} closed /><Line points={[120*scaleX,(80/2-7.32/2)*scaleY,120*scaleX,(80/2+7.32/2)*scaleY]} stroke="black" strokeWidth={4} /><Rect x={10} y={10} width={15} height={15} fill="green"/><Text x={30} y={10} text={t('visualization.passMapDetails.completed')} fontSize={12}/><Rect x={10} y={30} width={15} height={15} fill="red"/><Text x={30} y={30} text={t('visualization.passMapDetails.incomplete')} fontSize={12}/><Rect x={10} y={50} width={15} height={15} fill="blue"/><Text x={30} y={50} text={t('visualization.passMapDetails.assists')} fontSize={12}/><Rect x={10} y={70} width={15} height={15} fill="purple"/><Text x={30} y={70} text={t('visualization.passMapDetails.finalThirdIfApplicable')} fontSize={12}/></>);};

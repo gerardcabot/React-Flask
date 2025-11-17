@@ -180,12 +180,12 @@
       "currentSeason_desc": "Métricas de la temporada actual.",
       "historical": "Histórico:",
       "historical_desc": "Promedios y tendencias de temporadas anteriores.",
-      "close": "Cerrar"
-    },
-    "position": {
-      "defender": "Defensor",
-      "midfielder": "Centrocampista",
-      "attacker": "Atacante"
+      "close": "Cerrar",
+      "position": {
+        "defender": "Defensor",
+        "midfielder": "Centrocampista",
+        "attacker": "Atacante"
+      }
     }
   },
   "visualization": {
