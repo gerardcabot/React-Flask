@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import "./App.css"; 
 import VisualizationPage from "./VisualizationPage"; 
 import ScoutingPage from "./ScoutingPage"; 
-import React from "react";
+import React, { useEffect } from "react";
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
@@ -11,6 +11,7 @@ function HeaderBrand() {
   const location = useLocation();
   const isScouting = location.pathname === "/scouting";
   const { t } = useTranslation();
+  
   
   return (
     <div style={{
@@ -89,6 +90,16 @@ function App() {
   const isVisualization = location.pathname === "/visualization";
   const isScouting = location.pathname === "/scouting";
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL || 'https://football-api-r0f2.onrender.com';
+    fetch(`${API_URL}/health`, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache',
+    }).catch(() => {
+    });
+  }, []);
   
   return (
     <>

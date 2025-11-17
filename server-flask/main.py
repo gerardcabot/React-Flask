@@ -207,7 +207,7 @@ CORS(app, resources={
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["300 per day", "100 per hour"], 
+    default_limits=["1000 per day", "200 per hour"], 
     storage_uri="memory://"  
 )
 
@@ -457,6 +457,7 @@ def structure_kpis_for_frontend(kpi_definitions_by_position):
 def home(): return jsonify({"message": "Welcome to the Player Stats API."})
 
 @app.route("/health")
+@limiter.exempt
 def health_check():
     """
     Lightweight health check endpoint for uptime monitoring.

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { apiGet } from '../utils/apiHelper';
 import { Stage, Layer, Rect, Line, Text } from "react-konva";
 import { useTranslation } from 'react-i18next';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
 
 export default function PassMap({ playerId, season }) {
@@ -38,10 +37,7 @@ export default function PassMap({ playerId, season }) {
     setPasses([]);
     setError(null);
 
-    axios
-      .get(`${API_URL}/pass_map_plot`, {
-        params: { player_id: playerId, season }
-      })
+    apiGet('/pass_map_plot', { params: { player_id: playerId, season } })
       .then(res => {
         if (res.data.passes) {
           const passData = res.data.passes;

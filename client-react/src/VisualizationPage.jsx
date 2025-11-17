@@ -1,6 +1,6 @@
 
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import { apiGet } from './utils/apiHelper';
 import { Chart } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { FaUser, FaCalendarAlt, FaChartBar } from "react-icons/fa"; 
@@ -10,9 +10,6 @@ import PassMap from "./components/PassMap";
 import ShotMap from "./components/ShotMap";
 import PositionHeatmap from "./components/PositionHeatmap";
 import PressureHeatmap from "./components/PressureHeatmap";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
 
 function InfoTooltip({ text }) {
 return (
@@ -100,7 +97,7 @@ const [loadingAggregatedMetric, setLoadingAggregatedMetric] = useState(false);
 const chartRefs = useRef({});
 
 useEffect(() => {
-    axios.get(`${API_URL}/players`).then(res => setPlayers(res.data)).catch(err => console.error("Error fetching players:", err));
+  apiGet('/players').then(res => setPlayers(res.data)).catch(err => console.error("Error fetching players:", err));
 }, []);
 
 useEffect(() => {
@@ -108,8 +105,7 @@ useEffect(() => {
   setLoadingEvents(true);
   setAvailableEventTypes([]);
 
-  axios.get(`${API_URL}/player_events`, {
-
+  apiGet('/player_events', {
     params: { player_id: selectedPlayer.player_id, season: selectedSeason }
   }).then(res => {
     setEvents(res.data || []);
@@ -144,21 +140,21 @@ useEffect(() => {
 if (selectedPlayer && selectedSeason && selectedSeason !== "all" && selectedStandardViz === "shotsavemap") {
 setLoadingGkAnalysis(true);
 setGkAnalysisData(null);
-axios.get(`${API_URL}/api/player/${selectedPlayer.player_id}/goalkeeper/analysis/${selectedSeason}`)
+apiGet(`/api/player/${selectedPlayer.player_id}/goalkeeper/analysis/${selectedSeason}`)
 .then(res => { setGkAnalysisData(res.data); setLoadingGkAnalysis(false); })
 .catch(err => { console.error("Error fetching goalkeeper analysis:", err); setGkAnalysisData({ error: t('visualization.analysisError') }); setLoadingGkAnalysis(false); });
 } else {
 setGkAnalysisData(null);
 }
-}, [selectedPlayer, selectedSeason, selectedStandardViz]);
+}, [selectedPlayer, selectedSeason, selectedStandardViz, t]);
 
 useEffect(() => {
-if (availableAggregatedMetrics.length === 0) {
-axios.get(`${API_URL}/available_aggregated_metrics`)
-.then(res => setAvailableAggregatedMetrics(res.data.available_metrics || []))
-.catch(err => console.error("Error fetching available aggregated metrics:", err));
-}
-}, [availableAggregatedMetrics.length]);
+  if (availableAggregatedMetrics.length === 0) {
+    apiGet('/available_aggregated_metrics')
+      .then(res => setAvailableAggregatedMetrics(res.data.available_metrics || []))
+      .catch(err => console.error("Error fetching available aggregated metrics:", err));
+  }
+}, []);
 
 useEffect(() => {
     if (selectedPlayer && selectedAggregatedMetric && selectedSeason !== "") {
@@ -170,7 +166,7 @@ useEffect(() => {
             metric: selectedAggregatedMetric,
             ...(selectedSeason !== "all" && { season: selectedSeason })
         };
-        axios.get(`${API_URL}/${endpoint}`, { params })
+        apiGet(`/${endpoint}`, { params })
             .then(res => {
                 setAggregatedMetricData(res.data);
                 setLoadingAggregatedMetric(false);

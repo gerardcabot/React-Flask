@@ -1,11 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import axios from "axios";
 import dayjs from "dayjs";
 import React from "react";
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiGet, apiPost } from './utils/apiHelper';
+const API_URL = import.meta.env.VITE_API_URL || 'https://football-api-r0f2.onrender.com';
 
 const MY_MODELS_KEY = 'my_custom_models';
 
@@ -148,49 +147,44 @@ function ScoutingPage() {
   const [showV14Info, setShowV14Info] = useState(false);
 
   useEffect(() => {
-    axios.get(`${API_URL}/players`)
-      .then(res => setAllPlayers(res.data || []))
-      .catch((err) => {
+    const loadData = async () => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const [playersRes, kpisRes, featuresRes, configRes] = await Promise.all([
+          apiGet('/players').catch(() => ({ data: [] })),
+          apiGet('/api/custom_model/available_kpis').catch(() => ({ data: { structured_kpis: [] } })),
+          apiGet('/api/custom_model/available_ml_features').catch(() => ({ data: { available_ml_features: [] } })),
+          apiGet('/api/model/default_v14_config').catch(() => ({ data: null }))
+        ]);
+        
+        setAllPlayers(playersRes.data || []);
+        setStructuredKpiOptions(kpisRes.data?.structured_kpis || []);
+        setSelectedImpactKpisForCustom([]);
+        setSelectedTargetKpisForCustom([]);
+        setAvailableMlFeaturesOptions(featuresRes.data?.available_ml_features || []);
+        setV14ModelConfig(configRes.data);
+        
+        if (!playersRes.data || playersRes.data.length === 0) {
+          setPredictionError(t('scouting.errors.playersLoadFailed'));
+        }
+      } catch (err) {
         setAllPlayers([]);
         if (err.code === 'ERR_NETWORK' || err.response?.status >= 500) {
-          setPredictionError(`⚠️ Server is starting up (cold start). Please wait 30-60 seconds and refresh the page. Error: ${err.message}`);
+          setPredictionError(`⚠️ Server is starting up. Please wait a moment...`);
         } else {
           setPredictionError(t('scouting.errors.playersLoadFailed'));
         }
-      });
-
-    axios.get(`${API_URL}/api/custom_model/available_kpis`)
-      .then(res => {
-        setStructuredKpiOptions(res.data?.structured_kpis || []);
-        setSelectedImpactKpisForCustom([]);
-        setSelectedTargetKpisForCustom([]);
-      })
-      .catch(() => {
-        setStructuredKpiOptions([]);
-      });
-
-    axios.get(`${API_URL}/api/custom_model/available_ml_features`)
-      .then(res => {
-        setAvailableMlFeaturesOptions(res.data?.available_ml_features || []);
-      })
-      .catch(() => {
-        setAvailableMlFeaturesOptions([]);
-        console.error("Failed to load available ML features.");
-      });
-
-    axios.get(`${API_URL}/api/model/default_v14_config`)
-      .then(res => {
-        setV14ModelConfig(res.data);
-      })
-      .catch(() => {
-        console.error("Failed to load V14 model configuration.");
-      });
+      }
+    };
+    
+    loadData();
   }, [t]);
 
   useEffect(() => {
     if (modelTypeForPrediction === 'custom') {
       setIsLoadingPrediction(true);
-      axios.get(`${API_URL}/api/custom_model/list`)
+      apiGet('/api/custom_model/list')
         .then(res => {
           setAvailableCustomModels(res.data?.custom_models || []);
           setIsLoadingPrediction(false);
@@ -252,7 +246,7 @@ function ScoutingPage() {
     setPredictionError("");
 
     toast.promise(
-      axios.get(`${API_URL}/scouting_predict`, {
+      apiGet('/scouting_predict', {
         params: {
           player_id: selectedPlayer.player_id,
           season: selectedSeason,
@@ -326,7 +320,7 @@ function ScoutingPage() {
 
 
     toast.promise(
-      axios.post(`${API_URL}/api/custom_model/trigger_github_training`, payload, { headers }),
+      apiPost('/api/custom_model/trigger_github_training', payload, { headers }),
       {
         loading: t('scouting.customModelBuilder.starting'),
         success: (res) => {

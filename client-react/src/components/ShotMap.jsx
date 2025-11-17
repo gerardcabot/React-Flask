@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { apiGet } from '../utils/apiHelper';
 import { Stage, Layer, Rect, Line, RegularPolygon, Text } from "react-konva";
 import { useTranslation } from 'react-i18next';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function ShotMap({ playerId, season }) {
   const { t } = useTranslation();
@@ -28,10 +27,7 @@ export default function ShotMap({ playerId, season }) {
     setShots([]);
     setError(null);
 
-    axios
-      .get(`${API_URL}/shot_map`, {
-        params: { player_id: playerId, season }
-      })
+    apiGet('/shot_map', { params: { player_id: playerId, season } })
       .then(res => {
         if (res.data.shots) {
           const shotData = res.data.shots;
