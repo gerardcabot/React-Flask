@@ -186,6 +186,9 @@
         "midfielder": "Migcampista",
         "attacker": "Atacant"
       }
+    },
+    "warnings": {
+      "positionMismatch": "Aquest model va ser entrenat per a {{modelPosition}}s, però el jugador seleccionat és un {{playerPosition}}."
     }
   },
   "visualization": {

@@ -1022,6 +1022,16 @@ def scouting_predict():
             if not expected_ml_feature_names_for_model:
                 return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
 
+            model_position_trained = model_cfg.get("position_group_trained_for")
+            position_mismatch_warning = None
+            if model_position_trained and model_position_trained != position_group_for_prediction:
+                position_mismatch_warning = {
+                    "message": f"This model was trained for {model_position_trained}s, but the selected player is a {position_group_for_prediction}.",
+                    "model_position": model_position_trained,
+                    "player_position": position_group_for_prediction
+                }
+                logger.warning(f"Position mismatch: Model {model_identifier} trained for {model_position_trained}, but predicting for {position_group_for_prediction}")
+
         except Exception as e:
             error_str = str(e)
             if '404' in error_str or 'NoSuchKey' in error_str or 'Not Found' in error_str:
@@ -1133,7 +1143,8 @@ def scouting_predict():
             "num_90s_played_in_season": round(num_90s_target_season_pred, 2),
             "model_used": model_identifier,
             "debug_num_ml_features_generated_for_pred": len(ml_features_series_pred) if ml_features_series_pred is not None else 0,
-            "debug_num_ml_features_expected_by_model": len(expected_ml_feature_names_for_model)
+            "debug_num_ml_features_expected_by_model": len(expected_ml_feature_names_for_model),
+            "position_mismatch_warning": position_mismatch_warning
         })
         
         if 'df_all_seasons_base_features' in locals():

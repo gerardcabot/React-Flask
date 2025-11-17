@@ -186,6 +186,9 @@
         "midfielder": "Midfielder",
         "attacker": "Attacker"
       }
+    },
+    "warnings": {
+      "positionMismatch": "This model was trained for {{modelPosition}}s, but the selected player is a {{playerPosition}}."
     }
   },
   "visualization": {

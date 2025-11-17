@@ -186,6 +186,9 @@
         "midfielder": "Centrocampista",
         "attacker": "Atacante"
       }
+    },
+    "warnings": {
+      "positionMismatch": "Este modelo fue entrenado para {{modelPosition}}s, pero el jugador seleccionado es un {{playerPosition}}."
     }
   },
   "visualization": {

@@ -257,6 +257,16 @@ function ScoutingPage() {
         loading: t('scouting.predicting'),
         success: (res) => {
           setPredictionResult(res.data);
+          if (res.data.position_mismatch_warning) {
+            const warning = res.data.position_mismatch_warning;
+            toast(t('scouting.warnings.positionMismatch', {
+              modelPosition: warning.model_position,
+              playerPosition: warning.player_position
+            }), {
+              icon: '⚠️',
+              duration: 6000,
+            });
+          }
           return `${t('scouting.result.score')}: ${res.data.predicted_potential_score}/200`;
         },
         error: (err) => {
