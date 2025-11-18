@@ -259,9 +259,17 @@ function ScoutingPage() {
           setPredictionResult(res.data);
           if (res.data.position_mismatch_warning) {
             const warning = res.data.position_mismatch_warning;
+            
+            const translatePosition = (position) => {
+              return t(`scouting.v14Config.position.${position.toLowerCase()}`);
+            };
+            
+            const translatedModelPosition = translatePosition(warning.model_position);
+            const translatedPlayerPosition = translatePosition(warning.player_position);
+            
             toast(t('scouting.warnings.positionMismatch', {
-              modelPosition: warning.model_position,
-              playerPosition: warning.player_position
+              modelPosition: translatedModelPosition,
+              playerPosition: translatedPlayerPosition
             }), {
               icon: '⚠️',
               duration: 6000,

@@ -1009,18 +1009,13 @@ def scouting_predict():
 
         model_file_name_suffix = f"_{effective_model_id_for_path}"
         
-        # For custom models, we need to find which position folder exists
-        # For default model, use player's position
-        model_position_to_load_from = None
         position_mismatch_warning = None
         
         if is_custom_model:
-            # Try all three positions to find which one exists for this model
             possible_positions = ["Attacker", "Midfielder", "Defender"]
             for pos in possible_positions:
                 test_config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{pos.lower()}/model_config_{pos.lower()}{model_file_name_suffix}.json"
                 try:
-                    # Try to get the config to see if this position folder exists
                     config_obj = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=test_config_key)
                     config_content = config_obj['Body'].read().decode('utf-8')
                     test_cfg = json.loads(config_content)
@@ -1038,7 +1033,6 @@ def scouting_predict():
                 logger.error(error_message)
                 return jsonify({"error": error_message}), 404
             
-            # Check for position mismatch
             if model_position_to_load_from != position_group_for_prediction:
                 position_mismatch_warning = {
                     "message": f"This model was trained for {model_position_to_load_from}s, but the selected player is a {position_group_for_prediction}.",
@@ -1047,10 +1041,8 @@ def scouting_predict():
                 }
                 logger.warning(f"Position mismatch: Model {model_identifier} trained for {model_position_to_load_from}, but predicting for {position_group_for_prediction}")
         else:
-            # For default model, use player's position
             model_position_to_load_from = position_group_for_prediction
         
-        # Build paths using the model's position (not player's position for custom models)
         model_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/potential_model_{model_position_to_load_from.lower()}{model_file_name_suffix}.joblib"
         scaler_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/feature_scaler_{model_position_to_load_from.lower()}{model_file_name_suffix}.joblib"
         config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/model_config_{model_position_to_load_from.lower()}{model_file_name_suffix}.json"
@@ -1064,7 +1056,6 @@ def scouting_predict():
             if not expected_ml_feature_names_for_model:
                 return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
 
-            # For default model, check mismatch here (for custom models, we already checked above)
             if not is_custom_model:
                 model_position_trained = model_cfg.get("position_group_trained_for")
                 if model_position_trained and model_position_trained != position_group_for_prediction:
