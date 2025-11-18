@@ -1005,13 +1005,55 @@ def scouting_predict():
         if not s3_client:
             return jsonify({"error": "S3 client not initialized. Check server configuration."}), 500
             
-        logger.info(f"Loading model from R2. Bucket: {R2_BUCKET_NAME}, Model ID: {effective_model_id_for_path}, Position: {position_group_for_prediction}")
+        logger.info(f"Loading model from R2. Bucket: {R2_BUCKET_NAME}, Model ID: {effective_model_id_for_path}, Player Position: {position_group_for_prediction}")
 
         model_file_name_suffix = f"_{effective_model_id_for_path}"
         
-        model_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/potential_model_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
-        scaler_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/feature_scaler_{position_group_for_prediction.lower()}{model_file_name_suffix}.joblib"
-        config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{position_group_for_prediction.lower()}/model_config_{position_group_for_prediction.lower()}{model_file_name_suffix}.json"
+        # For custom models, we need to find which position folder exists
+        # For default model, use player's position
+        model_position_to_load_from = None
+        position_mismatch_warning = None
+        
+        if is_custom_model:
+            # Try all three positions to find which one exists for this model
+            possible_positions = ["Attacker", "Midfielder", "Defender"]
+            for pos in possible_positions:
+                test_config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{pos.lower()}/model_config_{pos.lower()}{model_file_name_suffix}.json"
+                try:
+                    # Try to get the config to see if this position folder exists
+                    config_obj = s3_client.get_object(Bucket=R2_BUCKET_NAME, Key=test_config_key)
+                    config_content = config_obj['Body'].read().decode('utf-8')
+                    test_cfg = json.loads(config_content)
+                    model_position_to_load_from = test_cfg.get("position_group_trained_for", pos)
+                    logger.info(f"Found model files for position: {model_position_to_load_from}")
+                    break
+                except Exception as e:
+                    if 'NoSuchKey' in str(e) or '404' in str(e):
+                        continue
+                    else:
+                        logger.warning(f"Error checking position {pos} for model {effective_model_id_for_path}: {e}")
+            
+            if not model_position_to_load_from:
+                error_message = f"Model files not found in R2 for any position. Model ID: {model_identifier}. Checked positions: attacker, midfielder, defender"
+                logger.error(error_message)
+                return jsonify({"error": error_message}), 404
+            
+            # Check for position mismatch
+            if model_position_to_load_from != position_group_for_prediction:
+                position_mismatch_warning = {
+                    "message": f"This model was trained for {model_position_to_load_from}s, but the selected player is a {position_group_for_prediction}.",
+                    "model_position": model_position_to_load_from,
+                    "player_position": position_group_for_prediction
+                }
+                logger.warning(f"Position mismatch: Model {model_identifier} trained for {model_position_to_load_from}, but predicting for {position_group_for_prediction}")
+        else:
+            # For default model, use player's position
+            model_position_to_load_from = position_group_for_prediction
+        
+        # Build paths using the model's position (not player's position for custom models)
+        model_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/potential_model_{model_position_to_load_from.lower()}{model_file_name_suffix}.joblib"
+        scaler_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/feature_scaler_{model_position_to_load_from.lower()}{model_file_name_suffix}.joblib"
+        config_key = f"{base_path_in_bucket}/{effective_model_id_for_path}/{model_position_to_load_from.lower()}/model_config_{model_position_to_load_from.lower()}{model_file_name_suffix}.json"
 
         try:
             model_to_load, scaler_to_load, model_cfg = load_model_from_r2_cached(
@@ -1022,26 +1064,26 @@ def scouting_predict():
             if not expected_ml_feature_names_for_model:
                 return jsonify({"error": f"Feature list missing in config for model {effective_model_id_for_path}"}), 500
 
-            model_position_trained = model_cfg.get("position_group_trained_for")
-            position_mismatch_warning = None
-            if model_position_trained and model_position_trained != position_group_for_prediction:
-                position_mismatch_warning = {
-                    "message": f"This model was trained for {model_position_trained}s, but the selected player is a {position_group_for_prediction}.",
-                    "model_position": model_position_trained,
-                    "player_position": position_group_for_prediction
-                }
-                logger.warning(f"Position mismatch: Model {model_identifier} trained for {model_position_trained}, but predicting for {position_group_for_prediction}")
+            # For default model, check mismatch here (for custom models, we already checked above)
+            if not is_custom_model:
+                model_position_trained = model_cfg.get("position_group_trained_for")
+                if model_position_trained and model_position_trained != position_group_for_prediction:
+                    position_mismatch_warning = {
+                        "message": f"This model was trained for {model_position_trained}s, but the selected player is a {position_group_for_prediction}.",
+                        "model_position": model_position_trained,
+                        "player_position": position_group_for_prediction
+                    }
+                    logger.warning(f"Position mismatch: Model {model_identifier} trained for {model_position_trained}, but predicting for {position_group_for_prediction}")
 
         except Exception as e:
             error_str = str(e)
             if '404' in error_str or 'NoSuchKey' in error_str or 'Not Found' in error_str:
-                error_message = f"Model files not found in R2. Model ID: {model_identifier}, Position: {position_group_for_prediction}. Keys tried: model={model_key}, scaler={scaler_key}, config={config_key}"
+                error_message = f"Model files not found in R2. Model ID: {model_identifier}, Position: {model_position_to_load_from or position_group_for_prediction}. Keys tried: model={model_key}, scaler={scaler_key}, config={config_key}"
                 logger.error(error_message)
                 return jsonify({"error": error_message}), 404
             else:
                 logger.error(f"Failed to load model files from R2 for {model_identifier}. Keys: model={model_key}, scaler={scaler_key}, config={config_key}. Error: {error_str}", exc_info=True)
                 return jsonify({"error": f"Could not load model files from cloud storage for {model_identifier}. Error: {error_str}"}), 500
-
 
         player_seasons_all = player_metadata.get("seasons", [])
         if not player_seasons_all: return jsonify({"error": "No seasons for player"}), 404
